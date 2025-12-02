@@ -1,0 +1,4 @@
+module Crankshaft.Components
+AppButton 1.0 AppButton.qml
+Card 1.0 Card.qml
+Icon 1.0 Icon.qml

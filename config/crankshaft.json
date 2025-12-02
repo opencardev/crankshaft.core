@@ -1,0 +1,19 @@
+{
+  "core": {
+    "websocket": {
+      "port": 8080,
+      "host": "0.0.0.0"
+    },
+    "logging": {
+      "level": "info",
+      "file": "crankshaft.log"
+    }
+  },
+  "ui": {
+    "theme": "light",
+    "language": "en-GB",
+    "websocket": {
+      "server": "ws://localhost:8080"
+    }
+  }
+}
