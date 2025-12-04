@@ -21,41 +21,41 @@ import QtQuick
 
 QtObject {
   // Common labels/sections
-  readonly property string appTitle: "Crankshaft"
-  readonly property string buttonBack: "Back"
-  readonly property string buttonSettings: "Settings"
+  readonly property string appTitle: qsTr("Crankshaft")
+  readonly property string buttonBack: qsTr("Back")
+  readonly property string buttonSettings: qsTr("Settings")
 
-  readonly property string sectionAppearance: "Appearance"
-  readonly property string sectionLanguage: "Language"
-  readonly property string sectionConnection: "Connection"
-  readonly property string labelDarkMode: "Dark Mode"
-  readonly property string labelLanguage: "Language"
-  readonly property string labelStatus: "Status"
+  readonly property string sectionAppearance: qsTr("Appearance")
+  readonly property string sectionLanguage: qsTr("Language")
+  readonly property string sectionConnection: qsTr("Connection")
+  readonly property string labelDarkMode: qsTr("Dark Mode")
+  readonly property string labelLanguage: qsTr("Language")
+  readonly property string labelStatus: qsTr("Status")
 
   // Languages
-  readonly property string langEnGb: "English (GB)"
-  readonly property string langDeDe: "Deutsch (DE)"
+  readonly property string langEnGb: qsTr("English (GB)")
+  readonly property string langDeDe: qsTr("Deutsch (DE)")
 
   // Connection statuses
-  readonly property string statusConnected: "Connected"
-  readonly property string statusDisconnected: "Disconnected"
-  readonly property string statusNotConnected: "Not connected"
+  readonly property string statusConnected: qsTr("Connected")
+  readonly property string statusDisconnected: qsTr("Disconnected")
+  readonly property string statusNotConnected: qsTr("Not connected")
 
   // Home screen
-  readonly property string homeWelcome: "Welcome to Crankshaft MVP"
-  readonly property string cardNavigationTitle: "Navigation"
-  readonly property string cardNavigationDesc: "GPS and route planning"
-  readonly property string cardMediaTitle: "Media"
-  readonly property string cardMediaDesc: "Music and audio"
-  readonly property string cardPhoneTitle: "Phone"
-  readonly property string cardPhoneDesc: "Calls and contacts"
-  readonly property string cardSystemTitle: "System"
-  readonly property string cardSystemDesc: "Settings and info"
-  readonly property string cardAndroidAutoTitle: "Android Auto"
-  readonly property string cardAndroidAutoDesc: "Connect your phone"
+  readonly property string homeWelcome: qsTr("Welcome to Crankshaft MVP")
+  readonly property string cardNavigationTitle: qsTr("Navigation")
+  readonly property string cardNavigationDesc: qsTr("GPS and route planning")
+  readonly property string cardMediaTitle: qsTr("Media")
+  readonly property string cardMediaDesc: qsTr("Music and audio")
+  readonly property string cardPhoneTitle: qsTr("Phone")
+  readonly property string cardPhoneDesc: qsTr("Calls and contacts")
+  readonly property string cardSystemTitle: qsTr("System")
+  readonly property string cardSystemDesc: qsTr("Settings and info")
+  readonly property string cardAndroidAutoTitle: qsTr("Android Auto")
+  readonly property string cardAndroidAutoDesc: qsTr("Connect your phone")
 
   // Android Auto page
-  readonly property string aaTitle: "Android Auto"
-  readonly property string aaStart: "Start Android Auto"
-  readonly property string aaStop: "Stop Android Auto"
+  readonly property string aaTitle: qsTr("Android Auto")
+  readonly property string aaStart: qsTr("Start Android Auto")
+  readonly property string aaStop: qsTr("Stop Android Auto")
 }
