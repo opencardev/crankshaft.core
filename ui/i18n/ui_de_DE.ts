@@ -251,7 +251,7 @@
     <message>
         <location filename="../qml/Strings.qml" line="55"/>
         <source>Connect your phone</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Verbinde dein Telefon</translation>
     </message>
     <message>
         <location filename="../qml/Strings.qml" line="59"/>
