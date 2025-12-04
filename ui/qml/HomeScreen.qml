@@ -21,6 +21,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "Components"
+import Crankshaft 1.0
 
 Page {
     id: root
@@ -39,7 +40,7 @@ Page {
             anchors.margins: Theme.spacingMd
             
             Text {
-                text: qsTr("Crankshaft")
+                text: Strings.appTitle
                 font.pixelSize: Theme.fontSizeHeading2
                 font.bold: true
                 color: Theme.textPrimary
@@ -47,7 +48,7 @@ Page {
             }
             
             AppButton {
-                text: qsTr("Settings")
+                text: Strings.buttonSettings
                 onClicked: stackView.push(settingsScreen)
             }
         }
@@ -59,7 +60,7 @@ Page {
         spacing: Theme.spacingXl
         
         Text {
-            text: qsTr("Welcome to Crankshaft MVP")
+            text: Strings.homeWelcome
             font.pixelSize: Theme.fontSizeHeading1
             font.bold: true
             color: Theme.textPrimary
@@ -73,8 +74,8 @@ Page {
             Layout.alignment: Qt.AlignHCenter
             
             Card {
-                title: qsTr("Navigation")
-                description: qsTr("GPS and route planning")
+                title: Strings.cardNavigationTitle
+                description: Strings.cardNavigationDesc
                 icon: "navigation"
                 Layout.preferredWidth: 250
                 Layout.preferredHeight: 200
@@ -85,8 +86,8 @@ Page {
             }
             
             Card {
-                title: qsTr("Media")
-                description: qsTr("Music and audio")
+                title: Strings.cardMediaTitle
+                description: Strings.cardMediaDesc
                 icon: "music"
                 Layout.preferredWidth: 250
                 Layout.preferredHeight: 200
@@ -97,8 +98,8 @@ Page {
             }
             
             Card {
-                title: qsTr("Phone")
-                description: qsTr("Calls and contacts")
+                title: Strings.cardPhoneTitle
+                description: Strings.cardPhoneDesc
                 icon: "phone"
                 Layout.preferredWidth: 250
                 Layout.preferredHeight: 200
@@ -107,10 +108,19 @@ Page {
                     wsClient.publish("ui/phone/opened", {})
                 }
             }
-            
             Card {
-                title: qsTr("System")
-                description: qsTr("Settings and info")
+                title: Strings.cardAndroidAutoTitle
+                description: Strings.cardAndroidAutoDesc
+                icon: "phone"
+                Layout.preferredWidth: 250
+                Layout.preferredHeight: 200
+                onClicked: {
+                    stackView.push(androidautoScreen, { stack: stackView })
+                }
+            }
+            Card {
+                title: Strings.cardSystemTitle
+                description: Strings.cardSystemDesc
                 icon: "settings"
                 Layout.preferredWidth: 250
                 Layout.preferredHeight: 200

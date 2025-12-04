@@ -17,8 +17,8 @@
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick
+import QtQuick.Controls
 
 Item {
     id: root
@@ -30,6 +30,12 @@ Item {
     
     width: 200
     height: 150
+    
+    scale: mouseArea.pressed ? 0.95 : (mouseArea.containsMouse ? 1.02 : 1.0)
+    
+    Behavior on scale {
+        NumberAnimation { duration: Theme.animationDuration }
+    }
     
     MouseArea {
         id: mouseArea
@@ -45,12 +51,6 @@ Item {
         radius: Theme.radiusLg
         border.color: Theme.divider
         border.width: 1
-        
-        scale: mouseArea.pressed ? 0.95 : (mouseArea.containsMouse ? 1.02 : 1.0)
-        
-        Behavior on scale {
-            NumberAnimation { duration: Theme.animationDuration }
-        }
         
         Behavior on color {
             ColorAnimation { duration: Theme.animationDuration }

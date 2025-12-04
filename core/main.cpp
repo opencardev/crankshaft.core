@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
   parser.process(app);
 
   // Initialize logger
-  Logger::instance().setLevel(Logger::Info);
+  Logger::instance().setLevel(Logger::Level::Info);
   Logger::instance().info("Starting Crankshaft Core...");
 
   // Load configuration

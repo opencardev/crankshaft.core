@@ -21,9 +21,12 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import "Components"
+import Crankshaft 1.0
 
 Page {
     id: root
+    
+    // currentLanguage is provided by root context
     
     background: Rectangle {
         color: Theme.background
@@ -39,12 +42,12 @@ Page {
             anchors.margins: Theme.spacingMd
             
             AppButton {
-                text: qsTr("← Back")
+                text: "\u2190 " + Strings.buttonBack
                 onClicked: stackView.pop()
             }
             
             Text {
-                text: qsTr("Settings")
+                text: Strings.buttonSettings
                 font.pixelSize: Theme.fontSizeHeading2
                 font.bold: true
                 color: Theme.textPrimary
@@ -76,7 +79,7 @@ Page {
                     spacing: Theme.spacingMd
                     
                     Text {
-                        text: qsTr("Appearance")
+                        text: Strings.sectionAppearance
                         font.pixelSize: Theme.fontSizeHeading3
                         font.bold: true
                         color: Theme.textPrimary
@@ -87,7 +90,7 @@ Page {
                         spacing: Theme.spacingMd
                         
                         Text {
-                            text: qsTr("Dark Mode")
+                            text: Strings.labelDarkMode
                             font.pixelSize: Theme.fontSizeBody
                             color: Theme.textPrimary
                             Layout.fillWidth: true
@@ -121,7 +124,7 @@ Page {
                     spacing: Theme.spacingMd
                     
                     Text {
-                        text: qsTr("Language")
+                        text: Strings.sectionLanguage
                         font.pixelSize: Theme.fontSizeHeading3
                         font.bold: true
                         color: Theme.textPrimary
@@ -129,10 +132,12 @@ Page {
                     
                     ComboBox {
                         Layout.fillWidth: true
-                        model: ["English (GB)", "Deutsch (DE)"]
+                        model: [Strings.langEnGb, Strings.langDeDe]
+                        currentIndex: currentLanguage === "de-DE" ? 1 : 0
                         
                         onActivated: (index) => {
                             let lang = index === 0 ? "en-GB" : "de-DE"
+                            console.log("Publishing language change:", lang)
                             wsClient.publish("ui/language/changed", {
                                 "language": lang
                             })
@@ -156,7 +161,7 @@ Page {
                     spacing: Theme.spacingMd
                     
                     Text {
-                        text: qsTr("Connection")
+                        text: Strings.sectionConnection
                         font.pixelSize: Theme.fontSizeHeading3
                         font.bold: true
                         color: Theme.textPrimary
@@ -166,13 +171,13 @@ Page {
                         Layout.fillWidth: true
                         
                         Text {
-                            text: qsTr("Status:")
+                            text: Strings.labelStatus
                             font.pixelSize: Theme.fontSizeBody
                             color: Theme.textSecondary
                         }
                         
                         Text {
-                            text: wsClient.connected ? qsTr("Connected") : qsTr("Disconnected")
+                            text: wsClient.connected ? Strings.statusConnected : Strings.statusDisconnected
                             font.pixelSize: Theme.fontSizeBody
                             color: wsClient.connected ? Theme.success : Theme.error
                             font.bold: true

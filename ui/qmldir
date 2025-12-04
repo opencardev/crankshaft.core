@@ -1,0 +1,11 @@
+module Crankshaft
+typeinfo crankshaft-ui.qmltypes
+prefer :/qt/qml/Crankshaft/
+Main 1.0 qml/Main.qml
+HomeScreen 1.0 qml/HomeScreen.qml
+SettingsScreen 1.0 qml/SettingsScreen.qml
+AndroidAutoScreen 1.0 qml/AndroidAutoScreen.qml
+singleton Strings 1.0 qml/Strings.qml
+AppButton 1.0 qml/Components/AppButton.qml
+Card 1.0 qml/Components/Card.qml
+Icon 1.0 qml/Components/Icon.qml

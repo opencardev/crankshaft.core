@@ -88,7 +88,7 @@ void WebSocketClient::onConnected() {
   emit connectedChanged();
 
   // Re-subscribe to all topics
-  for (const QString& topic : m_subscriptions) {
+  for (const auto& topic : std::as_const(m_subscriptions)) {
     subscribe(topic);
   }
 }

@@ -26,9 +26,9 @@ class Logger : public QObject {
   Q_OBJECT
 
  public:
-  enum Level { Debug, Info, Warning, Error };
+  enum class Level { Debug, Info, Warning, Error };
 
-  static Logger& instance();
+  [[nodiscard]] static Logger& instance();
 
   void setLevel(Level level);
   void setLogFile(const QString& filePath);
@@ -45,8 +45,8 @@ class Logger : public QObject {
   Logger& operator=(const Logger&) = delete;
 
   void log(Level level, const QString& message);
-  QString levelToString(Level level) const;
+  [[nodiscard]] QString levelToString(Level level) const;
 
-  Level m_level = Info;
+  Level m_level{Level::Info};
   QString m_logFile;
 };

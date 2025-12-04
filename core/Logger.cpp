@@ -33,13 +33,13 @@ void Logger::setLevel(Level level) { m_level = level; }
 
 void Logger::setLogFile(const QString& filePath) { m_logFile = filePath; }
 
-void Logger::debug(const QString& message) { log(Debug, message); }
+void Logger::debug(const QString& message) { log(Level::Debug, message); }
 
-void Logger::info(const QString& message) { log(Info, message); }
+void Logger::info(const QString& message) { log(Level::Info, message); }
 
-void Logger::warning(const QString& message) { log(Warning, message); }
+void Logger::warning(const QString& message) { log(Level::Warning, message); }
 
-void Logger::error(const QString& message) { log(Error, message); }
+void Logger::error(const QString& message) { log(Level::Error, message); }
 
 void Logger::log(Level level, const QString& message) {
   if (level < m_level) return;
@@ -64,13 +64,13 @@ void Logger::log(Level level, const QString& message) {
 
 QString Logger::levelToString(Level level) const {
   switch (level) {
-    case Debug:
+    case Level::Debug:
       return "DEBUG";
-    case Info:
+    case Level::Info:
       return "INFO";
-    case Warning:
+    case Level::Warning:
       return "WARNING";
-    case Error:
+    case Level::Error:
       return "ERROR";
     default:
       return "UNKNOWN";

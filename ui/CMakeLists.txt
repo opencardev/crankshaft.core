@@ -39,20 +39,34 @@ set_target_properties(crankshaft-ui PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/ui
 )
 
+# Compile translations
+set(TS_FILES
+  i18n/ui_en_GB.ts
+  i18n/ui_de_DE.ts
+)
+
+qt_add_translations(crankshaft-ui
+  TS_FILES ${TS_FILES}
+  RESOURCE_PREFIX "/i18n"
+)
+
 qt_add_qml_module(crankshaft-ui
   URI Crankshaft
   VERSION 1.0
   NO_PLUGIN_OPTIONAL
-  NO_IMPORT_SCAN
+  NO_GENERATE_QMLDIR
   QML_FILES
     qml/Main.qml
     qml/HomeScreen.qml
     qml/SettingsScreen.qml
+    qml/AndroidAutoScreen.qml
+    qml/Strings.qml
     qml/Components/AppButton.qml
     qml/Components/Card.qml
     qml/Components/Icon.qml
   RESOURCES
     assets/icons/mdi.svg
+    qmldir
 )
 
 target_include_directories(crankshaft-ui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

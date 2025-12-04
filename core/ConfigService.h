@@ -27,12 +27,12 @@ class ConfigService : public QObject {
   Q_OBJECT
 
  public:
-  static ConfigService& instance();
+  [[nodiscard]] static ConfigService& instance();
 
   bool load(const QString& filePath);
   bool save(const QString& filePath);
 
-  QVariant get(const QString& key, const QVariant& defaultValue = QVariant()) const;
+  [[nodiscard]] QVariant get(const QString& key, const QVariant& defaultValue = QVariant()) const;
   void set(const QString& key, const QVariant& value);
 
  signals:

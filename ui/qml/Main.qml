@@ -20,6 +20,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Crankshaft 1.0
 
 ApplicationWindow {
     id: window
@@ -27,7 +28,7 @@ ApplicationWindow {
     visible: true
     width: 1024
     height: 600
-    title: qsTr("Crankshaft")
+    title: Strings.appTitle
     
     color: Theme.background
     
@@ -61,6 +62,11 @@ ApplicationWindow {
     Component {
         id: settingsScreen
         SettingsScreen {}
+    }
+    
+    Component {
+        id: androidautoScreen
+        AndroidAutoScreen {}
     }
     
     // Handle WebSocket events

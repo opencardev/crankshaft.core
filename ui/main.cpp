@@ -48,11 +48,15 @@ int main(int argc, char* argv[]) {
 
   parser.process(app);
 
-  // Set up translator
-  QTranslator translator;
-  QString language = parser.value(languageOption);
-  if (translator.load(QString(":/i18n/ui_%1").arg(language))) {
-    app.installTranslator(&translator);
+  // Set up translator (heap-allocated for proper lifetime)
+  QTranslator* translator = new QTranslator(&app);
+  QString currentLanguage = parser.value(languageOption);
+  QString translationFile = QString(":/i18n/ui_%1").arg(QString(currentLanguage).replace('-', '_'));
+  if (translator->load(translationFile)) {
+    app.installTranslator(translator);
+    qDebug() << "Loaded translation:" << translationFile;
+  } else {
+    qWarning() << "Failed to load translation:" << translationFile;
   }
 
   // Create WebSocket client
@@ -72,6 +76,35 @@ int main(int argc, char* argv[]) {
   // Set context properties (Theme as global object, not singleton)
   engine.rootContext()->setContextProperty("Theme", theme);
   engine.rootContext()->setContextProperty("wsClient", wsClient);
+  engine.rootContext()->setContextProperty("currentLanguage", currentLanguage);
+
+  // Handle language change events
+  QObject::connect(wsClient, &WebSocketClient::eventReceived, [&, translator](const QString& topic, const QVariantMap& payload) {
+    if (topic == "ui/language/changed") {
+      QString newLanguage = payload.value("language").toString();
+      qDebug() << "Language change requested:" << newLanguage;
+      
+      // Remove old translator
+      app.removeTranslator(translator);
+      
+      // Load new translator (convert hyphens to underscores for file path)
+      QString translationFile = QString(":/i18n/ui_%1").arg(QString(newLanguage).replace('-', '_'));
+      if (translator->load(translationFile)) {
+        app.installTranslator(translator);
+        qDebug() << "Translation loaded:" << translationFile;
+        
+        // Update context property
+        currentLanguage = newLanguage;
+        engine.rootContext()->setContextProperty("currentLanguage", currentLanguage);
+        
+        // Trigger retranslation
+        engine.retranslate();
+        qDebug() << "UI retranslated";
+      } else {
+        qWarning() << "Failed to load translation:" << translationFile;
+      }
+    }
+  });
 
   // Load the module
   engine.loadFromModule("Crankshaft", "Main");

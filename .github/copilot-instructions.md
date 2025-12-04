@@ -203,7 +203,7 @@ For new files, always include the appropriate header comment block based on file
  *
  *  You should have received a copy of the GNU General Public License
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
- */
+*/
 ```
 
 ### Python Files (.py)

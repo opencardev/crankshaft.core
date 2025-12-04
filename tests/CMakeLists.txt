@@ -44,7 +44,7 @@ target_include_directories(test_eventbus PRIVATE
 )
 
 target_link_libraries(test_eventbus PRIVATE
-  Catch2::Catch2
+  Catch2::Catch2WithMain
   Qt6::Core
   Qt6::Test
 )
@@ -69,7 +69,7 @@ target_include_directories(test_websocket PRIVATE
 )
 
 target_link_libraries(test_websocket PRIVATE
-  Catch2::Catch2
+  Catch2::Catch2WithMain
   Qt6::Core
   Qt6::Network
   Qt6::WebSockets

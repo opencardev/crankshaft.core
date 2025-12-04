@@ -29,10 +29,10 @@ class WebSocketServer : public QObject {
 
  public:
   explicit WebSocketServer(quint16 port, QObject* parent = nullptr);
-  ~WebSocketServer();
+  ~WebSocketServer() override;
 
   void broadcastEvent(const QString& topic, const QVariantMap& payload);
-  bool isListening() const;
+  [[nodiscard]] bool isListening() const;
 
  private slots:
   void onNewConnection();
@@ -42,6 +42,7 @@ class WebSocketServer : public QObject {
  private:
   void handleSubscribe(QWebSocket* client, const QString& topic);
   void handlePublish(const QString& topic, const QVariantMap& payload);
+  [[nodiscard]] bool topicMatches(const QString& topic, const QString& pattern) const;
 
   QWebSocketServer* m_server;
   QList<QWebSocket*> m_clients;

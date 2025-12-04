@@ -138,11 +138,12 @@ TEST_CASE("WebSocketServer multiple clients", "[websocket]") {
   QSignalSpy message1(&client1, &QWebSocket::textMessageReceived);
   QSignalSpy message2(&client2, &QWebSocket::textMessageReceived);
 
+  // Connect clients sequentially to avoid race conditions
   client1.open(QUrl("ws://localhost:8085"));
+  REQUIRE(connected1.wait(2000));
+  
   client2.open(QUrl("ws://localhost:8085"));
-
-  REQUIRE(connected1.wait(1000));
-  REQUIRE(connected2.wait(1000));
+  REQUIRE(connected2.wait(2000));
 
   // Both subscribe to same topic
   QJsonObject subscribeMsg;
@@ -151,13 +152,18 @@ TEST_CASE("WebSocketServer multiple clients", "[websocket]") {
 
   client1.sendTextMessage(QJsonDocument(subscribeMsg).toJson(QJsonDocument::Compact));
   client2.sendTextMessage(QJsonDocument(subscribeMsg).toJson(QJsonDocument::Compact));
-  QTest::qWait(100);
+  QTest::qWait(200);
 
   // Broadcast to both
   server.broadcastEvent("broadcast/test", {{"data", "test"}});
 
-  REQUIRE(message1.wait(1000));
-  REQUIRE(message2.wait(1000));
+  // Check if messages already received or wait
+  if (message1.count() == 0) {
+    REQUIRE(message1.wait(2000));
+  }
+  if (message2.count() == 0) {
+    REQUIRE(message2.wait(2000));
+  }
 
   REQUIRE(message1.count() == 1);
   REQUIRE(message2.count() == 1);

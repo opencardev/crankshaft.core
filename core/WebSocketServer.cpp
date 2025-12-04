@@ -108,9 +108,36 @@ void WebSocketServer::broadcastEvent(const QString& topic, const QVariantMap& pa
   QJsonDocument doc(obj);
   QString message = doc.toJson(QJsonDocument::Compact);
 
-  for (QWebSocket* client : m_clients) {
-    if (m_subscriptions[client].contains(topic) || m_subscriptions[client].contains("*")) {
+  for (auto* client : std::as_const(m_clients)) {
+    bool shouldSend = false;
+    for (const QString& subscription : std::as_const(m_subscriptions[client])) {
+      if (topicMatches(topic, subscription)) {
+        shouldSend = true;
+        break;
+      }
+    }
+    if (shouldSend) {
       client->sendTextMessage(message);
     }
   }
+}
+
+bool WebSocketServer::topicMatches(const QString& topic, const QString& pattern) const {
+  // Handle exact match
+  if (topic == pattern) {
+    return true;
+  }
+
+  // Handle wildcard '*' - matches everything
+  if (pattern == "*") {
+    return true;
+  }
+
+  // Handle pattern with wildcard like 'test/*'
+  if (pattern.endsWith("/*")) {
+    QString prefix = pattern.left(pattern.length() - 2);
+    return topic.startsWith(prefix + "/");
+  }
+
+  return false;
 }
