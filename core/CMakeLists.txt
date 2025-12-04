@@ -50,3 +50,15 @@ target_link_libraries(crankshaft-core PRIVATE
   Qt6::Network
   Qt6::WebSockets
 )
+
+# Install core executable
+install(TARGETS crankshaft-core
+  RUNTIME DESTINATION bin
+  COMPONENT core
+)
+
+# Install core configuration
+install(FILES ${CMAKE_SOURCE_DIR}/config/crankshaft.json
+  DESTINATION /etc/crankshaft
+  COMPONENT core
+)

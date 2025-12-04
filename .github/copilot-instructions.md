@@ -109,6 +109,8 @@ The project will have a additional extension to support AndroidAuto using AASDK,
 - Follow best practices for security, such as validating user input and managing sensitive data appropriately.
 - Use virtual environments for Python projects to manage dependencies.
 - For shell scripts, use `set -e` to exit on errors and `set -u` to treat unset variables as errors.
+- Use named parameters in scripts for better readability and maintainability.
+- Avoid using magic numbers; use named constants instead.
 - Use logging instead of print statements for better tracking and debugging.
 - Ensure code is compatible with the target environment (e.g., Raspberry Pi OS version).
 - Follow the DRY (Don't Repeat Yourself) principle to avoid code duplication.

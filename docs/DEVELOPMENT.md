@@ -37,19 +37,35 @@ sudo apt install -y \
 ### Quick Build (Linux/WSL)
 
 ```bash
-./scripts/build.sh Debug
+# Debug build (default)
+./scripts/build.sh
+
+# Release build
+./scripts/build.sh --build-type Release
+
+# Build specific component
+./scripts/build.sh --component ui
+
+# Build and create DEB packages
+./scripts/build.sh --build-type Release --package
 ```
 
-Or for release build:
+### Build Script Options
 
 ```bash
-./scripts/build.sh Release
+./scripts/build.sh [OPTIONS]
+
+Options:
+  --build-type TYPE      Build configuration (Debug|Release) [default: Debug]
+  --component COMP       Component to build (all|core|ui|tests) [default: all]
+  --package              Create DEB packages after building [default: false]
+  --help                 Display help message
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-.\scripts\build.ps1 Debug
+.\scripts\build.ps1 --build-type Debug
 ```
 
 ### Manual Build
@@ -60,12 +76,16 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 
 # Build
 cmake --build build --config Debug -j$(nproc)
+
+# Create packages
+cd build && cpack -G DEB
 ```
 
 **Outputs:**
 - Core: `build/core/crankshaft-core`
 - UI: `build/ui/crankshaft-ui`
-- Tests: `build/tests/test_*`
+- Tests: `build/tests/test_eventbus`, `build/tests/test_websocket`
+- Packages: `build/crankshaft-core_*.deb`, `build/crankshaft-ui_*.deb`
 
 ---
 

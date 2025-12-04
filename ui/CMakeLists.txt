@@ -78,3 +78,9 @@ target_link_libraries(crankshaft-ui PRIVATE
   Qt6::Quick
   Qt6::WebSockets
 )
+
+# Install ui executable
+install(TARGETS crankshaft-ui
+  RUNTIME DESTINATION bin
+  COMPONENT ui
+)

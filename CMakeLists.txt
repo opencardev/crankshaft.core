@@ -36,13 +36,33 @@ add_subdirectory(core)
 add_subdirectory(ui)
 add_subdirectory(tests)
 
-# CPack configuration for DEB package
+# CPack configuration for DEB packages
 set(CPACK_GENERATOR "DEB")
-set(CPACK_PACKAGE_NAME "crankshaft-mvp")
 set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Crankshaft Automotive Infotainment System")
-set(CPACK_PACKAGE_CONTACT "OpenCarDev Team")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "OpenCarDev Team")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt6core6, libqt6network6, libqt6websockets6, libqt6qml6, libqt6quick6")
+set(CPACK_PACKAGE_CONTACT "OpenCarDev Team <team@opencardev.org>")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "OpenCarDev Team <team@opencardev.org>")
+set(CPACK_DEBIAN_PACKAGE_SECTION "misc")
+set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/opencardev/crankshaft")
+set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
+
+# Enable component-based packaging
+set(CPACK_DEB_COMPONENT_INSTALL ON)
+set(CPACK_COMPONENTS_ALL core ui)
+
+# Core package configuration
+set(CPACK_COMPONENT_CORE_DISPLAY_NAME "Crankshaft Core")
+set(CPACK_COMPONENT_CORE_DESCRIPTION "Crankshaft core backend service with event bus and WebSocket server")
+set(CPACK_DEBIAN_CORE_PACKAGE_NAME "crankshaft-core")
+set(CPACK_DEBIAN_CORE_PACKAGE_DEPENDS "libqt6core6 (>= 6.2), libqt6network6 (>= 6.2), libqt6websockets6 (>= 6.2)")
+set(CPACK_DEBIAN_CORE_PACKAGE_CONTROL_EXTRA "${CMAKE_SOURCE_DIR}/packaging/core/postinst;${CMAKE_SOURCE_DIR}/packaging/core/prerm")
+
+# UI package configuration
+set(CPACK_COMPONENT_UI_DISPLAY_NAME "Crankshaft UI")
+set(CPACK_COMPONENT_UI_DESCRIPTION "Crankshaft QML-based user interface")
+set(CPACK_COMPONENT_UI_DEPENDS core)
+set(CPACK_DEBIAN_UI_PACKAGE_NAME "crankshaft-ui")
+set(CPACK_DEBIAN_UI_PACKAGE_DEPENDS "crankshaft-core (>= ${PROJECT_VERSION}), libqt6core6 (>= 6.2), libqt6gui6 (>= 6.2), libqt6qml6 (>= 6.2), libqt6quick6 (>= 6.2), libqt6websockets6 (>= 6.2), qml6-module-qtquick, qml6-module-qtquick-controls, qml6-module-qtquick-layouts")
+set(CPACK_DEBIAN_UI_PACKAGE_CONTROL_EXTRA "${CMAKE_SOURCE_DIR}/packaging/ui/postinst;${CMAKE_SOURCE_DIR}/packaging/ui/prerm")
 
 include(CPack)
