@@ -25,9 +25,7 @@
 #include "services/eventbus/EventBus.h"
 #include "services/logging/Logger.h"
 #include "services/websocket/WebSocketServer.h"
-#include "hal/HALManager.h"
-#include "hal/VehicleHAL.h"
-#include "hal/HostHAL.h"
+#include "services/android_auto/AndroidAutoService.h"
 
 int main(int argc, char* argv[]) {
   QCoreApplication app(argc, argv);
@@ -49,7 +47,7 @@ int main(int argc, char* argv[]) {
 
   parser.process(app);
 
-  // Initialize logger
+  // Initialise logger
   Logger::instance().setLevel(Logger::Level::Info);
   Logger::instance().info("Starting Crankshaft Core...");
 
@@ -65,50 +63,24 @@ int main(int argc, char* argv[]) {
     port = ConfigService::instance().get("core.websocket.port", 8080).toUInt();
   }
 
-  // Initialize HAL Manager (creates default mock HALs)
-  HALManager &halManager = HALManager::instance();
-  halManager.initialize(true);  // true = use default mock HALs
-  Logger::instance().info("HAL Manager initialized with mock devices");
-
-  // Connect HAL Manager vehicle property changes to EventBus
-  QObject::connect(&halManager,
-                   static_cast<void (HALManager::*)(VehiclePropertyType, const QVariant &)>(&HALManager::vehiclePropertyChanged),
-                   [](VehiclePropertyType type, const QVariant &value) {
-                     QString propertyName = VehicleHAL::propertyTypeToString(type);
-                     QVariantMap payload;
-                     payload["value"] = value;
-                     EventBus::instance().publish("hal/vehicle/" + propertyName, payload);
-                     Logger::instance().debug("Vehicle property updated: " + propertyName);
-                   });
-
-  // Connect HAL Manager host property changes to EventBus
-  QObject::connect(&halManager,
-                   static_cast<void (HALManager::*)(HostPropertyType, const QVariant &)>(&HALManager::hostPropertyChanged),
-                   [](HostPropertyType type, const QVariant &value) {
-                     QString propertyName = HostHAL::propertyTypeToString(type);
-                     QVariantMap payload;
-                     payload["value"] = value;
-                     EventBus::instance().publish("hal/host/" + propertyName, payload);
-                     Logger::instance().debug("Host property updated: " + propertyName);
-                   });
-
-  // Connect HAL errors to logger
-  QObject::connect(&halManager, &HALManager::errorOccurred,
-                   [](const QString &message) {
-                     Logger::instance().error("HAL error: " + message);
-                   });
+  // Initialise services
+  Logger::instance().info("Initialising core services...");
+  EventBus::instance();  // Initialise event bus
+  Logger::instance().info("Event bus initialised");
 
   // Create WebSocket server
   WebSocketServer server(port);
   if (!server.isListening()) {
-    Logger::instance().error("Failed to start server");
+    Logger::instance().error("Failed to start WebSocket server on port " + QString::number(port));
     return 1;
   }
+  Logger::instance().info("WebSocket server listening on port " + QString::number(port));
 
-  // Connect EventBus to WebSocket server (broadcasts all events including HAL)
+  // Connect EventBus to WebSocket server (broadcasts all events)
   QObject::connect(&EventBus::instance(), &EventBus::messagePublished, &server, &WebSocketServer::broadcastEvent);
 
   Logger::instance().info("Crankshaft Core started successfully");
+  Logger::instance().info("Core services ready");
 
   return app.exec();
 }

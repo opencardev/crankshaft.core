@@ -18,7 +18,7 @@
  */
 
 #include "GPSDevice.h"
-#include "../../Logger.h"
+#include "../../services/logging/Logger.h"
 
 GPSDevice::GPSDevice(Transport* transport, QObject* parent)
     : FunctionalDevice(transport, parent), m_state(DeviceState::OFFLINE) {
@@ -49,10 +49,10 @@ bool GPSDevice::initialize() {
     return true;
   }
 
-  Logger::instance()->log("GPSDevice: Initializing GPS device");
+  Logger::instance().info("GPSDevice: Initializing GPS device");
 
   if (!m_transport) {
-    Logger::instance()->log("GPSDevice: No transport configured");
+    Logger::instance().info("GPSDevice: No transport configured");
     m_state = DeviceState::ERROR;
     emit stateChanged(m_state);
     return false;
@@ -64,7 +64,7 @@ bool GPSDevice::initialize() {
   // Open transport if not already open
   if (!m_transport->isOpen()) {
     if (!m_transport->open()) {
-      Logger::instance()->log("GPSDevice: Failed to open transport");
+      Logger::instance().info("GPSDevice: Failed to open transport");
       m_state = DeviceState::ERROR;
       emit stateChanged(m_state);
       return false;
@@ -73,7 +73,7 @@ bool GPSDevice::initialize() {
 
   m_state = DeviceState::ONLINE;
   emit stateChanged(m_state);
-  Logger::instance()->log("GPSDevice: Initialization complete");
+  Logger::instance().info("GPSDevice: Initialization complete");
   return true;
 }
 
@@ -82,7 +82,7 @@ void GPSDevice::shutdown() {
     return;
   }
 
-  Logger::instance()->log("GPSDevice: Shutting down");
+  Logger::instance().info("GPSDevice: Shutting down");
   m_state = DeviceState::OFFLINE;
   emit stateChanged(m_state);
 }
@@ -135,7 +135,7 @@ void GPSDevice::parseNMEA(const QByteArray& data) {
     if (line.startsWith("$GPGGA") || line.startsWith("$GNGGA")) {
       // Parse GGA sentence for location and satellite count
       // TODO: Implement NMEA parsing
-      Logger::instance()->log(QString("GPSDevice: Received GGA: %1").arg(line));
+      Logger::instance().info(QString("GPSDevice: Received GGA: %1").arg(line));
       
       // Example: Update location (simplified)
       QMutexLocker locker(&m_mutex);
@@ -159,7 +159,7 @@ void GPSDevice::parseNMEA(const QByteArray& data) {
 
   // Prevent buffer from growing indefinitely
   if (m_buffer.size() > 4096) {
-    Logger::instance()->log("GPSDevice: Buffer overflow, clearing");
+    Logger::instance().info("GPSDevice: Buffer overflow, clearing");
     m_buffer.clear();
   }
 }

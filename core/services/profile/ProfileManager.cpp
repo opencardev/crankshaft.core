@@ -18,7 +18,7 @@
  */
 
 #include "ProfileManager.h"
-#include "Logger.h"
+#include "../logging/Logger.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>

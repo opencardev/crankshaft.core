@@ -18,7 +18,7 @@
  */
 
 #include "CANDevice.h"
-#include "../../Logger.h"
+#include "../../services/logging/Logger.h"
 
 CANDevice::CANDevice(Transport* transport, QObject* parent)
     : FunctionalDevice(transport, parent),
@@ -40,10 +40,10 @@ bool CANDevice::initialize() {
     return true;
   }
 
-  Logger::instance()->log("CANDevice: Initializing CAN bus");
+  Logger::instance().info("CANDevice: Initializing CAN bus");
 
   if (!m_transport) {
-    Logger::instance()->log("CANDevice: No transport configured");
+    Logger::instance().info("CANDevice: No transport configured");
     m_state = DeviceState::ERROR;
     emit stateChanged(m_state);
     return false;
@@ -55,7 +55,7 @@ bool CANDevice::initialize() {
   // Open transport if not already open
   if (!m_transport->isOpen()) {
     if (!m_transport->open()) {
-      Logger::instance()->log("CANDevice: Failed to open transport");
+      Logger::instance().info("CANDevice: Failed to open transport");
       m_state = DeviceState::ERROR;
       emit stateChanged(m_state);
       return false;
@@ -71,7 +71,7 @@ bool CANDevice::initialize() {
   m_state = DeviceState::ONLINE;
   emit stateChanged(m_state);
   emit busStatusChanged(true);
-  Logger::instance()->log(QString("CANDevice: Initialization complete, bit rate %1").arg(m_bitRate));
+  Logger::instance().info(QString("CANDevice: Initialization complete, bit rate %1").arg(m_bitRate));
   return true;
 }
 
@@ -80,7 +80,7 @@ void CANDevice::shutdown() {
     return;
   }
 
-  Logger::instance()->log("CANDevice: Shutting down");
+  Logger::instance().info("CANDevice: Shutting down");
   m_state = DeviceState::OFFLINE;
   emit stateChanged(m_state);
   emit busStatusChanged(false);
@@ -136,7 +136,7 @@ bool CANDevice::setBitRate(quint32 bitRate) {
   // SPI-CAN controllers need CNF register configuration
   // Native CAN uses netlink commands
 
-  Logger::instance()->log(QString("CANDevice: Set bit rate to %1").arg(bitRate));
+  Logger::instance().info(QString("CANDevice: Set bit rate to %1").arg(bitRate));
   return true;
 }
 
@@ -190,7 +190,7 @@ void CANDevice::parseCANData(const QByteArray& data) {
       QString dataStr = frameStr.mid(message.extended ? 10 : 5, len * 2);
       message.data = QByteArray::fromHex(dataStr.toLatin1());
 
-      Logger::instance()->log(QString("CANDevice: Received message ID 0x%1").arg(message.id, 0, 16));
+      Logger::instance().info(QString("CANDevice: Received message ID 0x%1").arg(message.id, 0, 16));
       emit messageReceived(message);
     }
 
@@ -206,7 +206,7 @@ void CANDevice::parseCANData(const QByteArray& data) {
 
   // Prevent buffer overflow
   if (m_buffer.size() > 4096) {
-    Logger::instance()->log("CANDevice: Buffer overflow, clearing");
+    Logger::instance().info("CANDevice: Buffer overflow, clearing");
     m_buffer.clear();
   }
 }

@@ -149,7 +149,11 @@ Rectangle {
                     Layout.preferredHeight: 40
                     text: '⬅'
                     font.pixelSize: 16
-                    onClicked: wsClient.publish("androidauto/key", { "key": "BACK" })
+                    onClicked: {
+                        if (stack) {
+                            stack.pop()
+                        }
+                    }
                 }
 
                 Button {

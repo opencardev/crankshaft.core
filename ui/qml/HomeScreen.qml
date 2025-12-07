@@ -26,6 +26,8 @@ import Crankshaft 1.0
 Page {
     id: root
     
+    property var stack: null
+    
     background: Rectangle {
         color: Theme.background
     }
@@ -52,7 +54,11 @@ Page {
                 text: "⚙"
                 implicitWidth: 76
                 implicitHeight: 76
-                onClicked: stackView.push(settingsScreen)
+                onClicked: {
+                    if (stack) {
+                        stack.push(settingsScreen, { stack: stack })
+                    }
+                }
             }
         }
     }
@@ -156,7 +162,9 @@ Page {
                     Layout.minimumHeight: 120
                     
                     onClicked: {
-                        stackView.push(androidautoScreen, { stack: stackView })
+                        if (stack) {
+                            stack.push(androidautoScreen, { stack: stack })
+                        }
                     }
                 }
             }
@@ -172,7 +180,9 @@ Page {
             Layout.minimumHeight: 100
             
             onClicked: {
-                stackView.push(settingsScreen)
+                if (stack) {
+                    stack.push(settingsScreen, { stack: stack })
+                }
             }
         }
     }
