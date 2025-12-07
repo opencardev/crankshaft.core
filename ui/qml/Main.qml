@@ -51,18 +51,11 @@ ApplicationWindow {
         anchors.fill: parent
         anchors.topMargin: statusBar.height
         
-        initialItem: homeScreenComponent
-        
-        onItemPushed: (item) => {
-            if (item.stack !== undefined) {
-                item.stack = stackView
+        initialItem: Component {
+            HomeScreen {
+                Component.onCompleted: stack = stackView
             }
         }
-    }
-    
-    Component {
-        id: homeScreenComponent
-        HomeScreen { stack: stackView }
     }
     
     Component {
