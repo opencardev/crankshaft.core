@@ -67,18 +67,18 @@ set(SOURCES
   hal/functional/GPSDevice.cpp
   hal/functional/CANDevice.cpp
   
-  # Mock Transports
-  hal/mocks/transport/MockTransport.cpp
+  # Mock Transports (temporarily disabled - needs header files)
+  # hal/mocks/transport/MockTransport.cpp
   
-  # Multimedia HAL
-  hal/multimedia/AudioHAL.cpp
-  hal/multimedia/VideoHAL.cpp
-  hal/multimedia/MediaPipeline.cpp
+  # Multimedia HAL (temporarily disabled - needs header files)
+  # hal/multimedia/AudioHAL.cpp
+  # hal/multimedia/VideoHAL.cpp
+  # hal/multimedia/MediaPipeline.cpp
   
-  # Wireless HAL
-  hal/wireless/WiFiHAL.cpp
-  hal/wireless/BluetoothHAL.cpp
-  hal/wireless/NetworkService.cpp
+  # Wireless HAL (temporarily disabled - needs header files)
+  # hal/wireless/WiFiHAL.cpp
+  # hal/wireless/BluetoothHAL.cpp
+  # hal/wireless/NetworkService.cpp
 )
 
 # Headers are automatically discovered by AUTOMOC

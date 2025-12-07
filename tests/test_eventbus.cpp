@@ -24,7 +24,7 @@
 #include <QThread>
 #include <QVariantMap>
 
-#include "EventBus.h"
+#include "services/eventbus/EventBus.h"
 
 TEST_CASE("EventBus singleton", "[eventbus]") {
   EventBus& bus1 = EventBus::instance();

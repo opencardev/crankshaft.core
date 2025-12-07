@@ -26,8 +26,8 @@
 #include <QTest>
 #include <QWebSocket>
 
-#include "EventBus.h"
-#include "WebSocketServer.h"
+#include "services/eventbus/EventBus.h"
+#include "services/websocket/WebSocketServer.h"
 
 TEST_CASE("WebSocketServer starts and stops", "[websocket]") {
   int argc = 0;

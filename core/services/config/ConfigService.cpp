@@ -23,7 +23,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "Logger.h"
+#include "../logging/Logger.h"
 
 ConfigService& ConfigService::instance() {
   static ConfigService instance;

@@ -23,8 +23,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "EventBus.h"
-#include "Logger.h"
+#include "../eventbus/EventBus.h"
+#include "../logging/Logger.h"
 
 WebSocketServer::WebSocketServer(quint16 port, QObject* parent)
     : QObject(parent), m_server(new QWebSocketServer("CrankshaftCore", QWebSocketServer::NonSecureMode, this)) {

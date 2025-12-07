@@ -26,6 +26,9 @@ import Crankshaft 1.0
 Page {
     id: root
     
+    // Navigation stack from parent
+    property var stack: null
+    
     // currentLanguage is provided by root context
     
     background: Rectangle {
@@ -43,7 +46,11 @@ Page {
             
             AppButton {
                 text: "\u2190 " + Strings.buttonBack
-                onClicked: stackView.pop()
+                onClicked: {
+                    if (stack) {
+                        stack.pop()
+                    }
+                }
             }
             
             Text {

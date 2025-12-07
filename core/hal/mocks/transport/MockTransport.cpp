@@ -18,7 +18,7 @@
  */
 
 #include "MockTransport.h"
-#include "../../../Logger.h"
+#include "../../../../services/logging/Logger.h"
 
 MockTransport::MockTransport(const QString& name, QObject* parent)
     : Transport(parent),
