@@ -21,10 +21,10 @@
 #include <QCommandLineParser>
 #include <QCoreApplication>
 
-#include "ConfigService.h"
-#include "EventBus.h"
-#include "Logger.h"
-#include "WebSocketServer.h"
+#include "services/config/ConfigService.h"
+#include "services/eventbus/EventBus.h"
+#include "services/logging/Logger.h"
+#include "services/websocket/WebSocketServer.h"
 #include "hal/HALManager.h"
 #include "hal/VehicleHAL.h"
 #include "hal/HostHAL.h"

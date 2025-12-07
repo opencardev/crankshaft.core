@@ -1,0 +1,133 @@
+# Project: Crankshaft
+# This file is part of Crankshaft project.
+# Copyright (C) 2025 OpenCarDev Team
+#
+#  Crankshaft is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Crankshaft is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
+
+cmake_minimum_required(VERSION 3.16)
+
+project(crankshaft-core)
+
+find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Gui)
+
+set(SOURCES
+  main.cpp
+  EventBus.cpp
+  WebSocketServer.cpp
+  ConfigService.cpp
+  Logger.cpp
+  ProfileManager.cpp
+  hal/VehicleHAL.cpp
+  hal/HostHAL.cpp
+  hal/DeviceHAL.cpp
+  hal/mocks/MockVehicleHAL.cpp
+  hal/mocks/MockHostHAL.cpp
+  hal/mocks/MockDeviceHAL.cpp
+  hal/mocks/MockBluetoothDevice.cpp
+  hal/mocks/MockWirelessDevice.cpp
+  hal/mocks/MockCANDevice.cpp
+  hal/mocks/MockI2CDevice.cpp
+  hal/mocks/MockUARTDevice.cpp
+  hal/mocks/MockGPIODevice.cpp
+  hal/mocks/MockIMUDevice.cpp
+  hal/mocks/MockCameraDevice.cpp
+  hal/mocks/MockLIDARDevice.cpp
+  hal/mocks/MockRADARDevice.cpp
+  hal/mocks/MockThermometerDevice.cpp
+  hal/mocks/MockHumidityDevice.cpp
+  hal/mocks/MockPressureDevice.cpp
+  hal/mocks/MockAccelerometerDevice.cpp
+  hal/mocks/MockGyroscopeDevice.cpp
+  hal/mocks/MockMagnetometerDevice.cpp
+  hal/mocks/MockPWMDevice.cpp
+  hal/mocks/MockDisplayDevice.cpp
+  hal/mocks/MockLEDDevice.cpp
+  hal/mocks/MockSpeakerDevice.cpp
+  hal/mocks/MockVibratorDevice.cpp
+  hal/mocks/MockPowerSupplyDevice.cpp
+  hal/mocks/MockBatteryDevice.cpp
+  hal/mocks/MockUSBPowerDevice.cpp
+  hal/HALManager.cpp
+  hal/BluetoothDevice.cpp
+  hal/WirelessDevice.cpp
+)
+
+set(HEADERS
+  EventBus.h
+  WebSocketServer.h
+  ConfigService.h
+  Logger.h
+  ProfileManager.h
+  hal/VehicleHAL.h
+  hal/HostHAL.h
+  hal/DeviceHAL.h
+  hal/mocks/MockVehicleHAL.h
+  hal/mocks/MockHostHAL.h
+  hal/mocks/MockDeviceHAL.h
+  hal/mocks/MockBluetoothDevice.h
+  hal/mocks/MockWirelessDevice.h
+  hal/mocks/MockCANDevice.h
+  hal/mocks/MockI2CDevice.h
+  hal/mocks/MockUARTDevice.h
+  hal/mocks/MockGPIODevice.h
+  hal/mocks/MockIMUDevice.h
+  hal/mocks/MockCameraDevice.h
+  hal/mocks/MockLIDARDevice.h
+  hal/mocks/MockRADARDevice.h
+  hal/mocks/MockThermometerDevice.h
+  hal/mocks/MockHumidityDevice.h
+  hal/mocks/MockPressureDevice.h
+  hal/mocks/MockAccelerometerDevice.h
+  hal/mocks/MockGyroscopeDevice.h
+  hal/mocks/MockMagnetometerDevice.h
+  hal/mocks/MockPWMDevice.h
+  hal/mocks/MockDisplayDevice.h
+  hal/mocks/MockLEDDevice.h
+  hal/mocks/MockSpeakerDevice.h
+  hal/mocks/MockVibratorDevice.h
+  hal/mocks/MockPowerSupplyDevice.h
+  hal/mocks/MockBatteryDevice.h
+  hal/mocks/MockUSBPowerDevice.h
+  hal/HALManager.h
+  hal/BluetoothDevice.h
+  hal/WirelessDevice.h
+)
+
+add_executable(crankshaft-core ${SOURCES} ${HEADERS})
+
+target_include_directories(crankshaft-core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+set_target_properties(crankshaft-core PROPERTIES
+  AUTOMOC ON
+  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/core
+)
+
+target_link_libraries(crankshaft-core PRIVATE
+  Qt6::Core
+  Qt6::Network
+  Qt6::WebSockets
+  Qt6::Gui
+)
+
+# Install core executable
+install(TARGETS crankshaft-core
+  RUNTIME DESTINATION bin
+  COMPONENT core
+)
+
+# Install core configuration
+install(FILES ${CMAKE_SOURCE_DIR}/config/crankshaft.json
+  DESTINATION /etc/crankshaft
+  COMPONENT core
+)

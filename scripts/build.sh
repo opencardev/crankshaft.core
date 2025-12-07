@@ -24,6 +24,67 @@ BUILD_TYPE="Debug"
 COMPONENT="all"
 BUILD_DIR="build"
 CREATE_PACKAGE=false
+INSTALL_DEPS=false
+
+# Dependency installation functions
+install_core_deps() {
+    echo "Installing core dependencies..."
+    sudo apt-get update
+    sudo apt-get install -y \
+        build-essential \
+        cmake \
+        pkg-config \
+        libdbus-1-dev \
+        libgstreamer1.0-dev \
+        libgstreamer-plugins-base1.0-dev \
+        libgstreamer-plugins-good1.0-dev \
+        gstreamer1.0-plugins-base \
+        gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-bad \
+        gstreamer1.0-plugins-ugly \
+        gstreamer1.0-libav \
+        gstreamer1.0-tools
+    echo "Core dependencies installed successfully"
+}
+
+install_aasdk_deps() {
+    echo "Installing AASDK dependencies..."
+    sudo apt-get update
+    sudo apt-get install -y \
+        libusb-1.0-0-dev \
+        libssl-dev \
+        libprotobuf-dev \
+        protobuf-compiler \
+        libboost-system-dev \
+        libboost-log-dev \
+        libboost-thread-dev \
+        libboost-all-dev
+    echo "AASDK dependencies installed successfully"
+}
+
+install_ui_deps() {
+    echo "Installing UI dependencies..."
+    sudo apt-get update
+    sudo apt-get install -y \
+        qt6-base-dev \
+        qt6-declarative-dev \
+        qt6-websockets-dev \
+        qml6-module-qtquick \
+        qml6-module-qtquick-controls \
+        qml6-module-qtquick-layouts \
+        qml6-module-qtquick-window \
+        libgl1-mesa-dev \
+        libvulkan-dev
+    echo "UI dependencies installed successfully"
+}
+
+install_all_deps() {
+    echo "Installing all dependencies..."
+    install_core_deps
+    install_aasdk_deps
+    install_ui_deps
+    echo "All dependencies installed successfully"
+}
 
 # Usage information
 usage() {
@@ -34,6 +95,7 @@ Named parameters:
   --build-type TYPE      Build configuration (Debug|Release) [default: Debug]
   --component COMP       Component to build (all|core|ui|tests) [default: all]
   --package              Create DEB packages after building [default: false]
+  --install-deps         Install dependencies for the specified component
   --help                 Display this help message
 
 Examples:
@@ -41,7 +103,9 @@ Examples:
   $0 --build-type Release                 # Build all components in Release mode
   $0 --component ui --build-type Debug    # Build only UI in Debug mode
   $0 --build-type Release --package       # Build all in Release mode and create packages
-  $0 --component core --package           # Build only core in Debug mode and create package
+  $0 --install-deps                       # Install all dependencies
+  $0 --component core --install-deps      # Install only core dependencies
+  $0 --component aasdk --install-deps     # Install only AASDK dependencies
 EOF
     exit 1
 }
@@ -69,6 +133,10 @@ while [[ $# -gt 0 ]]; do
             CREATE_PACKAGE=true
             shift
             ;;
+        --install-deps)
+            INSTALL_DEPS=true
+            shift
+            ;;
         --help)
             usage
             ;;
@@ -78,6 +146,30 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Handle dependency installation
+if [ "$INSTALL_DEPS" = true ]; then
+    case "$COMPONENT" in
+        all)
+            install_all_deps
+            ;;
+        core)
+            install_core_deps
+            ;;
+        ui)
+            install_ui_deps
+            ;;
+        aasdk)
+            install_aasdk_deps
+            ;;
+        *)
+            echo "Error: Invalid component for dependency installation '$COMPONENT'."
+            echo "Valid components: all, core, ui, aasdk"
+            exit 1
+            ;;
+    esac
+    exit 0
+fi
 
 # Validate build type
 if [[ "$BUILD_TYPE" != "Debug" && "$BUILD_TYPE" != "Release" ]]; then

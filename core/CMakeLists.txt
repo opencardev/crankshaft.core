@@ -19,40 +19,81 @@ cmake_minimum_required(VERSION 3.16)
 
 project(crankshaft-core)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets)
+find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Gui)
+
+# Find GStreamer for multimedia
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
+pkg_check_modules(GSTREAMER_APP REQUIRED gstreamer-app-1.0)
+pkg_check_modules(GSTREAMER_VIDEO REQUIRED gstreamer-video-1.0)
+pkg_check_modules(GSTREAMER_AUDIO REQUIRED gstreamer-audio-1.0)
+
+# Find DBus for wireless/bluetooth
+pkg_check_modules(DBUS REQUIRED dbus-1)
+
+# Find libusb for Android Auto
+pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+
+# Find OpenSSL for AASDK
+find_package(OpenSSL REQUIRED)
+
+# Find Protobuf for AASDK
+find_package(Protobuf REQUIRED)
+
+# Add AASDK submodule
+if(EXISTS ${CMAKE_SOURCE_DIR}/external/aasdk/CMakeLists.txt)
+  add_subdirectory(${CMAKE_SOURCE_DIR}/external/aasdk aasdk)
+else()
+  message(WARNING "AASDK submodule not found. Run: git submodule update --init --recursive")
+endif()
 
 set(SOURCES
   main.cpp
-  EventBus.cpp
-  WebSocketServer.cpp
-  ConfigService.cpp
-  Logger.cpp
-  hal/VehicleHAL.cpp
-  hal/HostHAL.cpp
-  hal/DeviceHAL.cpp
-  hal/MockVehicleHAL.cpp
-  hal/MockHostHAL.cpp
-  hal/MockDeviceHAL.cpp
-  hal/HALManager.cpp
+  
+  # Core Services
+  services/eventbus/EventBus.cpp
+  services/websocket/WebSocketServer.cpp
+  services/config/ConfigService.cpp
+  services/logging/Logger.cpp
+  services/profile/ProfileManager.cpp
+  services/android_auto/AndroidAutoService.cpp
+  
+  # Transport Layer
+  hal/transport/Transport.cpp
+  hal/transport/UARTTransport.cpp
+  
+  # Functional Device Layer
+  hal/functional/FunctionalDevice.cpp
+  hal/functional/GPSDevice.cpp
+  hal/functional/CANDevice.cpp
+  
+  # Mock Transports
+  hal/mocks/transport/MockTransport.cpp
+  
+  # Multimedia HAL
+  hal/multimedia/AudioHAL.cpp
+  hal/multimedia/VideoHAL.cpp
+  hal/multimedia/MediaPipeline.cpp
+  
+  # Wireless HAL
+  hal/wireless/WiFiHAL.cpp
+  hal/wireless/BluetoothHAL.cpp
+  hal/wireless/NetworkService.cpp
 )
 
-set(HEADERS
-  EventBus.h
-  WebSocketServer.h
-  ConfigService.h
-  Logger.h
-  hal/VehicleHAL.h
-  hal/HostHAL.h
-  hal/DeviceHAL.h
-  hal/MockVehicleHAL.h
-  hal/MockHostHAL.h
-  hal/MockDeviceHAL.h
-  hal/HALManager.h
+# Headers are automatically discovered by AUTOMOC
+add_executable(crankshaft-core ${SOURCES})
+
+target_include_directories(crankshaft-core PRIVATE 
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${GSTREAMER_INCLUDE_DIRS}
+  ${GSTREAMER_APP_INCLUDE_DIRS}
+  ${GSTREAMER_VIDEO_INCLUDE_DIRS}
+  ${GSTREAMER_AUDIO_INCLUDE_DIRS}
+  ${DBUS_INCLUDE_DIRS}
+  ${LIBUSB_INCLUDE_DIRS}
+  ${CMAKE_SOURCE_DIR}/external/aasdk/include
 )
-
-add_executable(crankshaft-core ${SOURCES} ${HEADERS})
-
-target_include_directories(crankshaft-core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 set_target_properties(crankshaft-core PROPERTIES
   AUTOMOC ON
@@ -63,6 +104,17 @@ target_link_libraries(crankshaft-core PRIVATE
   Qt6::Core
   Qt6::Network
   Qt6::WebSockets
+  Qt6::Gui
+  ${GSTREAMER_LIBRARIES}
+  ${GSTREAMER_APP_LIBRARIES}
+  ${GSTREAMER_VIDEO_LIBRARIES}
+  ${GSTREAMER_AUDIO_LIBRARIES}
+  ${DBUS_LIBRARIES}
+  ${LIBUSB_LIBRARIES}
+  OpenSSL::SSL
+  OpenSSL::Crypto
+  protobuf::libprotobuf
+  aasdk
 )
 
 # Install core executable

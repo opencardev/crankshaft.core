@@ -29,9 +29,9 @@ FetchContent_MakeAvailable(Catch2)
 find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Test)
 
 # Test for EventBus
-add_executable(test_eventbus
+add_executable(test_eventbus 
   test_eventbus.cpp
-  ../core/EventBus.cpp
+  ../core/services/eventbus/EventBus.cpp
 )
 
 set_target_properties(test_eventbus PROPERTIES
@@ -54,9 +54,9 @@ add_test(NAME EventBusTest COMMAND test_eventbus)
 # Test for WebSocketServer
 add_executable(test_websocket
   test_websocket.cpp
-  ../core/EventBus.cpp
-  ../core/Logger.cpp
-  ../core/WebSocketServer.cpp
+  ../core/services/eventbus/EventBus.cpp
+  ../core/services/logging/Logger.cpp
+  ../core/services/websocket/WebSocketServer.cpp
 )
 
 set_target_properties(test_websocket PROPERTIES
