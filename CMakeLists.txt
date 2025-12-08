@@ -28,7 +28,10 @@ set(QT_QML_GENERATE_QMLLS_INI ON CACHE BOOL "Generate .qmllint.ini for QML langu
 # Add custom CMake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-# Download Material Design Icons font
+# Download Material Design Icons font and generate mappings
+# - Automatically downloads MDI font v7.4.47 (1.3 MB)
+# - Auto-generates MaterialDesignIcons.js with 7447+ icon mappings (requires Python3)
+# - To force regeneration: cmake -DFORCE_GENERATE_MDI_MAPPINGS=ON ..
 include(DownloadMaterialDesignIcons)
 download_material_design_icons()
 

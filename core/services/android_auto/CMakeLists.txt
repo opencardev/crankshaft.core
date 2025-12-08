@@ -27,6 +27,10 @@ endif()
 # Android Auto service library
 add_library(android-auto-service STATIC
     AndroidAutoService.cpp
+    MockAndroidAutoService.cpp
+    MockAndroidAutoService.h
+    RealAndroidAutoService.cpp
+    RealAndroidAutoService.h
 )
 
 set_target_properties(android-auto-service PROPERTIES
@@ -36,6 +40,7 @@ set_target_properties(android-auto-service PROPERTIES
 target_link_libraries(android-auto-service
     Qt6::Core
     Qt6::Network
+    Qt6::Gui
 )
 
 # Link AASDK if available

@@ -36,8 +36,6 @@ static const char* BLUEZ_MEDIA_PLAYER_INTERFACE = "org.bluez.MediaPlayer1";
 static const char* DBUS_PROPERTIES_INTERFACE = "org.freedesktop.DBus.Properties";
 static const char* DBUS_OBJECT_MANAGER_INTERFACE = "org.freedesktop.DBus.ObjectManager";
 
-Q_DECLARE_METATYPE(QMap<QString, QVariantMap>)
-
 class BluetoothHAL::BluetoothHALPrivate {
 public:
     QDBusConnection dbusConnection;
@@ -336,7 +334,7 @@ bool BluetoothHAL::stopDiscovery() {
     return true;
 }
 
-QList<BluetoothDevice> BluetoothHAL::getDiscoveredDevices() const {
+QList<BluetoothDevice> BluetoothHAL::getDevices() const {
     return d->devices;
 }
 

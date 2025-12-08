@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
 
-# Download and set up Material Design Icons font
+# Download and set up Material Design Icons font and generate mappings
 function(download_material_design_icons)
     set(MDI_VERSION "7.4.47")
     # Try multiple sources for the font file
@@ -26,6 +26,7 @@ function(download_material_design_icons)
     )
     set(MDI_FONT_DIR "${CMAKE_BINARY_DIR}/ui/fonts")
     set(MDI_FONT_FILE "${MDI_FONT_DIR}/materialdesignicons-webfont.ttf")
+    set(MDI_MAPPINGS_FILE "${CMAKE_SOURCE_DIR}/ui/qml/components/MaterialDesignIcons.js")
     
     # Create fonts directory
     file(MAKE_DIRECTORY "${MDI_FONT_DIR}")
@@ -72,6 +73,53 @@ function(download_material_design_icons)
         file(SIZE "${MDI_FONT_FILE}" FILE_SIZE)
         if(FILE_SIZE GREATER 0)
             message(STATUS "Material Design Icons font already present (${FILE_SIZE} bytes)")
+        endif()
+    endif()
+    
+    # Generate icon mappings if Python is available
+    find_package(Python3 COMPONENTS Interpreter)
+    if(Python3_FOUND)
+        set(GENERATE_SCRIPT "${CMAKE_SOURCE_DIR}/scripts/generate_mdi_mappings.py")
+        
+        # Check if mappings file needs to be generated or updated
+        set(SHOULD_GENERATE FALSE)
+        
+        if(NOT EXISTS "${MDI_MAPPINGS_FILE}")
+            message(STATUS "MaterialDesignIcons.js not found, will generate")
+            set(SHOULD_GENERATE TRUE)
+        else()
+            # Check if FORCE_GENERATE_MDI_MAPPINGS is set
+            if(FORCE_GENERATE_MDI_MAPPINGS)
+                message(STATUS "FORCE_GENERATE_MDI_MAPPINGS is set, will regenerate")
+                set(SHOULD_GENERATE TRUE)
+            endif()
+        endif()
+        
+        if(SHOULD_GENERATE)
+            message(STATUS "Generating Material Design Icons mappings...")
+            execute_process(
+                COMMAND ${Python3_EXECUTABLE} "${GENERATE_SCRIPT}"
+                WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                RESULT_VARIABLE GENERATE_RESULT
+                OUTPUT_VARIABLE GENERATE_OUTPUT
+                ERROR_VARIABLE GENERATE_ERROR
+            )
+            
+            if(GENERATE_RESULT EQUAL 0)
+                message(STATUS "Material Design Icons mappings generated successfully")
+                if(GENERATE_OUTPUT)
+                    message(STATUS "${GENERATE_OUTPUT}")
+                endif()
+            else()
+                message(WARNING "Failed to generate Material Design Icons mappings: ${GENERATE_ERROR}")
+            endif()
+        else()
+            message(STATUS "Material Design Icons mappings already up to date")
+        endif()
+    else()
+        message(STATUS "Python3 not found, skipping icon mappings generation")
+        if(NOT EXISTS "${MDI_MAPPINGS_FILE}")
+            message(WARNING "MaterialDesignIcons.js not found and Python3 not available. Icons may not work correctly.")
         endif()
     endif()
     

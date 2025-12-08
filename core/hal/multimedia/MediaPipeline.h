@@ -19,113 +19,126 @@
 
 #pragma once
 
-#include "AudioDevice.h"
-#include "VideoDevice.h"
+#include "AudioHAL.h"
+#include "VideoHAL.h"
 #include <QString>
 #include <QObject>
+#include <QByteArray>
 #include <memory>
+
+/**
+ * @brief Configuration for media pipeline
+ */
+struct MediaConfig {
+    QString streamName;
+    
+    // Audio configuration
+    bool enableAudio = false;
+    int audioVolume = 100;
+    AudioHAL::AudioRoute audioRoute = AudioHAL::AudioRoute::Default;
+    int audioSampleRate = 48000;
+    int audioChannels = 2;
+    
+    // Video configuration
+    bool enableVideo = false;
+    VideoHAL::VideoResolution videoResolution = VideoHAL::VideoResolution::HD_720p;
+    int videoBrightness = 50;
+    int videoContrast = 50;
+    QString videoCodec = "H264";
+};
 
 /**
  * @brief Media pipeline for processing audio/video streams
  *
- * Abstracts GStreamer pipeline management for both audio and video.
- * Handles encoding, decoding, muxing, and demuxing of media streams.
+ * Coordinates audio and video HAL components for streaming media.
+ * Manages configuration and data flow between components.
  */
 class MediaPipeline : public QObject {
   Q_OBJECT
 
  public:
-  enum class State {
-    NULL_STATE,
-    READY,
-    PAUSED,
-    PLAYING,
-    ERROR,
-  };
-
-  enum class MediaType {
-    AUDIO_ONLY,
-    VIDEO_ONLY,
-    AUDIO_VIDEO,
-  };
-
   explicit MediaPipeline(QObject* parent = nullptr);
   ~MediaPipeline() override;
 
   /**
-   * @brief Initialise the pipeline
-   * @param media_type Type of media to handle
-   * @return true if initialisation successful
+   * @brief Start the media pipeline with given configuration
    */
-  virtual bool initialise(MediaType media_type) = 0;
+  bool start(const MediaConfig& config);
 
   /**
-   * @brief Deinitialise the pipeline
+   * @brief Stop the media pipeline
    */
-  virtual void deinitialise() = 0;
+  bool stop();
 
   /**
-   * @brief Transition pipeline to PLAYING state
+   * @brief Check if pipeline is active
    */
-  virtual bool play() = 0;
+  bool isActive() const;
 
   /**
-   * @brief Transition pipeline to PAUSED state
+   * @brief Get audio HAL
    */
-  virtual bool pause() = 0;
+  AudioHAL* audioHAL() const;
 
   /**
-   * @brief Transition pipeline to READY state
+   * @brief Get video HAL
    */
-  virtual bool stop() = 0;
+  VideoHAL* videoHAL() const;
 
   /**
-   * @brief Get current pipeline state
+   * @brief Push audio data to pipeline
    */
-  virtual State getState() const = 0;
+  bool pushAudioData(const QByteArray& data);
 
   /**
-   * @brief Link audio input to output
+   * @brief Push video frame to pipeline
    */
-  virtual bool linkAudioPath(AudioInputDevicePtr input,
-                             AudioOutputDevicePtr output) = 0;
+  bool pushVideoFrame(const QByteArray& frameData);
 
   /**
-   * @brief Link video input to output (with transcoding)
+   * @brief Get current configuration
    */
-  virtual bool linkVideoPath(VideoInputDevicePtr input,
-                             VideoOutputDevicePtr output) = 0;
+  MediaConfig getConfig() const;
 
   /**
-   * @brief Unlink audio path
+   * @brief Update configuration dynamically
    */
-  virtual void unlinkAudioPath() = 0;
-
-  /**
-   * @brief Unlink video path
-   */
-  virtual void unlinkVideoPath() = 0;
-
-  /**
-   * @brief Get current CPU/memory usage
-   */
-  virtual double getCpuUsage() const = 0;
+  bool updateConfig(const MediaConfig& config);
 
  signals:
-  /**
-   * @brief Emitted when pipeline state changes
-   */
-  void stateChanged(State state);
-
-  /**
-   * @brief Emitted when pipeline error occurs
-   */
+  void pipelineStarted();
+  void pipelineStopped();
+  void configUpdated();
+  void audioVolumeChanged(int volume);
+  void audioMuteChanged(bool muted);
+  void audioRouteChanged(AudioHAL::AudioRoute route);
+  void videoResolutionChanged(VideoHAL::VideoResolution resolution);
+  void videoBrightnessChanged(int brightness);
+  void videoContrastChanged(int contrast);
+  void videoStreamEnded();
   void errorOccurred(const QString& error);
 
-  /**
-   * @brief Emitted when EOS (End Of Stream) is reached
-   */
-  void endOfStream();
+ private slots:
+  void onAudioVolumeChanged(int volume);
+  void onAudioMuteChanged(bool muted);
+  void onAudioRouteChanged(AudioHAL::AudioRoute route);
+  void onAudioStreamStarted(const QString& streamName);
+  void onAudioStreamStopped(const QString& streamName);
+  void onAudioError(const QString& error);
+  
+  void onVideoResolutionChanged(VideoHAL::VideoResolution resolution);
+  void onVideoBrightnessChanged(int brightness);
+  void onVideoContrastChanged(int contrast);
+  void onVideoStreamStarted(const QString& streamName);
+  void onVideoStreamStopped(const QString& streamName);
+  void onVideoStreamEnded();
+  void onVideoError(const QString& error);
+
+ private:
+  AudioHAL* m_audioHAL;
+  VideoHAL* m_videoHAL;
+  MediaConfig m_config;
+  bool m_isActive;
 };
 
 using MediaPipelinePtr = std::shared_ptr<MediaPipeline>;
