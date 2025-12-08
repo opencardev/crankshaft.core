@@ -63,6 +63,44 @@ void ProfileManager::initializeDefaultProfiles() {
   devHostProfile.ramMB = 16384;
   devHostProfile.osVersion = "Raspberry Pi OS (Simulated)";
 
+  // Add default mock devices
+  DeviceConfig androidAutoDevice;
+  androidAutoDevice.name = "AndroidAuto";
+  androidAutoDevice.type = "AndroidAuto";
+  androidAutoDevice.enabled = true;
+  androidAutoDevice.useMock = true;
+  androidAutoDevice.description = "Android Auto projection service";
+  androidAutoDevice.settings["resolution"] = "1024x600";
+  androidAutoDevice.settings["fps"] = 30;
+  androidAutoDevice.settings["generateTestVideo"] = true;
+  androidAutoDevice.settings["generateTestAudio"] = false;
+    // Channel configuration
+    androidAutoDevice.settings["channels.video"] = true;
+    androidAutoDevice.settings["channels.mediaAudio"] = true;
+    androidAutoDevice.settings["channels.systemAudio"] = true;
+    androidAutoDevice.settings["channels.speechAudio"] = true;
+    androidAutoDevice.settings["channels.microphone"] = true;
+    androidAutoDevice.settings["channels.input"] = true;
+    androidAutoDevice.settings["channels.sensor"] = true;
+    androidAutoDevice.settings["channels.bluetooth"] = false;  // Disabled by default
+  devHostProfile.devices.append(androidAutoDevice);
+
+  DeviceConfig bluetoothDevice;
+  bluetoothDevice.name = "Bluetooth";
+  bluetoothDevice.type = "Bluetooth";
+  bluetoothDevice.enabled = true;
+  bluetoothDevice.useMock = true;
+  bluetoothDevice.description = "Bluetooth connectivity";
+  devHostProfile.devices.append(bluetoothDevice);
+
+  DeviceConfig wifiDevice;
+  wifiDevice.name = "WiFi";
+  wifiDevice.type = "WiFi";
+  wifiDevice.enabled = true;
+  wifiDevice.useMock = true;
+  wifiDevice.description = "WiFi connectivity";
+  devHostProfile.devices.append(wifiDevice);
+
   m_hostProfiles[devHostProfile.id] = devHostProfile;
   m_activeHostProfileId = devHostProfile.id;
 

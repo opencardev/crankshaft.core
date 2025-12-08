@@ -24,6 +24,8 @@
 #include <QDBusArgument>
 #include <QDBusPendingCall>
 #include <QDBusPendingReply>
+#include <QUuid>
+#include <QTimer>
 #include <QDebug>
 
 // NetworkManager DBus constants
@@ -173,11 +175,7 @@ WiFiNetwork WiFiHAL::WiFiHALPrivate::parseAccessPoint(const QString& apPath) {
     if (frequencyVar.isValid()) {
         uint frequency = frequencyVar.toUInt();
         // Rough channel estimation
-        if (frequency >= 2412 && frequency <= 2484) {
-            network.channel = (frequency - 2412) / 5 + 1;
-        } else if (frequency >= 5170 && frequency <= 5825) {
-            network.channel = (frequency - 5170) / 5 + 34;
-        }
+        // Channel can be derived from frequency if needed
     }
     
     network.connected = false;

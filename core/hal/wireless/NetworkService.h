@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "WiFiHAL.h"
+#include "BluetoothHAL.h"
 #include <QString>
 #include <QObject>
 #include <QVector>
@@ -27,120 +29,61 @@
 /**
  * @brief Network connectivity service
  *
- * Manages network connectivity, routing, and DNS configuration.
+ * Manages WiFi and Bluetooth connectivity, providing a unified interface
+ * for network operations.
  */
 class NetworkService : public QObject {
   Q_OBJECT
 
  public:
-  enum class NetworkType {
-    UNKNOWN,
-    NONE,
-    ETHERNET,
-    WIFI,
-    CELLULAR,
-    BLUETOOTH,
-  };
-
-  struct NetworkInterface {
-    QString name;
-    QString mac_address;
-    QString ipv4_address;
-    QString ipv6_address;
-    NetworkType type;
-    bool is_active;
-    int mtu;
-  };
-
   explicit NetworkService(QObject* parent = nullptr);
   ~NetworkService() override;
 
   /**
-   * @brief Initialise the network service
+   * @brief Get WiFi HAL instance
    */
-  virtual bool initialise() = 0;
+  WiFiHAL* wifiHAL() const;
 
   /**
-   * @brief Deinitialise the network service
+   * @brief Get Bluetooth HAL instance
    */
-  virtual void deinitialise() = 0;
+  BluetoothHAL* bluetoothHAL() const;
 
   /**
-   * @brief Get active network type
+   * @brief Check if system is online (has network connectivity)
    */
-  virtual NetworkType getActiveNetworkType() const = 0;
+  bool isOnline() const;
 
   /**
-   * @brief Check if network is connected
+   * @brief Get current connection type
    */
-  virtual bool isConnected() const = 0;
-
-  /**
-   * @brief Get all network interfaces
-   */
-  virtual QVector<NetworkInterface> getNetworkInterfaces() const = 0;
-
-  /**
-   * @brief Get active network interface
-   */
-  virtual NetworkInterface getActiveInterface() const = 0;
-
-  /**
-   * @brief Get hostname
-   */
-  virtual QString getHostname() const = 0;
-
-  /**
-   * @brief Set hostname
-   */
-  virtual bool setHostname(const QString& hostname) = 0;
-
-  /**
-   * @brief Get DNS servers
-   */
-  virtual QVector<QString> getDNSServers() const = 0;
-
-  /**
-   * @brief Set DNS servers
-   */
-  virtual bool setDNSServers(const QVector<QString>& servers) = 0;
-
-  /**
-   * @brief Get gateway IP address
-   */
-  virtual QString getGateway() const = 0;
-
-  /**
-   * @brief Ping a host
-   * @return Round-trip time in milliseconds, -1 on failure
-   */
-  virtual int ping(const QString& host) = 0;
-
-  /**
-   * @brief Get network latency (ping to gateway)
-   */
-  virtual int getLatency() const = 0;
+  QString getConnectionType() const;
 
  signals:
   /**
-   * @brief Emitted when network connectivity changes
+   * @brief Emitted when overall connectivity changes
    */
-  void connectivityChanged(bool connected);
+  void connectivityChanged();
 
-  /**
-   * @brief Emitted when active network type changes
-   */
-  void networkTypeChanged(NetworkType type);
+ private slots:
+  void onWiFiEnabledChanged(bool enabled);
+  void onWiFiScanningChanged(bool scanning);
+  void onWiFiNetworksUpdated(const QList<WiFiNetwork>& networks);
+  void onWiFiConnectionStateChanged(WiFiHAL::ConnectionState state);
 
-  /**
-   * @brief Emitted when IP address changes
-   */
-  void ipAddressChanged(const QString& address);
+  void onBluetoothEnabledChanged(bool enabled);
+  void onBluetoothDiscoveryStateChanged(bool discovering);
+  void onBluetoothDevicesUpdated(const QList<BluetoothDevice>& devices);
+  void onBluetoothDevicePaired(const QString& address);
+  void onBluetoothDeviceConnected(const QString& address);
+  void onBluetoothDeviceDisconnected(const QString& address);
+  void onBluetoothPairingFailed(const QString& address, const QString& error);
+  void onBluetoothConnectionFailed(const QString& address, const QString& error);
+  void onBluetoothError(const QString& error);
 
-  /**
-   * @brief Emitted when network error occurs
-   */
-  void errorOccurred(const QString& error);
+ private:
+  WiFiHAL* m_wifiHAL;
+  BluetoothHAL* m_bluetoothHAL;
 };
 
 using NetworkServicePtr = std::shared_ptr<NetworkService>;

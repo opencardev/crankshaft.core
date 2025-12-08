@@ -21,6 +21,7 @@
 
 #include "../../transport/Transport.h"
 #include <QTimer>
+#include <QTime>
 #include <QQueue>
 
 /**

@@ -137,7 +137,7 @@ bool MediaPipeline::pushVideoFrame(const QByteArray& frameData) {
     return m_videoHAL->pushVideoFrame(frameData);
 }
 
-MediaPipeline::MediaConfig MediaPipeline::getConfig() const {
+MediaConfig MediaPipeline::getConfig() const {
     return m_config;
 }
 

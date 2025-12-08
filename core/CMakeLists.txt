@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(crankshaft-core)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Gui)
+find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Gui DBus)
 
 # Find GStreamer for multimedia
 find_package(PkgConfig REQUIRED)
@@ -57,6 +57,9 @@ set(SOURCES
   services/logging/Logger.cpp
   services/profile/ProfileManager.cpp
   services/android_auto/AndroidAutoService.cpp
+  services/android_auto/MockAndroidAutoService.cpp
+  services/android_auto/RealAndroidAutoService.cpp
+  services/android_auto/ProtocolHelpers.cpp
   
   # Transport Layer
   hal/transport/Transport.cpp
@@ -67,18 +70,22 @@ set(SOURCES
   hal/functional/GPSDevice.cpp
   hal/functional/CANDevice.cpp
   
-  # Mock Transports (temporarily disabled - needs header files)
-  # hal/mocks/transport/MockTransport.cpp
+  # Mock Transports
+  hal/mocks/transport/MockTransport.cpp
   
-  # Multimedia HAL (temporarily disabled - needs header files)
-  # hal/multimedia/AudioHAL.cpp
-  # hal/multimedia/VideoHAL.cpp
-  # hal/multimedia/MediaPipeline.cpp
+  # Multimedia HAL
+  hal/multimedia/IVideoDecoder.cpp
+  hal/multimedia/GStreamerVideoDecoder.cpp
+  hal/multimedia/IAudioMixer.cpp
+  hal/multimedia/AudioMixer.cpp
+  hal/multimedia/AudioHAL.cpp
+  hal/multimedia/VideoHAL.cpp
+  hal/multimedia/MediaPipeline.cpp
   
-  # Wireless HAL (temporarily disabled - needs header files)
-  # hal/wireless/WiFiHAL.cpp
-  # hal/wireless/BluetoothHAL.cpp
-  # hal/wireless/NetworkService.cpp
+  # Wireless HAL
+  hal/wireless/WiFiHAL.cpp
+  hal/wireless/BluetoothHAL.cpp
+  hal/wireless/NetworkService.cpp
 )
 
 # Headers are automatically discovered by AUTOMOC
@@ -105,6 +112,7 @@ target_link_libraries(crankshaft-core PRIVATE
   Qt6::Network
   Qt6::WebSockets
   Qt6::Gui
+  Qt6::DBus
   ${GSTREAMER_LIBRARIES}
   ${GSTREAMER_APP_LIBRARIES}
   ${GSTREAMER_VIDEO_LIBRARIES}

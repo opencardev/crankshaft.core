@@ -15,10 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
- */
+*/
 
 #include "MockTransport.h"
-#include "../../../../services/logging/Logger.h"
+#include "../../../services/logging/Logger.h"
 
 MockTransport::MockTransport(const QString& name, QObject* parent)
     : Transport(parent),
@@ -40,7 +40,7 @@ bool MockTransport::open() {
     return true;
   }
 
-  Logger::instance()->log(QString("MockTransport(%1): Opening").arg(m_name));
+  Logger::instance().info(QString("MockTransport(%1): Opening").arg(m_name));
   m_state = TransportState::CONNECTING;
   emit stateChanged(m_state);
 
@@ -49,7 +49,7 @@ bool MockTransport::open() {
   emit stateChanged(m_state);
   emit connected();
   
-  Logger::instance()->log(QString("MockTransport(%1): Connected").arg(m_name));
+  Logger::instance().info(QString("MockTransport(%1): Connected").arg(m_name));
   return true;
 }
 
@@ -58,7 +58,7 @@ void MockTransport::close() {
     return;
   }
 
-  Logger::instance()->log(QString("MockTransport(%1): Closing").arg(m_name));
+  Logger::instance().info(QString("MockTransport(%1): Closing").arg(m_name));
   m_autoInjectTimer->stop();
   m_isOpen = false;
   m_state = TransportState::DISCONNECTED;
@@ -72,7 +72,7 @@ qint64 MockTransport::write(const QByteArray& data) {
   }
 
   m_writtenData.append(data);
-  Logger::instance()->log(QString("MockTransport(%1): Wrote %2 bytes").arg(m_name).arg(data.size()));
+  Logger::instance().info(QString("MockTransport(%1): Wrote %2 bytes").arg(m_name).arg(data.size()));
   return data.size();
 }
 
@@ -89,7 +89,7 @@ QByteArray MockTransport::read(qint64 maxSize) {
     data = data.left(maxSize);
   }
 
-  Logger::instance()->log(QString("MockTransport(%1): Read %2 bytes").arg(m_name).arg(data.size()));
+  Logger::instance().info(QString("MockTransport(%1): Read %2 bytes").arg(m_name).arg(data.size()));
   return data;
 }
 
@@ -116,12 +116,12 @@ QVariant MockTransport::getConfiguration(const QString& key) const {
 
 void MockTransport::injectData(const QByteArray& data) {
   if (!m_isOpen) {
-    Logger::instance()->log(QString("MockTransport(%1): Cannot inject data, not open").arg(m_name));
+    Logger::instance().info(QString("MockTransport(%1): Cannot inject data, not open").arg(m_name));
     return;
   }
 
   m_receiveQueue.enqueue(data);
-  Logger::instance()->log(QString("MockTransport(%1): Injected %2 bytes").arg(m_name).arg(data.size()));
+  Logger::instance().info(QString("MockTransport(%1): Injected %2 bytes").arg(m_name).arg(data.size()));
   emit dataReceived();
 }
 
@@ -134,7 +134,7 @@ void MockTransport::clearWrittenData() {
 }
 
 void MockTransport::simulateError(const QString& error) {
-  Logger::instance()->log(QString("MockTransport(%1): Simulating error: %2").arg(m_name, error));
+  Logger::instance().info(QString("MockTransport(%1): Simulating error: %2").arg(m_name, error));
   m_state = TransportState::ERROR;
   emit stateChanged(m_state);
   emit errorOccurred(error);
@@ -143,12 +143,12 @@ void MockTransport::simulateError(const QString& error) {
 void MockTransport::setAutoInject(bool enabled, int intervalMs) {
   if (enabled) {
     m_autoInjectTimer->start(intervalMs);
-    Logger::instance()->log(QString("MockTransport(%1): Auto-inject enabled, interval %2ms")
+    Logger::instance().info(QString("MockTransport(%1): Auto-inject enabled, interval %2ms")
                                 .arg(m_name)
                                 .arg(intervalMs));
   } else {
     m_autoInjectTimer->stop();
-    Logger::instance()->log(QString("MockTransport(%1): Auto-inject disabled").arg(m_name));
+    Logger::instance().info(QString("MockTransport(%1): Auto-inject disabled").arg(m_name));
   }
 }
 

@@ -31,6 +31,8 @@ qt_add_executable(crankshaft-ui
   Theme.h
   WebSocketClient.h
   WebSocketClient.cpp
+  SettingsRegistry.h
+  SettingsRegistry.cpp
 )
 
 # Enable AUTOMOC for metatype generation
@@ -56,18 +58,36 @@ qt_add_qml_module(crankshaft-ui
   NO_PLUGIN_OPTIONAL
   NO_GENERATE_QMLDIR
   QML_FILES
-    qml/Main.qml
-    qml/HomeScreen.qml
-    qml/SettingsScreen.qml
-    qml/AndroidAutoScreen.qml
-    qml/Strings.qml
-    qml/Components/AppButton.qml
-    qml/Components/Card.qml
-    qml/Components/Icon.qml
+    qml/screens/Main.qml
+    qml/screens/HomeScreen.qml
+    qml/screens/SettingsScreen.qml
+    qml/screens/AndroidAutoScreen.qml
+      qml/screens/AndroidAutoSettingsPage.qml
+    qml/screens/ToolsPage.qml
+    qml/screens/ProfilesPage.qml
+    qml/screens/WiFiSettingsPage.qml
+    qml/screens/BluetoothSettingsPage.qml
+    qml/models/SettingsModel.qml
+    qml/models/Strings.qml
+    qml/components/AppButton.qml
+    qml/components/Card.qml
+    qml/components/Icon.qml
+    qml/components/MaterialDesignIcons.js
   RESOURCES
     assets/icons/mdi.svg
     qmldir
 )
+
+# Add Material Design Icons font as a separate resource
+if(MDI_FONT_FILE AND EXISTS "${MDI_FONT_FILE}")
+  set_source_files_properties(${MDI_FONT_FILE}
+    PROPERTIES QT_RESOURCE_ALIAS "materialdesignicons-webfont.ttf"
+  )
+  qt_add_resources(crankshaft-ui "mdi-font"
+    PREFIX "/fonts"
+    FILES ${MDI_FONT_FILE}
+  )
+endif()
 
 target_include_directories(crankshaft-ui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

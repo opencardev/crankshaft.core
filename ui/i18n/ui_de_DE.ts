@@ -263,5 +263,15 @@
         <source>Stop Android Auto</source>
         <translation type="unfinished">Android Auto stoppen</translation>
     </message>
+    <message>
+        <location filename="../qml/Strings.qml" line="63"/>
+        <source>Tools</source>
+        <translation type="unfinished">Werkzeuge</translation>
+    </message>
+    <message>
+        <location filename="../qml/Strings.qml" line="64"/>
+        <source>Utilities and diagnostics</source>
+        <translation type="unfinished">Dienstprogramme und Diagnostik</translation>
+    </message>
 </context>
 </TS>

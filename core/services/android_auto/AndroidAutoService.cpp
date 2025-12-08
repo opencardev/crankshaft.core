@@ -18,11 +18,13 @@
  */
 
 #include "AndroidAutoService.h"
+#include "MockAndroidAutoService.h"
+#include "RealAndroidAutoService.h"
 #include "../../hal/multimedia/MediaPipeline.h"
 #include "../logging/Logger.h"
 #include <QTimer>
-#include <QDebug>
 #include <libusb-1.0/libusb.h>
+#include <QDebug>
 #include <QJsonDocument>
 
 class AndroidAutoServiceImpl : public AndroidAutoService {
@@ -270,8 +272,28 @@ AndroidAutoService::AndroidAutoService(QObject* parent) : QObject(parent) {}
 AndroidAutoService::~AndroidAutoService() {}
 
 // Static factory function
-AndroidAutoService* AndroidAutoService::create(MediaPipeline* mediaPipeline, QObject* parent) {
-  return new AndroidAutoServiceImpl(mediaPipeline, parent);
+AndroidAutoService* AndroidAutoService::create(MediaPipeline* mediaPipeline,
+                                               QObject* parent) {
+  // Check environment variable to determine which implementation to use
+  QByteArray useMock = qgetenv("CRANKSHAFT_USE_MOCK_AA");
+  bool mockEnabled = !useMock.isEmpty() &&
+                     (useMock == "1" || useMock.toLower() == "true");
+
+  AndroidAutoService* service = nullptr;
+
+  if (mockEnabled) {
+    Logger::instance().info(
+        "Creating Mock Android Auto service (CRANKSHAFT_USE_MOCK_AA=1)");
+    service = new MockAndroidAutoService(parent);
+  } else {
+    Logger::instance().warning("Real Android Auto service not yet available - using Mock. "
+                               "TODO: Fix AASDK header paths in RealAndroidAutoService");
+    service = new MockAndroidAutoService(parent);
+    // TODO: Uncomment when AASDK headers are fixed:
+    // service = new RealAndroidAutoService(mediaPipeline, parent);
+  }
+
+  return service;
 }
 
 #include "AndroidAutoService.moc"

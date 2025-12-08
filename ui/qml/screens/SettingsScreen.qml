@@ -496,6 +496,14 @@ Page {
                         if (stack) {
                             stack.push(androidautoSettingsScreen, { stack: stack })
                         }
+                    } else if (setting.pageComponent === "WiFiSettingsPage") {
+                        if (stack) {
+                            stack.push(wifiSettingsPage, { stack: stack })
+                        }
+                    } else if (setting.pageComponent === "BluetoothSettingsPage") {
+                        if (stack) {
+                            stack.push(bluetoothSettingsPage, { stack: stack })
+                        }
                     }
                 }
             }
@@ -583,5 +591,16 @@ Page {
                 color: Theme.textSecondary
             }
         }
+    }
+    
+    // Page components for navigation
+    Component {
+        id: wifiSettingsPage
+        WiFiSettingsPage {}
+    }
+    
+    Component {
+        id: bluetoothSettingsPage
+        BluetoothSettingsPage {}
     }
 }
