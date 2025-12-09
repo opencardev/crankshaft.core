@@ -69,6 +69,10 @@ def parse_css_codepoints(css_content):
 def generate_qml_mapping_file(mappings, output_path):
     """Generate QML-compatible JavaScript mapping file."""
     
+    # Ensure output directory exists
+    output_dir = Path(output_path).parent
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
     header = '''/*
  * Project: Crankshaft
  * This file is part of Crankshaft project.

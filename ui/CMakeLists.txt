@@ -58,23 +58,23 @@ qt_add_qml_module(crankshaft-ui
   NO_PLUGIN_OPTIONAL
   NO_GENERATE_QMLDIR
   QML_FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/screens/Main.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/screens/HomeScreen.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/screens/SettingsScreen.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/screens/AndroidAutoScreen.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/screens/ToolsPage.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/screens/ProfilesPage.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/screens/WiFiSettingsPage.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/screens/BluetoothSettingsPage.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/models/SettingsModel.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/models/Strings.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/components/AppButton.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/components/Card.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/components/Icon.qml
-    ${CMAKE_CURRENT_SOURCE_DIR}/qml/components/MaterialDesignIcons.js
+    qml/screens/Main.qml
+    qml/screens/HomeScreen.qml
+    qml/screens/SettingsScreen.qml
+    qml/screens/AndroidAutoScreen.qml
+    qml/screens/ToolsPage.qml
+    qml/screens/ProfilesPage.qml
+    qml/screens/WiFiSettingsPage.qml
+    qml/screens/BluetoothSettingsPage.qml
+    qml/models/SettingsModel.qml
+    qml/models/Strings.qml
+    qml/components/AppButton.qml
+    qml/components/Card.qml
+    qml/components/Icon.qml
+    qml/components/MaterialDesignIcons.js
   RESOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/mdi.svg
-    ${CMAKE_CURRENT_SOURCE_DIR}/qmldir
+    assets/icons/mdi.svg
+    qmldir
 )
 
 # Add Material Design Icons font as a separate resource
