@@ -25,10 +25,7 @@ import "../components"
 
 Item {
     id: root
-
-    WebSocketClient {
-        id: wsClient
-    }
+    // Uses global wsClient exposed from main.cpp
 
     ColumnLayout {
         anchors.fill: parent
@@ -148,25 +145,27 @@ Item {
                 GroupBox {
                     Layout.fillWidth: true
                     title: qsTr("Channel Configuration")
-                    
-                    Label {
-                        text: qsTr("Note: Changing channel settings requires reconnection")
-                        font.pixelSize: 12
-                        color: Theme.textSecondary
-                        wrapMode: Text.WordWrap
-                        width: parent.width
-                    }
 
                     ColumnLayout {
                         width: parent.width
                         spacing: 15
+                        
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("Note: Changing channel settings requires reconnection")
+                            font.pixelSize: 12
+                            color: Theme.textSecondary
+                            wrapMode: Text.WordWrap
+                        }
 
                         // Video Channel
                         RowLayout {
                             Layout.fillWidth: true
+                            spacing: 10
                             
                             ColumnLayout {
                                 Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
                                 spacing: 5
                                 
                                 Label {
@@ -174,6 +173,7 @@ Item {
                                     font.bold: true
                                 }
                                 Label {
+                                    Layout.fillWidth: true
                                     text: qsTr("Display projection from Android device")
                                     font.pixelSize: 12
                                     color: Theme.textSecondary
@@ -183,6 +183,7 @@ Item {
                             
                             Switch {
                                 id: videoChannelSwitch
+                                Layout.alignment: Qt.AlignVCenter
                                 checked: true
                                 onToggled: {
                                     wsClient.publish("android-auto/channels/video", {
@@ -195,15 +196,17 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
-                            color: Theme.border
+                            color: Theme.divider
                         }
 
                         // Media Audio Channel
                         RowLayout {
                             Layout.fillWidth: true
+                            spacing: 10
                             
                             ColumnLayout {
                                 Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
                                 spacing: 5
                                 
                                 Label {
@@ -211,6 +214,7 @@ Item {
                                     font.bold: true
                                 }
                                 Label {
+                                    Layout.fillWidth: true
                                     text: qsTr("Music and media playback audio")
                                     font.pixelSize: 12
                                     color: Theme.textSecondary
@@ -220,6 +224,7 @@ Item {
                             
                             Switch {
                                 id: mediaAudioChannelSwitch
+                                Layout.alignment: Qt.AlignVCenter
                                 checked: true
                                 onToggled: {
                                     wsClient.publish("android-auto/channels/media-audio", {
@@ -232,15 +237,17 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
-                            color: Theme.border
+                            color: Theme.divider
                         }
 
                         // System Audio Channel
                         RowLayout {
                             Layout.fillWidth: true
+                            spacing: 10
                             
                             ColumnLayout {
                                 Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
                                 spacing: 5
                                 
                                 Label {
@@ -248,6 +255,7 @@ Item {
                                     font.bold: true
                                 }
                                 Label {
+                                    Layout.fillWidth: true
                                     text: qsTr("System sounds and notifications")
                                     font.pixelSize: 12
                                     color: Theme.textSecondary
@@ -257,6 +265,7 @@ Item {
                             
                             Switch {
                                 id: systemAudioChannelSwitch
+                                Layout.alignment: Qt.AlignVCenter
                                 checked: true
                                 onToggled: {
                                     wsClient.publish("android-auto/channels/system-audio", {
@@ -269,15 +278,17 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
-                            color: Theme.border
+                            color: Theme.divider
                         }
 
                         // Speech Audio Channel
                         RowLayout {
                             Layout.fillWidth: true
+                            spacing: 10
                             
                             ColumnLayout {
                                 Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
                                 spacing: 5
                                 
                                 Label {
@@ -285,6 +296,7 @@ Item {
                                     font.bold: true
                                 }
                                 Label {
+                                    Layout.fillWidth: true
                                     text: qsTr("Navigation guidance and voice assistant")
                                     font.pixelSize: 12
                                     color: Theme.textSecondary
@@ -294,6 +306,7 @@ Item {
                             
                             Switch {
                                 id: speechAudioChannelSwitch
+                                Layout.alignment: Qt.AlignVCenter
                                 checked: true
                                 onToggled: {
                                     wsClient.publish("android-auto/channels/speech-audio", {
@@ -306,15 +319,17 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
-                            color: Theme.border
+                            color: Theme.divider
                         }
 
                         // Microphone Channel
                         RowLayout {
                             Layout.fillWidth: true
+                            spacing: 10
                             
                             ColumnLayout {
                                 Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
                                 spacing: 5
                                 
                                 Label {
@@ -322,6 +337,7 @@ Item {
                                     font.bold: true
                                 }
                                 Label {
+                                    Layout.fillWidth: true
                                     text: qsTr("Voice commands and phone calls")
                                     font.pixelSize: 12
                                     color: Theme.textSecondary
@@ -331,6 +347,7 @@ Item {
                             
                             Switch {
                                 id: microphoneChannelSwitch
+                                Layout.alignment: Qt.AlignVCenter
                                 checked: true
                                 onToggled: {
                                     wsClient.publish("android-auto/channels/microphone", {
@@ -343,15 +360,17 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
-                            color: Theme.border
+                            color: Theme.divider
                         }
 
                         // Input Channel
                         RowLayout {
                             Layout.fillWidth: true
+                            spacing: 10
                             
                             ColumnLayout {
                                 Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
                                 spacing: 5
                                 
                                 Label {
@@ -359,6 +378,7 @@ Item {
                                     font.bold: true
                                 }
                                 Label {
+                                    Layout.fillWidth: true
                                     text: qsTr("Touch screen and button inputs")
                                     font.pixelSize: 12
                                     color: Theme.textSecondary
@@ -368,6 +388,7 @@ Item {
                             
                             Switch {
                                 id: inputChannelSwitch
+                                Layout.alignment: Qt.AlignVCenter
                                 checked: true
                                 onToggled: {
                                     wsClient.publish("android-auto/channels/input", {
@@ -380,15 +401,17 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
-                            color: Theme.border
+                            color: Theme.divider
                         }
 
                         // Sensor Channel
                         RowLayout {
                             Layout.fillWidth: true
+                            spacing: 10
                             
                             ColumnLayout {
                                 Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
                                 spacing: 5
                                 
                                 Label {
@@ -396,6 +419,7 @@ Item {
                                     font.bold: true
                                 }
                                 Label {
+                                    Layout.fillWidth: true
                                     text: qsTr("GPS, speed, night mode and vehicle sensors")
                                     font.pixelSize: 12
                                     color: Theme.textSecondary
@@ -405,6 +429,7 @@ Item {
                             
                             Switch {
                                 id: sensorChannelSwitch
+                                Layout.alignment: Qt.AlignVCenter
                                 checked: true
                                 onToggled: {
                                     wsClient.publish("android-auto/channels/sensor", {
@@ -417,15 +442,17 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
-                            color: Theme.border
+                            color: Theme.divider
                         }
 
                         // Bluetooth Channel
                         RowLayout {
                             Layout.fillWidth: true
+                            spacing: 10
                             
                             ColumnLayout {
                                 Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
                                 spacing: 5
                                 
                                 Label {
@@ -433,6 +460,7 @@ Item {
                                     font.bold: true
                                 }
                                 Label {
+                                    Layout.fillWidth: true
                                     text: qsTr("Wireless Android Auto over Bluetooth")
                                     font.pixelSize: 12
                                     color: Theme.textSecondary
@@ -442,6 +470,7 @@ Item {
                             
                             Switch {
                                 id: bluetoothChannelSwitch
+                                Layout.alignment: Qt.AlignVCenter
                                 checked: false
                                 onToggled: {
                                     wsClient.publish("android-auto/channels/bluetooth", {
@@ -464,9 +493,11 @@ Item {
 
                         RowLayout {
                             Layout.fillWidth: true
+                            spacing: 10
                             
                             ColumnLayout {
                                 Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
                                 spacing: 5
                                 
                                 Label {
@@ -474,6 +505,7 @@ Item {
                                     font.bold: true
                                 }
                                 Label {
+                                    Layout.fillWidth: true
                                     text: qsTr("Use simulated Android Auto for testing")
                                     font.pixelSize: 12
                                     color: Theme.textSecondary
@@ -483,6 +515,7 @@ Item {
                             
                             Switch {
                                 id: useMockSwitch
+                                Layout.alignment: Qt.AlignVCenter
                                 checked: true
                                 onToggled: {
                                     wsClient.publish("android-auto/use-mock", {
@@ -495,14 +528,16 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
-                            color: Theme.border
+                            color: Theme.divider
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
+                            spacing: 10
                             
                             ColumnLayout {
                                 Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
                                 spacing: 5
                                 
                                 Label {
@@ -510,6 +545,7 @@ Item {
                                     font.bold: true
                                 }
                                 Label {
+                                    Layout.fillWidth: true
                                     text: qsTr("Display test pattern when using mock device")
                                     font.pixelSize: 12
                                     color: Theme.textSecondary
@@ -519,6 +555,7 @@ Item {
                             
                             Switch {
                                 id: testVideoSwitch
+                                Layout.alignment: Qt.AlignVCenter
                                 checked: true
                                 enabled: useMockSwitch.checked
                                 onToggled: {
@@ -532,14 +569,16 @@ Item {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
-                            color: Theme.border
+                            color: Theme.divider
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
+                            spacing: 10
                             
                             ColumnLayout {
                                 Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
                                 spacing: 5
                                 
                                 Label {
@@ -547,6 +586,7 @@ Item {
                                     font.bold: true
                                 }
                                 Label {
+                                    Layout.fillWidth: true
                                     text: qsTr("Play test tone when using mock device")
                                     font.pixelSize: 12
                                     color: Theme.textSecondary
@@ -556,6 +596,7 @@ Item {
                             
                             Switch {
                                 id: testAudioSwitch
+                                Layout.alignment: Qt.AlignVCenter
                                 checked: false
                                 enabled: useMockSwitch.checked
                                 onToggled: {
@@ -585,10 +626,10 @@ Item {
 
         function onMessageReceived(topic, payload) {
             if (topic === "android-auto/status") {
-                if (payload.hasOwnProperty("state")) {
+                if (payload.state !== undefined) {
                     statusLabel.text = payload.state
                 }
-                if (payload.hasOwnProperty("device")) {
+                if (payload.device !== undefined) {
                     deviceLabel.text = payload.device
                 }
             }

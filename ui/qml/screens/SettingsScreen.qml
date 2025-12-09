@@ -64,7 +64,7 @@ Page {
                 text: "⬅ " + Strings.buttonBack
                 Layout.preferredWidth: implicitWidth
                 onClicked: {
-                    if (stack) {
+                    if (typeof stack !== 'undefined' && stack) {
                         stack.pop()
                     }
                 }
@@ -496,14 +496,14 @@ Page {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    if (!stack) return
+                    if (typeof stack === 'undefined' || !stack) return
                     
                     if (setting.pageComponent === "AndroidAutoSettingsPage") {
-                        stack.push(androidautoSettingsScreen, { stack: stack })
+                        stack.push(androidautoSettingsScreen)
                     } else if (setting.pageComponent === "WiFiSettingsPage") {
-                        stack.push(wifiSettingsPage, { stack: stack })
+                        stack.push(wifiSettingsPage)
                     } else if (setting.pageComponent === "BluetoothSettingsPage") {
-                        stack.push(bluetoothSettingsPage, { stack: stack })
+                        stack.push(bluetoothSettingsPage)
                     }
                 }
             }
