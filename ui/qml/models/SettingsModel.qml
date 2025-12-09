@@ -29,7 +29,7 @@ QtObject {
         {
             id: "appearance",
             name: "Appearance",
-            icon: "🎨",
+            icon: "mdi-palette",
             settings: [
                 {
                     key: "ui.theme.dark",
@@ -49,7 +49,7 @@ QtObject {
         {
             id: "language",
             name: "Language",
-            icon: "🌍",
+            icon: "mdi-earth",
             settings: [
                 {
                     key: "ui.language",
@@ -72,7 +72,7 @@ QtObject {
         {
             id: "system",
             name: "System",
-            icon: "⚙",
+            icon: "mdi-cog",
             settings: [
                 {
                     key: "system.connection",
@@ -86,7 +86,7 @@ QtObject {
         {
             id: "audio",
             name: "Audio",
-            icon: "🔊",
+            icon: "mdi-volume-high",
             settings: [
                 {
                     key: "audio.volume.master",
@@ -169,9 +169,9 @@ QtObject {
             ]
         },
         {
-            id: "connectivity",
-            name: "Connectivity",
-            icon: "📡",
+            id: "androidauto",
+            name: "Android Auto",
+            icon: "mdi-android-auto",
             settings: [
                 {
                     key: "connectivity.android-auto.enabled",
@@ -343,7 +343,14 @@ QtObject {
                     onChange: function(val) {
                         wsClient.publish("android-auto/test-audio", { "enabled": val })
                     }
-                },
+                }
+            ]
+        },
+        {
+            id: "connectivity",
+            name: "Connectivity",
+            icon: "mdi-access-point",
+            settings: [
                 {
                     key: "connectivity.wifi.enabled",
                     label: "WiFi",
@@ -383,7 +390,7 @@ QtObject {
         {
             id: "about",
             name: "About",
-            icon: "ℹ",
+            icon: "mdi-information",
             settings: [
                 {
                     key: "about.version",
@@ -397,7 +404,7 @@ QtObject {
         {
             id: "profiles",
             name: "Device Profiles",
-            icon: "👤",
+            icon: "mdi-account",
             settings: [
                 {
                     key: "profiles.host.active",
