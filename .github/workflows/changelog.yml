@@ -1,0 +1,80 @@
+# Project: Crankshaft
+# This file is part of Crankshaft project.
+# Copyright (C) 2025 OpenCarDev Team
+#
+#  Crankshaft is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Crankshaft is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
+
+name: Changelog
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      range:
+        description: 'Git range for changelog (default: since last tag)'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine range
+        id: range
+        run: |
+          if [ -n "${{ inputs.range }}" ]; then
+            RANGE="${{ inputs.range }}"
+          else
+            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            if [ -n "$LAST_TAG" ]; then
+              RANGE="$LAST_TAG..HEAD"
+            else
+              RANGE="HEAD"
+            fi
+          fi
+          echo "range=$RANGE" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        run: |
+          RANGE="${{ steps.range.outputs.range }}"
+          TODAY=$(date -u +"%Y-%m-%d")
+          {
+            echo "# Crankshaft Changelog"
+            echo ""
+            echo "Generated on ${TODAY} (UTC)"
+            echo "Range: ${RANGE}"
+            echo ""
+            git log --pretty=format:"- %h %s" ${RANGE}
+          } > changelog-ci.md
+
+      - name: Upload changelog artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog-latest
+          path: changelog-ci.md
+          retention-days: 30
+
+      - name: Print summary
+        run: |
+          echo "Changelog generated for range: ${{ steps.range.outputs.range }}"
+          head -n 20 changelog-ci.md
