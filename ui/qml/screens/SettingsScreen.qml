@@ -121,10 +121,12 @@ Page {
                         anchors.rightMargin: Theme.spacingSm
                         spacing: Theme.spacingSm
                         
-                        Text {
-                            text: modelData.icon || "•"
-                            font.pixelSize: 18
+                        Icon {
+                            name: modelData.icon || "mdi-circle-small"
+                            size: 20
                             color: ListView.isCurrentItem ? Theme.textOnPrimary : Theme.textPrimary
+                            Layout.preferredWidth: 20
+                            Layout.preferredHeight: 20
                         }
                         
                         Text {

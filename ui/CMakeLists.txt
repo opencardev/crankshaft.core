@@ -62,7 +62,6 @@ qt_add_qml_module(crankshaft-ui
     qml/screens/HomeScreen.qml
     qml/screens/SettingsScreen.qml
     qml/screens/AndroidAutoScreen.qml
-      qml/screens/AndroidAutoSettingsPage.qml
     qml/screens/ToolsPage.qml
     qml/screens/ProfilesPage.qml
     qml/screens/WiFiSettingsPage.qml
