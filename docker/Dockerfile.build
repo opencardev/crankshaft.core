@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
 
-ARG DEBIAN_VERSION=bookworm
+ARG DEBIAN_VERSION=trixie
 FROM debian:${DEBIAN_VERSION} as builder
 
 ARG VERSION=0.0.0+dev
@@ -65,7 +65,7 @@ Section: misc
 Priority: optional
 Architecture: ${ARCH}
 Depends: libqt6core6, libqt6gui6, libqt6qml6, libqt6quick6, libqt6websockets6, libboost-system1.83.0, libprotobuf32, libssl3, libusb-1.0-0
-Maintainer: OpenCarDev Team <team@opencardev.org>
+Maintainer: OpenCarDev Team <opencardevuk@gmail.com>
 Description: Automotive infotainment system with extensible framework
  Crankshaft is a modern automotive infotainment system built with Qt6.
  It features an extensible plugin framework, Android Auto support,
