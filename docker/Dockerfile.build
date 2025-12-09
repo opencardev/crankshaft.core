@@ -59,7 +59,7 @@ RUN mkdir -p build && cd build && \
       -DBUILD_TESTS=OFF \
       -DVERSION=${VERSION} && \
     cmake --build . -j$(nproc) && \
-    cmake --install . DESTDIR=/staging
+    cmake --install . --prefix /staging/usr
 
 # Create DEB package
 RUN mkdir -p /staging/DEBIAN && \
@@ -90,4 +90,3 @@ RUN dpkg-deb --build /staging /output/crankshaft_${VERSION}_${ARCH}.deb
 # Final stage - export artifacts
 FROM scratch as exporter
 COPY --from=builder /output/*.deb /
-COPY --from=builder /staging/usr/bin/* /
