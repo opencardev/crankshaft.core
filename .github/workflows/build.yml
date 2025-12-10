@@ -66,7 +66,13 @@ env:
   IMAGE_NAME: ${{ github.repository }}/crankshaft
 
 jobs:
+  changelog:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/changelog.yml
+
   prepare:
+    needs: [changelog]
+    if: always() && (needs.changelog.result == 'success' || needs.changelog.result == 'skipped')
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
@@ -105,10 +111,12 @@ jobs:
             ARCHES="$ARCH_INPUT"
           fi
 
-          # On develop branch, limit to amd64 for faster feedback
-          if [ "${{ github.ref }}" = "refs/heads/develop" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+          # Only build amd64 for non-main/PR pushes (faster feedback on feature branches)
+          if [ "${{ github.event_name }}" = "push" ] && \
+             [ "${{ github.ref }}" != "refs/heads/main" ] && \
+             [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
             ARCHES="amd64"
-            echo "Building only amd64 for develop branch"
+            echo "Building only amd64 for feature/bugfix branch push"
           fi
 
           platform_for_arch() {
