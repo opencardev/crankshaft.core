@@ -374,6 +374,12 @@ jobs:
         path: crankshaft-sbom-final.json
         retention-days: 90
 
+  changelog-on-pr:
+    name: Generate Changelog
+    needs: [build]
+    if: github.event_name == 'pull_request' && success()
+    uses: ./.github/workflows/changelog.yml
+
   trigger-release:
     name: Trigger Release
     needs: [prepare, build, sbom]
