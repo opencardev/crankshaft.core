@@ -230,13 +230,14 @@ jobs:
     - name: Generate base SBOM from CMake project
       run: |
         # Create base SBOM with project metadata
-        cat > crankshaft-sbom.json << 'EOF'
+        TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        cat > crankshaft-sbom.json << EOF
         {
           "bomFormat": "CycloneDX",
           "specVersion": "1.5",
           "version": 1,
           "metadata": {
-            "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "timestamp": "${TS}",
             "tools": [
               {
                 "vendor": "OpenCarDev",
