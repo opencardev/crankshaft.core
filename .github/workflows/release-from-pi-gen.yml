@@ -1,0 +1,338 @@
+# Project: Crankshaft
+# This file is part of Crankshaft project.
+# Copyright (C) 2025 OpenCarDev Team
+#
+#  Crankshaft is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Crankshaft is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
+
+name: release-from-pi-gen
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: 'Build run ID to create release from (required)'
+        required: true
+        type: string
+      version:
+        description: 'Optional human-friendly version label for the release name'
+        required: false
+        default: ''
+        type: string
+      create_draft:
+        description: 'Create as draft release'
+        required: false
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      build_run_id:
+        description: 'Build run ID to create release from (required)'
+        required: true
+        type: string
+      version:
+        description: 'Optional human-friendly version label for the release name'
+        required: false
+        default: ''
+        type: string
+      create_draft:
+        description: 'Create as draft release'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (for docs and changelog)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts from build run
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          run_id: ${{ inputs.build_run_id }}
+          path: artifacts
+          if_no_artifact_found: ignore
+
+      - name: Collect OpenCarDev images only
+        id: collect
+        run: |
+          set -euo pipefail
+          mkdir -p release_assets
+          shopt -s nullglob
+          # Find images with -opencardev suffix
+          found=0
+          for f in artifacts/**/deploy/*-opencardev*.{xz,zip,img}; do
+            cp -v "$f" release_assets/
+            found=1
+          done || true
+
+          if [ "$found" -eq 0 ]; then
+            echo "No *-opencardev images found in artifacts. Aborting." >&2
+            exit 1
+          fi
+
+          # Derive build metadata from artifact directory names
+          # Expect artifact dir names like: pi-gen-lite-<arch>-<builddate>-<version>
+          arches=()
+          builddate=""
+          version=""
+          for dir in artifacts/*; do
+            bname=$(basename "$dir")
+            # Split on '-' and try to parse
+            IFS='-' read -r prefix arch bd ver <<<"$bname"
+            if [ "$prefix" = "pi" ]; then
+              # handle names with 'pi-gen-lite' prefix (pi-gen-lite is 3 tokens when split by '-')
+              IFS='-' read -r p1 p2 p3 arch bd ver <<<"$bname"
+            fi
+            if [ -n "${arch:-}" ]; then
+              arches+=("$arch")
+            fi
+            if [ -z "$builddate" ] && [ -n "${bd:-}" ]; then
+              builddate="$bd"
+            fi
+            if [ -z "$version" ] && [ -n "${ver:-}" ]; then
+              version="$ver"
+            fi
+          done
+
+          # Fallbacks
+          if [ -z "$builddate" ]; then builddate=$(date +%Y-%m-%d); fi
+          if [ -z "$version" ]; then version="${{ inputs.version || 'DEV' }}"; fi
+
+          # Tag and name
+          tag="crankshaft-${builddate}-${version}"
+          name="Crankshaft ${builddate} (${version})"
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "builddate=$builddate" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "${arches[@]}" | sort -u | tr '\n' ',' | sed 's/,$//' | awk '{print "arches=" $0}' >> "$GITHUB_OUTPUT"
+
+      - name: Compute SHA256 checksums
+        run: |
+          set -euo pipefail
+          cd release_assets
+          sha256sum * > SHA256SUMS-opencardev.txt
+          # Also write individual .sha256 files
+          while read -r sum file; do
+            echo "$sum  $file" > "$file.sha256"
+          done < SHA256SUMS-opencardev.txt
+
+      - name: Install SBOM tooling (syft + guestmount)
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y libguestfs-tools xz-utils unzip
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sudo sh -s -- -b /usr/local/bin
+          syft --version
+
+      - name: Generate CycloneDX/SPDX SBOMs from images
+        run: |
+          set -euo pipefail
+          export LIBGUESTFS_BACKEND=direct
+          mkdir -p sbom_tmp mnt
+          shopt -s nullglob
+          # Process only image artifacts
+          for src in release_assets/*-opencardev*.img release_assets/*-opencardev*.img.xz release_assets/*-opencardev*.zip; do
+            base=$(basename "$src")
+            img=""
+            tmp_created=0
+            case "$base" in
+              *.img)
+                img="$src"
+                ;;
+              *.img.xz)
+                out="sbom_tmp/${base%.xz}"
+                echo "Decompressing $src -> $out"
+                xz -dkc "$src" > "$out"
+                img="$out"
+                tmp_created=1
+                ;;
+              *.zip)
+                echo "Extracting .img from $src"
+                mkdir -p sbom_tmp/unzip
+                unzip -j -o "$src" '*.img' -d sbom_tmp/unzip >/dev/null
+                img=$(ls sbom_tmp/unzip/*.img 2>/dev/null | head -n 1 || true)
+                if [ -z "$img" ]; then
+                  echo "No .img found inside $src, skipping" >&2
+                  continue
+                fi
+                tmp_created=1
+                ;;
+              *)
+                echo "Unsupported artifact type: $base, skipping" >&2
+                continue
+                ;;
+            esac
+
+            echo "Mounting $img read-only via guestmount"
+            sudo guestmount -a "$img" -i --ro mnt || { echo "guestmount failed for $img" >&2; [ "$tmp_created" -eq 1 ] && rm -f "$img"; continue; }
+
+            # Generate SBOMs
+            cdx="release_assets/${base%.xz}.sbom.cyclonedx.json"
+            spdx="release_assets/${base%.xz}.sbom.spdx.json"
+            # Friendly source metadata for SBOMs
+            src_name="$base"
+            src_name="${src_name%.xz}"
+            src_name="${src_name%.img}"
+            src_version='${{ steps.collect.outputs.version }}'
+            echo "Generating CycloneDX -> $cdx"
+            SYFT_LOG_LEVEL=error sudo syft dir:mnt \
+              --source-name "$src_name" \
+              --source-version "$src_version" \
+              -o cyclonedx-json > "$cdx" || echo "Failed to create CycloneDX SBOM for $base"
+            echo "Generating SPDX -> $spdx"
+            SYFT_LOG_LEVEL=error sudo syft dir:mnt \
+              --source-name "$src_name" \
+              --source-version "$src_version" \
+              -o spdx-json > "$spdx" || echo "Failed to create SPDX SBOM for $base"
+
+            # Optionally extract the embedded versions file from boot
+            if [ -f mnt/boot/opencardev/versions.txt ]; then
+              cp mnt/boot/opencardev/versions.txt "release_assets/${base%.xz}.versions.txt" || true
+            fi
+
+            # Unmount and cleanup
+            sudo guestunmount mnt || true
+            sudo rm -rf mnt/*
+            if [ "$tmp_created" -eq 1 ]; then rm -f "$img"; fi
+          done
+
+      - name: Read versions and SBOM from artifacts (preferred)
+        id: versions
+        run: |
+          set -euo pipefail
+          # Look for metadata files uploaded by the build job
+          VFILE=$(ls artifacts/**/opencardev/versions.txt 2>/dev/null | head -n 1 || true)
+          SBOM=$(ls artifacts/**/opencardev/sbom-packages.txt 2>/dev/null | head -n 1 || true)
+          if [ -n "${VFILE}" ]; then
+            echo "Found versions file: ${VFILE}"
+            # Emit each line as output key=value if matches expected keys
+            libaasdk=$(grep '^libaasdk=' "${VFILE}" | cut -d= -f2- || echo "n/a")
+            openauto=$(grep '^openauto=' "${VFILE}" | cut -d= -f2- || echo "n/a")
+            echo "libaasdk=${libaasdk}" >> "$GITHUB_OUTPUT"
+            echo "openauto=${openauto}" >> "$GITHUB_OUTPUT"
+          else
+            echo "No versions.txt found in artifacts; will fall back to repo metadata."
+          fi
+          if [ -n "${SBOM}" ]; then
+            echo "sbom_path=${SBOM}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve libaasdk/openauto versions from repo metadata (fallback)
+        id: pkgver
+        run: |
+          set -euo pipefail
+          # If versions.txt is present, prefer those single values (no per-arch distinction)
+          if [ -n "${{ steps.versions.outputs.libaasdk }}" ] || [ -n "${{ steps.versions.outputs.openauto }}" ]; then
+            echo "Found versions in artifacts; skipping repo metadata lookup."
+            echo "libaasdk_armhf=${{ steps.versions.outputs.libaasdk || 'n/a' }}" >> "$GITHUB_OUTPUT"
+            echo "libaasdk_arm64=${{ steps.versions.outputs.libaasdk || 'n/a' }}" >> "$GITHUB_OUTPUT"
+            echo "openauto_armhf=${{ steps.versions.outputs.openauto || 'n/a' }}" >> "$GITHUB_OUTPUT"
+            echo "openauto_arm64=${{ steps.versions.outputs.openauto || 'n/a' }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          release=trixie
+          # Try both arches to report available versions
+          get_ver() {
+            pkg="$1"; arch="$2";
+            url="https://opencardev.github.io/packages/dists/${release}/main/binary-${arch}/Packages"
+            ver=$(curl -fsSL "$url" | awk -v p="Package: ${pkg}" -v f="Version:" '
+              $0==p {found=1} found&&/^Version:/ {print $2; exit}
+            ')
+            echo "${ver:-n/a}"
+          }
+          libaasdk_armhf=$(get_ver libaasdk armhf)
+          libaasdk_arm64=$(get_ver libaasdk arm64)
+          openauto_armhf=$(get_ver openauto armhf)
+          openauto_arm64=$(get_ver openauto arm64)
+
+          echo "libaasdk_armhf=$libaasdk_armhf" >> "$GITHUB_OUTPUT"
+          echo "libaasdk_arm64=$libaasdk_arm64" >> "$GITHUB_OUTPUT"
+          echo "openauto_armhf=$openauto_armhf" >> "$GITHUB_OUTPUT"
+          echo "openauto_arm64=$openauto_arm64" >> "$GITHUB_OUTPUT"
+
+      - name: Build release notes
+        run: |
+          set -euo pipefail
+          install_doc_url="https://github.com/${{ github.repository }}/blob/main/docs/INSTALLATION.md"
+
+          # Start from template and replace placeholders
+          cp .github/releasenote.md release_notes.md
+          sed -i "s|{{RELEASE_NAME}}|${{ steps.collect.outputs.name }}|g" release_notes.md
+          sed -i "s|{{INSTALL_DOC_URL}}|${install_doc_url}|g" release_notes.md
+
+          # Append dynamic sections
+          {
+            echo
+            echo "### Artifacts (-opencardev only)"
+            echo
+            ls -lh release_assets/* | awk '{printf("- %s (%s)\n", $9, $5)}' || true
+            echo
+            echo "### SHA256 checksums"
+            echo
+            echo '```'
+            cat release_assets/SHA256SUMS-opencardev.txt
+            echo '```'
+            echo
+            echo "### Package versions"
+            echo
+            if [ -n "${{ steps.versions.outputs.libaasdk }}" ] || [ -n "${{ steps.versions.outputs.openauto }}" ]; then
+              echo "- libaasdk: ${{ steps.versions.outputs.libaasdk || 'n/a' }}"
+              echo "- openauto: ${{ steps.versions.outputs.openauto || 'n/a' }}"
+            else
+              echo "- libaasdk: armhf ${{ steps.pkgver.outputs.libaasdk_armhf }}, arm64 ${{ steps.pkgver.outputs.libaasdk_arm64 }}"
+              echo "- openauto: armhf ${{ steps.pkgver.outputs.openauto_armhf }}, arm64 ${{ steps.pkgver.outputs.openauto_arm64 }}"
+            fi
+            echo
+            if [ -f docs/CHANGELOG.md ]; then
+              echo "### Changelog"
+              echo
+              cat docs/CHANGELOG.md
+            fi
+          } >> release_notes.md
+
+      - name: Prepare release assets list
+        # Remove zero-length files before upload to avoid GitHub release errors
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          # Remove zero-length files from release_assets
+          find release_assets -type f -size 0 -print -delete
+          # Remove zero-length sbom_path if present
+          if [ -n "${{ steps.versions.outputs.sbom_path }}" ] && [ ! -s "${{ steps.versions.outputs.sbom_path }}" ]; then
+            rm -f "${{ steps.versions.outputs.sbom_path }}"
+          fi
+          # List files to upload
+          ls -lh release_assets/* || true
+        shell: bash
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.collect.outputs.tag }}
+          name: ${{ steps.collect.outputs.name }}
+          body_path: release_notes.md
+          files: |
+            release_assets/*
+            ${{ steps.versions.outputs.sbom_path }}
+          draft: ${{ inputs.create_draft || false }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

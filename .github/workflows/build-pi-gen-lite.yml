@@ -1,0 +1,637 @@
+# Project: Crankshaft
+# This file is part of Crankshaft project.
+# Copyright (C) 2025 OpenCarDev Team
+#
+#  Crankshaft is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Crankshaft is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
+
+name: build-pi-gen-lite
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'
+        required: true
+        default: 'DEV'
+        type: string
+      release:
+        description: 'Debian Release'
+        required: false
+        default: 'trixie'
+        type: choice
+        options:
+          - trixie
+          - bookworm
+      auto_release:
+        description: 'Automatically create a GitHub release from this build'
+        required: false
+        default: false
+        type: boolean
+      create_release_draft:
+        description: 'Create the release as a draft'
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches:
+      - main
+    paths:
+      - 'image_builder/**'
+  pull_request:
+    paths:
+      - 'image_builder/**'
+
+env:
+  DEBIAN_FRONTEND: noninteractive
+
+permissions:
+  contents: write
+
+jobs:
+  build-lite-images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240  # 4 hours max build time
+    strategy:
+      matrix:
+        arch: [armhf, arm64]
+        include:
+          - arch: armhf
+            branch: master
+            platform: linux/arm/v7
+          - arch: arm64
+            branch: arm64
+            platform: linux/arm64
+
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      builddate: ${{ steps.get_version.outputs.builddate }}
+      
+    steps:
+      - name: Checkout image_builder repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Checkout pi-gen repository
+        uses: actions/checkout@v4
+        with:
+          repository: RPi-Distro/pi-gen
+          ref: ${{ matrix.branch }}
+          path: pi-gen
+          fetch-depth: 1
+          
+      - name: Copy build-docker-debug.sh to pi-gen folder
+        run: |
+          echo "Copying build-docker-debug.sh to pi-gen folder..."
+          
+          # Check if build-docker-debug.sh exists in current repo
+          if [ -f "image_builder/scripts/build-docker-debug.sh" ]; then
+            cp image_builder/scripts/build-docker-debug.sh pi-gen/
+            echo "Copied build-docker-debug.sh from image_builder/scripts directory"
+          else
+            echo "Warning: build-docker-debug.sh not found, using pi-gen's build-docker.sh instead"
+            # Fallback to regular build-docker.sh if it exists
+            if [ -f "pi-gen/build-docker.sh" ]; then
+              cp pi-gen/build-docker.sh pi-gen/build-docker-debug.sh
+              echo "Created build-docker-debug.sh as copy of build-docker.sh"
+            else
+              echo "Error: No build script found!"
+              exit 1
+            fi
+          fi
+          
+          # Make it executable
+          chmod +x pi-gen/build-docker-debug.sh
+          
+          echo "build-docker-debug.sh is ready in pi-gen folder"
+          ls -la pi-gen/build-docker-debug.sh
+          
+      - name: Copy stage60 to pi-gen folder
+        run: |
+          echo "Copying stage60 to pi-gen folder..."
+          
+          # Check if stage60 exists in stages directory
+          if [ -d "image_builder/stages/stage60" ]; then
+            cp -r image_builder/stages/stage60 pi-gen/
+            echo "Copied stage60 from stages directory"
+          else
+            echo "Error: stage60 not found in stages directory!"
+            exit 1
+          fi
+          
+          # Make all scripts executable
+          find pi-gen/stage60 -type f -name "*.sh" -exec chmod +x {} \;
+          
+          echo "stage60 is ready in pi-gen folder"
+          ls -la pi-gen/stage60/
+          
+      - name: Set up QEMU for multi-architecture builds
+        uses: docker/setup-qemu-action@v3
+        with:
+          image: tonistiigi/binfmt:latest
+          platforms: all
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Configure binfmt for persistent ARM emulation
+        run: |
+          echo "=== Configuring binfmt for persistent ARM emulation ==="
+          
+          # Install qemu-user-static if not already present
+          sudo apt-get update && sudo apt-get install -y qemu-user-static binfmt-support
+          
+          # Apply binfmt configuration for persistent mode
+          if [ -f /var/lib/binfmts/qemu-arm ]; then
+            sudo sed -i '10s/^$/yes/g' /var/lib/binfmts/qemu-arm
+            echo "Configured qemu-arm for persistent mode"
+          fi
+          
+          if [ -f /var/lib/binfmts/qemu-aarch64 ]; then
+            sudo sed -i '10s/^$/yes/g' /var/lib/binfmts/qemu-aarch64  
+            echo "Configured qemu-aarch64 for persistent mode"
+          fi
+          
+          # Restart binfmt-support to apply changes
+          sudo systemctl restart binfmt-support
+          
+          echo "=== Verifying binfmt configuration ==="
+          echo "Testing ${{ matrix.arch }} emulation capability:"
+          docker run --rm --platform ${{ matrix.platform }} busybox:latest echo "${{ matrix.arch }} emulation working!" || echo "${{ matrix.arch }} platform test failed"
+          
+      - name: Free up disk space
+        run: |
+          # Remove unnecessary packages to free up space
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          df -h
+          
+      - name: Get build version and metadata
+        id: get_version
+        run: |
+          # Extract version from input or default
+          VERSION="${{ github.event.inputs.version || 'DEV' }}"
+          ARCH="${{ matrix.arch }}"
+          RELEASE="${{ github.event.inputs.release || 'trixie' }}"
+          
+          # Get git information
+          BUILD_HASH=$(git rev-parse --short "$GITHUB_SHA")
+          BUILD_DATE=$(date '+%Y-%m-%d')
+          BUILD_BRANCH="pi-gen-lite"
+          
+          # Create version string
+          if [ "$VERSION" = "DEV" ]; then
+            VERSION_STRING="${BUILD_DATE}-${BUILD_BRANCH}-${ARCH}-${RELEASE}-${BUILD_HASH}"
+          else
+            VERSION_STRING="${VERSION}-${BUILD_DATE}-${ARCH}-${RELEASE}-${BUILD_HASH}"
+          fi
+          
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version_string=${VERSION_STRING}" >> $GITHUB_OUTPUT
+          echo "buildhash=${BUILD_HASH}" >> $GITHUB_OUTPUT
+          echo "buildbranch=${BUILD_BRANCH}" >> $GITHUB_OUTPUT
+          echo "builddate=${BUILD_DATE}" >> $GITHUB_OUTPUT
+          echo "arch=${ARCH}" >> $GITHUB_OUTPUT
+          echo "release=${RELEASE}" >> $GITHUB_OUTPUT
+          
+          echo "Build Version: ${VERSION_STRING}"
+          echo "Architecture: ${ARCH}"
+          echo "Debian Release: ${RELEASE}"
+          echo "Branch: ${{ matrix.branch }}"
+          
+      - name: Configure pi-gen build
+        id: configure
+        working-directory: pi-gen
+        run: |
+          # Create configuration file for lite image (stage2)
+          cat > config <<EOF
+          IMG_NAME=${{ steps.get_version.outputs.version_string }}
+          RELEASE=${{ steps.get_version.outputs.release }}
+          DEPLOY_COMPRESSION=xz
+          LOCALE_DEFAULT=en_GB.UTF-8
+          TARGET_HOSTNAME=raspberrypi
+          KEYBOARD_KEYMAP=gb
+          KEYBOARD_LAYOUT="English (UK)"
+          TIMEZONE_DEFAULT=Europe/London
+          FIRST_USER_NAME=pi
+          FIRST_USER_PASS=raspberry
+          ENABLE_SSH=1
+          PUBKEY_SSH_FIRST_USER=""
+          PUBKEY_ONLY_SSH=0
+          STAGE_LIST="stage0 stage1 stage2 stage60"
+          EOF
+          
+          # Make all shell scripts executable
+          find . -type f -iname "*.sh" -exec chmod +x {} \;
+          
+          # Ensure build-docker-debug.sh exists and is executable
+          if [ ! -f "build-docker-debug.sh" ]; then
+            echo "Error: build-docker-debug.sh not found in pi-gen repository!"
+            echo "Available files:"
+            ls -la
+            exit 1
+          fi
+          chmod +x build-docker-debug.sh
+          
+          # Display configuration
+          echo "=== Pi-gen Build Configuration for ${{ matrix.arch }} ==="
+          cat config
+          echo "============================================"
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            coreutils quilt parted qemu-user-static debootstrap zerofree zip \
+            dosfstools e2fsprogs libarchive-tools libcap2-bin grep rsync xz-utils \
+            file git curl bc gpg pigz xxd arch-test bmap-tools kmod
+            
+      - name: Verify QEMU and binfmt setup
+        run: |
+          echo "=== Verifying QEMU and binfmt setup for ${{ matrix.arch }} ==="
+          
+          # Check if binfmt_misc is loaded and mounted
+          echo "binfmt_misc module status:"
+          lsmod | grep binfmt_misc || echo "binfmt_misc module not loaded"
+          
+          echo "binfmt_misc filesystem:"
+          mount | grep binfmt_misc || echo "binfmt_misc not mounted"
+          
+          # Check binfmt directory
+          echo "binfmt_misc directory contents:"
+          ls -la /proc/sys/fs/binfmt_misc/ 2>/dev/null || echo "/proc/sys/fs/binfmt_misc not accessible"
+          
+          # Verify QEMU is available
+          echo "QEMU ARM static:"
+          qemu-arm-static --version || echo "qemu-arm-static not available"
+          
+          # Test ARM binary execution
+          echo "Testing ARM binary execution capability:"
+          arch-test || echo "arch-test failed"
+          echo "====================================="
+            
+      - name: Check Docker environment
+        run: |
+          echo "=== Docker Environment Check ==="
+          docker --version
+          docker info
+          echo "Docker service status:"
+          sudo systemctl status docker --no-pager || echo "systemctl not available"
+          
+          echo "=== QEMU and binfmt_misc verification ==="
+          # Check QEMU processors
+          ls -la /proc/sys/fs/binfmt_misc/ || echo "binfmt_misc not available"
+          
+          # Test if ARM emulation is working for this architecture
+          echo "Testing ${{ matrix.arch }} emulation:"
+          docker run --rm --platform ${{ matrix.platform }} hello-world || echo "${{ matrix.arch }} test failed"
+          
+          # Check available platforms
+          echo "Available Docker platforms:"
+          docker buildx ls || echo "buildx not available"
+          echo "================================="
+          
+      - name: Build pi-gen lite image using Docker
+        id: build-docker
+        working-directory: pi-gen
+        run: |
+          echo "Starting Docker build for ${{ matrix.arch }}..."
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          
+          # Ensure both build scripts are executable
+          chmod +x build-docker.sh build-docker-debug.sh
+          
+          # Check if config file exists
+          if [ ! -f config ]; then
+            echo "Error: config file not found!"
+            exit 1
+          fi
+          
+          echo "Config file contents:"
+          cat config
+          
+          # Check Docker environment
+          docker --version
+          docker info | head -20
+          
+          # Run the DEBUG docker build for detailed logging
+          echo "Executing: ./build-docker-debug.sh for enhanced debugging"
+          ./build-docker-debug.sh
+          
+          # Check what was produced
+          echo "Build completed. Checking results..."
+          if [ -d deploy ]; then
+            echo "Deploy directory contents:"
+            ls -la deploy/
+          else
+            echo "No deploy directory found!"
+          fi
+          
+          if [ -d work ]; then
+            echo "Work directory contents:"
+            find work -name "*.log" -exec echo "Log file: {}" \; -exec tail -20 {} \;
+          fi
+        env:
+          GIT_HASH: ${{ steps.get_version.outputs.buildhash }}
+          GIT_BRANCH: ${{ steps.get_version.outputs.buildbranch }}
+          
+      - name: Extract logs and artifacts from Docker container
+        if: always()
+        working-directory: pi-gen
+        run: |
+          echo "=== Extracting logs and artifacts from Docker container ==="
+          
+          # Get the most recent pi-gen container
+          CONTAINER_ID=$(docker ps -a --filter "ancestor=pi-gen" --format "{{.ID}}" | head -n 1)
+          
+          if [ -n "$CONTAINER_ID" ]; then
+            echo "Found pi-gen container: $CONTAINER_ID"
+            
+            # Create extraction directory
+            mkdir -p extracted-container
+            
+            # Extract work directory (contains logs)
+            echo "Extracting work directory..."
+            docker cp "$CONTAINER_ID:/pi-gen/work/" ./extracted-container/ 2>/dev/null || echo "Failed to extract work directory"
+            
+            # Extract deploy directory (contains built images)
+            echo "Extracting deploy directory..."
+            docker cp "$CONTAINER_ID:/pi-gen/deploy/" ./extracted-container/ 2>/dev/null || echo "Failed to extract deploy directory"
+            
+            # Get container logs
+            echo "Getting container logs..."
+            docker logs "$CONTAINER_ID" > extracted-container/docker-container.log 2>&1 || echo "Failed to get container logs"
+
+            # Try to extract OpenCarDev metadata generated inside the chroot
+            echo "Extracting OpenCarDev metadata (versions and SBOM) if present..."
+            mkdir -p extracted-container/opencardev
+            # Find possible paths within work dir
+            METAPATH=$(docker exec "$CONTAINER_ID" /bin/sh -lc 'ls -d /pi-gen/work/*/stage60/rootfs/etc/opencardev 2>/dev/null | head -n 1') || true
+            if [ -n "$METAPATH" ]; then
+              echo "Found metadata path: $METAPATH"
+              docker cp "$CONTAINER_ID:${METAPATH}/" ./extracted-container/opencardev/ 2>/dev/null || echo "Failed to copy metadata files"
+              ls -la extracted-container/opencardev/ || true
+            else
+              echo "No metadata directory found in container work tree"
+            fi
+            
+            # List what we extracted
+            echo "Extracted content:"
+            find extracted-container -type f 2>/dev/null | head -20 || echo "No files found in extraction"
+            
+          else
+            echo "No pi-gen container found"
+            echo "Available containers:"
+            docker ps -a
+            
+            # Fallback: check if directories exist on host (volume mounts)
+            mkdir -p extracted-container
+            if [ -d work ]; then
+              echo "Found work directory on host, copying..."
+              cp -r work extracted-container/ 2>/dev/null || echo "Failed to copy work directory"
+            fi
+            if [ -d deploy ]; then
+              echo "Found deploy directory on host, copying..."
+              cp -r deploy extracted-container/ 2>/dev/null || echo "Failed to copy deploy directory"
+            fi
+          fi
+          
+          echo "=== Final extraction summary ==="
+          echo "Host deploy directory:"
+          ls -la deploy/ 2>/dev/null || echo "No host deploy directory"
+          echo "Extracted container content:"
+          find extracted-container -name "deploy" -type d -exec ls -la {} \; 2>/dev/null || echo "No extracted deploy directory"
+          echo "Log files found:"
+          find extracted-container -name "*.log" -type f 2>/dev/null || echo "No log files in extraction"
+          
+      - name: Verify build output
+        working-directory: pi-gen
+        run: |
+          echo "=== Build Output for ${{ matrix.arch }} ==="
+          ls -la deploy/ || echo "No deploy directory found"
+          echo "==================="
+          
+          if [ -d deploy ]; then
+            echo "=== Deploy Directory Contents ==="
+            find deploy -type f -exec ls -lh {} \;
+            echo "================================="
+          fi
+          
+      - name: Get artifact information
+        id: get-artifact-name
+        working-directory: pi-gen
+        run: |
+          echo "=== Deploy Directory Contents for ${{ matrix.arch }} ==="
+          ls -hla deploy/ || echo "No deploy directory found"
+          
+          if [ ! -d deploy ]; then
+            echo "Error: Deploy directory not found!"
+            exit 1
+          fi
+          
+          # List all files in deploy directory
+          find deploy -type f -exec ls -lh {} \;
+          
+          # Look for image files (lite images should be .xz compressed)
+          ARTIFACT_PATHNAME=""
+          if ls deploy/*lite*.xz >/dev/null 2>&1; then
+            ARTIFACT_PATHNAME=$(ls deploy/*lite*.xz | head -n 1)
+          elif ls deploy/*.xz >/dev/null 2>&1; then  
+            ARTIFACT_PATHNAME=$(ls deploy/*.xz | head -n 1)
+          elif ls deploy/*.zip >/dev/null 2>&1; then
+            ARTIFACT_PATHNAME=$(ls deploy/*.zip | head -n 1)
+          elif ls deploy/*.img >/dev/null 2>&1; then
+            ARTIFACT_PATHNAME=$(ls deploy/*.img | head -n 1)
+          fi
+          
+          if [ -z "$ARTIFACT_PATHNAME" ]; then
+            echo "Error: No image artifact found in deploy directory!"
+            echo "Available files:"
+            ls -la deploy/
+            exit 1
+          fi
+          
+          ARTIFACT_NAME=$(basename "$ARTIFACT_PATHNAME")
+          
+          # Find checksum files
+          MD5_PATHNAME=$(find deploy -name "*.md5" | head -n 1)
+          SHA1_PATHNAME=$(find deploy -name "*.sha1" | head -n 1) 
+          SHA256_PATHNAME=$(find deploy -name "*.sha256" | head -n 1)
+          
+          # Set outputs
+          echo "artifact_filename=${ARTIFACT_NAME}" >> $GITHUB_OUTPUT
+          echo "artifact_path=${ARTIFACT_PATHNAME}" >> $GITHUB_OUTPUT
+          
+          if [ -n "$MD5_PATHNAME" ]; then
+            echo "md5_filename=$(basename "$MD5_PATHNAME")" >> $GITHUB_OUTPUT
+            echo "md5_path=${MD5_PATHNAME}" >> $GITHUB_OUTPUT
+          fi
+          
+          if [ -n "$SHA1_PATHNAME" ]; then
+            echo "sha1_filename=$(basename "$SHA1_PATHNAME")" >> $GITHUB_OUTPUT
+            echo "sha1_path=${SHA1_PATHNAME}" >> $GITHUB_OUTPUT
+          fi
+          
+          if [ -n "$SHA256_PATHNAME" ]; then
+            echo "sha256_filename=$(basename "$SHA256_PATHNAME")" >> $GITHUB_OUTPUT
+            echo "sha256_path=${SHA256_PATHNAME}" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "Found artifacts for ${{ matrix.arch }}:"
+          echo "  Main: ${ARTIFACT_NAME}"
+          echo "  MD5: $(basename "$MD5_PATHNAME" 2>/dev/null || echo 'none')"
+          echo "  SHA1: $(basename "$SHA1_PATHNAME" 2>/dev/null || echo 'none')"
+          echo "  SHA256: $(basename "$SHA256_PATHNAME" 2>/dev/null || echo 'none')"
+          
+      - name: Debug - List available log files
+        if: always()
+        run: |
+          echo "=== Checking for log files and directory structure for ${{ matrix.arch }} ==="
+          
+          echo "Current directory contents:"
+          ls -la . || echo "Cannot list current directory"
+          
+          echo "Pi-gen directory contents:"
+          ls -la pi-gen/ || echo "Pi-gen directory not found"
+          
+          echo "Looking for work directory:"
+          find . -name "work" -type d 2>/dev/null || echo "No work directories found"
+          
+          echo "All log files in project:"
+          find . -name "*.log" -type f 2>/dev/null || echo "No log files found anywhere"
+          
+          echo "Work directory structure (if exists):"
+          find pi-gen/work -type f -name "*.log" 2>/dev/null || echo "No log files found in work directory"
+          
+          echo "Specific build log location:"
+          ls -la pi-gen/work/*/build.log 2>/dev/null || echo "Main build log not found"
+          
+          echo "Stage logs:"
+          find pi-gen/work -path "*/stage*" -name "*.log" 2>/dev/null || echo "No stage logs found"
+          
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pi-gen-lite-${{ matrix.arch }}-${{ steps.get_version.outputs.builddate }}-${{ steps.get_version.outputs.version }}
+          path: |
+            pi-gen/deploy/
+            pi-gen/extracted-container/deploy/
+            pi-gen/extracted-container/work/
+            pi-gen/extracted-container/opencardev/
+            pi-gen/extracted-container/docker-container.log
+          retention-days: 30
+          
+      - name: Upload build logs on failure
+        if: always() && (failure() || cancelled())
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-failure-${{ matrix.arch }}-${{ steps.get_version.outputs.builddate }}-${{ steps.get_version.outputs.version }}
+          path: |
+            pi-gen/extracted-container/
+            pi-gen/work/
+            pi-gen/deploy/
+            pi-gen/*.log
+          retention-days: 7
+
+  # Summary job to collect results from both architectures
+  build-summary:
+    name: Build Summary
+    needs: [build-lite-images]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Build Success Summary
+        if: needs.build-lite-images.result == 'success'
+        run: |
+          echo "✅ Pi-gen lite image builds completed successfully for both architectures!"
+          echo "Version: ${{ needs.build-lite-images.outputs.version }}"
+          echo "Date: ${{ needs.build-lite-images.outputs.builddate }}"
+          echo "Debian Release: ${{ github.event.inputs.release || 'trixie' }}"
+          echo ""
+          echo "Built images:"
+          echo "  - ARMv7 (armhf) lite image"
+          echo "  - ARM64 lite image"
+          echo ""
+          echo "Images are based on Raspberry Pi OS Lite (stage2) and include:"
+          echo "  - Basic Raspberry Pi OS Lite system"
+          echo "  - SSH enabled"
+          echo "  - XZ compressed for smaller download size"
+          echo "  - Debian ${{ github.event.inputs.release || 'trixie' }} base"
+
+      - name: Publish run ID and release helper
+        if: needs.build-lite-images.result == 'success'
+        run: |
+          echo "Build Run ID: ${{ github.run_id }}" | tee run-info.txt
+          echo "Version: ${{ needs.build-lite-images.outputs.version }}" | tee -a run-info.txt
+          echo "Build Date: ${{ needs.build-lite-images.outputs.builddate }}" | tee -a run-info.txt
+          echo "\nTo create a release from these artifacts, run:" | tee -a run-info.txt
+          echo "  gh workflow run release-from-pi-gen.yml -f build_run_id=${{ github.run_id }} -f version='${{ needs.build-lite-images.outputs.version }}'" | tee -a run-info.txt
+          echo "\nOr dispatch via UI and provide build_run_id=${{ github.run_id }}" | tee -a run-info.txt
+
+      - name: Upload run info
+        if: needs.build-lite-images.result == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-run-info-${{ needs.build-lite-images.outputs.builddate }}
+          path: run-info.txt
+          retention-days: 30
+          
+      - name: Build Failure Summary
+        if: needs.build-lite-images.result == 'failure'
+        run: |
+          echo "❌ Pi-gen lite image build failed!"
+          echo "Check the build logs for details."
+          exit 1
+
+  # Notification job
+  notify:
+    name: Send Build Notification
+    needs: [build-lite-images]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Build Success Notification
+        if: needs.build-lite-images.result == 'success'
+        run: |
+          echo "✅ Pi-gen lite builds completed successfully!"
+          echo "Version: ${{ needs.build-lite-images.outputs.version }}"
+          echo "Date: ${{ needs.build-lite-images.outputs.builddate }}"
+          echo "Architectures: armhf, arm64"
+          
+      - name: Build Failure Notification
+        if: needs.build-lite-images.result == 'failure'
+        run: |
+          echo "❌ Pi-gen lite build failed!"
+          echo "Check the build logs for details."
+          exit 1
+
+  # Optional automatic release job using the reusable release workflow
+  create-release:
+    name: Create Release (optional)
+    needs: [build-lite-images]
+    if: ${{ needs.build-lite-images.result == 'success' && ((github.event_name == 'workflow_dispatch' && github.event.inputs.auto_release == 'true') || (github.event_name == 'push' && github.ref == 'refs/heads/main')) }}
+    uses: ./.github/workflows/release-from-pi-gen.yml
+    with:
+      build_run_id: ${{ github.run_id }}
+      version: ${{ needs.build-lite-images.outputs.version }}
+      create_draft: ${{ github.event.inputs.create_release_draft == 'true' }}
+    secrets: inherit
