@@ -52,14 +52,14 @@ WORKDIR /build
 COPY . .
 
 # Build project
-RUN mkdir -p build && cd build && \
+RUN mkdir -p build logs && cd build && \
     cmake .. \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=/usr \
       -DBUILD_TESTS=OFF \
-      -DVERSION=${VERSION} && \
-    cmake --build . -j$(nproc) && \
-    cmake --install . --prefix /staging/usr
+      -DVERSION=${VERSION} 2>&1 | tee /build/logs/cmake-configure.log && \
+    cmake --build . -j$(nproc) 2>&1 | tee /build/logs/cmake-build.log && \
+    cmake --install . --prefix /staging/usr 2>&1 | tee /build/logs/cmake-install.log
 
 # Create DEB package
 RUN mkdir -p /staging/DEBIAN && \
@@ -86,8 +86,9 @@ EOF
 
 # Build the DEB package
 RUN mkdir -p /output && \
-    dpkg-deb --build /staging /output/crankshaft_${VERSION}_${ARCH}.deb
+    dpkg-deb --build /staging /output/crankshaft_${VERSION}_${ARCH}.deb 2>&1 | tee /build/logs/dpkg-deb.log
 
 # Final stage - export artifacts
 FROM scratch AS exporter
 COPY --from=builder /output/*.deb /
+COPY --from=builder /build/logs/*.log /logs/
