@@ -61,32 +61,12 @@ RUN mkdir -p build logs && cd build && \
     cmake --build . -j$(nproc) 2>&1 | tee /build/logs/cmake-build.log && \
     cmake --install . --prefix /staging/usr 2>&1 | tee /build/logs/cmake-install.log
 
-# Create DEB package
-RUN mkdir -p /staging/DEBIAN && \
-    cat > /staging/DEBIAN/control << EOF
-Package: crankshaft
-Version: ${VERSION}
-Section: misc
-Priority: optional
-Architecture: ${ARCH}
-Depends: libqt6core6, libqt6gui6, libqt6qml6, libqt6quick6, libqt6websockets6, libboost-system1.83.0, libprotobuf32, libssl3, libusb-1.0-0
-Maintainer: OpenCarDev Team <opencardevuk@gmail.com>
-Description: Automotive infotainment system with extensible framework
- Crankshaft is a modern automotive infotainment system built with Qt6.
- It features an extensible plugin framework, Android Auto support,
- WebSocket-based event system, and a responsive Material Design UI.
- .
- Features:
-  - Qt6-based modern UI
-  - Android Auto integration
-  - Multi-language support
-  - Theme system with dark/light mode
-  - Extension framework for plugins
-EOF
-
-# Build the DEB package
-RUN mkdir -p /output && \
-    dpkg-deb --build /staging /output/crankshaft_${VERSION}_${ARCH}.deb 2>&1 | tee /build/logs/dpkg-deb.log
+# Build DEB packages via CPack (component install produces core/ui)
+RUN mkdir -p /output && cd build && \
+        cpack -G DEB -C Release \
+            -B /output \
+            -D CPACK_DEB_COMPONENT_INSTALL=ON \
+            -D CPACK_PACKAGE_VERSION=${VERSION} 2>&1 | tee /build/logs/cpack.log
 
 # Final stage - export artifacts
 FROM scratch AS exporter
