@@ -16,7 +16,7 @@
 #  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
 
 ARG DEBIAN_VERSION=trixie
-FROM debian:${DEBIAN_VERSION} as builder
+FROM debian:${DEBIAN_VERSION} AS builder
 
 ARG VERSION=0.0.0+dev
 ARG ARCH=amd64
@@ -89,5 +89,5 @@ RUN mkdir -p /output && \
     dpkg-deb --build /staging /output/crankshaft_${VERSION}_${ARCH}.deb
 
 # Final stage - export artifacts
-FROM scratch as exporter
+FROM scratch AS exporter
 COPY --from=builder /output/*.deb /
