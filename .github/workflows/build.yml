@@ -191,16 +191,6 @@ jobs:
         path: build-output/*.deb
         retention-days: 30
 
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: crankshaft-${{ matrix.arch }}-artifacts
-        path: |
-          build-output/CrankshaftReborn
-          build-output/crankshaft-core
-          build-output/crankshaft-ui
-        retention-days: 7
-
   sbom:
     name: Generate SBOM
     needs: [prepare, build]
@@ -355,7 +345,7 @@ jobs:
         EOF
 
         # Merge components into SBOM
-        jq '.components = input' crankshaft-sbom.json components.json > crankshaft-sbom-final.json
+        jq --slurpfile comps components.json '.components = $comps[0]' crankshaft-sbom.json > crankshaft-sbom-final.json
 
     - name: Validate SBOM
       run: |
