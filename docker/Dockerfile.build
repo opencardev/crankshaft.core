@@ -85,7 +85,8 @@ Description: Automotive infotainment system with extensible framework
 EOF
 
 # Build the DEB package
-RUN dpkg-deb --build /staging /output/crankshaft_${VERSION}_${ARCH}.deb
+RUN mkdir -p /output && \
+    dpkg-deb --build /staging /output/crankshaft_${VERSION}_${ARCH}.deb
 
 # Final stage - export artifacts
 FROM scratch as exporter
