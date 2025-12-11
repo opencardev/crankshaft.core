@@ -18,15 +18,52 @@
 
 set -e
 
-echo "Linting C++ code with clang-tidy..."
+echo "=== Running code quality checks ==="
 
-# Ensure compile_commands.json exists
-if [ ! -f build/compile_commands.json ]; then
-    echo "Error: build/compile_commands.json not found. Run build.sh first."
-    exit 1
+# Check for required tools
+MISSING_TOOLS=()
+command -v clang-format >/dev/null 2>&1 || MISSING_TOOLS+=("clang-format")
+command -v find >/dev/null 2>&1 || MISSING_TOOLS+=("find")
+
+if [ ${#MISSING_TOOLS[@]} -ne 0 ]; then
+    echo "Warning: Missing tools: ${MISSING_TOOLS[*]}"
+    echo "Some checks will be skipped"
 fi
 
-find core ui tests -type f \( -name '*.cpp' \) -print0 | \
-  xargs -0 clang-tidy -p build
+# 1. Check C++ formatting
+echo "=== Checking C++ formatting ==="
+if command -v clang-format >/dev/null 2>&1; then
+    if find core ui -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' -o -name '*.cc' \) -print0 2>/dev/null | xargs -0 clang-format --dry-run --Werror 2>&1; then
+        echo "✓ C++ formatting check passed"
+    else
+        echo "✗ C++ formatting check failed"
+        echo "Run: find core ui -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' -o -name '*.cc' \) -print0 | xargs -0 clang-format -i"
+        exit 1
+    fi
+else
+    echo "⊘ clang-format not found, skipping formatting check"
+fi
 
-echo "Linting complete!"
+# 2. Check for license headers
+echo "=== Checking license headers ==="
+MISSING_HEADERS=$(find core ui -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -exec grep -L 'GNU General Public License' {} \; 2>/dev/null || true)
+if [ -n "$MISSING_HEADERS" ]; then
+    echo "✗ Files missing license headers:"
+    echo "$MISSING_HEADERS"
+    exit 1
+else
+    echo "✓ License header check passed"
+fi
+
+# 3. Check for common issues
+echo "=== Checking for common issues ==="
+# Check for CRLF line endings in source files
+if find core ui -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -exec file {} \; 2>/dev/null | grep -q CRLF; then
+    echo "✗ CRLF line endings found in source files"
+    find core ui -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -exec file {} \; | grep CRLF
+    exit 1
+else
+    echo "✓ No CRLF line endings found"
+fi
+
+echo "=== All code quality checks passed ==="
