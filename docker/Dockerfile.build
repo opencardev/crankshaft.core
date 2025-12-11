@@ -69,8 +69,13 @@ RUN mkdir -p /output && cd build && \
             -D CPACK_PACKAGE_VERSION=${VERSION} 2>&1 | tee /build/logs/cpack.log
 
 # Build source DEB containing full project sources
-RUN mkdir -p /srcpkg/DEBIAN /srcpkg/usr/share/crankshaft-source && \
-    tar czf /srcpkg/usr/share/crankshaft-source/crankshaft-${VERSION}-source.tar.gz -C /build .. && \
+RUN mkdir -p /srcpkg/DEBIAN /srcpkg/usr/share/crankshaft-source /tmp/src && \
+    tar czf /tmp/src/crankshaft-${VERSION}-source.tar.gz \
+      --exclude='.git' \
+      --exclude='build' \
+      --exclude='*.deb' \
+      -C /build .. && \
+    mv /tmp/src/crankshaft-${VERSION}-source.tar.gz /srcpkg/usr/share/crankshaft-source/ && \
     cat > /srcpkg/DEBIAN/control << 'EOF'
 Package: crankshaft-src
 Version: ${VERSION}
