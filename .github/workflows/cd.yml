@@ -27,18 +27,43 @@ on:
 
 jobs:
   publish-apt:
-    if: github.event.workflow_run.conclusion == 'success'
-    uses: ./.github/workflows/trigger-apt-publish.yml
-    with:
-      build_run_id: ${{ github.event.workflow_run.id }}
-      distribution: trixie
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger APT Repository Update
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const workflow = fs.readFileSync('./.github/workflows/trigger-apt-publish.yml', 'utf8');
+            console.log('Triggering APT publish for run: ${{ github.event.workflow_run.id }}');
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'trigger-apt-publish.yml',
+              ref: 'main',
+              inputs: {
+                build_run_id: '${{ github.event.workflow_run.id }}',
+                distribution: 'trixie'
+              }
+            });
 
   build-pi-images:
     needs: publish-apt
-    if: github.event.workflow_run.conclusion == 'success'
-    uses: ./.github/workflows/build-pi-gen-lite.yml
-    with:
-      version: ${{ format('{0}-{1}', github.event.workflow_run.head_branch || 'main', github.event.workflow_run.run_number) }}
-      release: trixie
-      auto_release: false
-      create_release_draft: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Pi-Gen Build
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'build-pi-gen-lite.yml',
+              ref: 'main',
+              inputs: {
+                version: '${{ format('{0}-{1}', github.event.workflow_run.head_branch || 'main', github.event.workflow_run.run_number) }}',
+                release: 'trixie',
+                auto_release: 'false',
+                create_release_draft: 'false'
+              }
+            });
