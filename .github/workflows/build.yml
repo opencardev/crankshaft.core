@@ -15,29 +15,21 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
 
-name: Crankshaft Build and Test
+name: Crankshaft Build (Reusable)
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-      - 'feature/*'
-      - 'bugfix/*'
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.gitignore'
-
-  pull_request:
-    branches:
-      - main
-      - develop
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.gitignore'
-
+  workflow_call:
+    inputs:
+      version:
+        description: 'Build version (leave empty for auto-generated)'
+        required: false
+        default: ''
+        type: string
+      architectures:
+        description: 'Space-separated architectures (e.g. "amd64 arm64 armhf")'
+        required: false
+        default: 'amd64 arm64 armhf'
+        type: string
   workflow_dispatch:
     inputs:
       version:
@@ -45,21 +37,11 @@ on:
         required: false
         default: ''
         type: string
-      architecture:
-        description: 'Architecture to build (all, amd64, arm64, armhf)'
+      architectures:
+        description: 'Space-separated architectures (e.g. "amd64 arm64 armhf")'
         required: false
-        default: 'all'
-        type: choice
-        options:
-          - all
-          - amd64
-          - arm64
-          - armhf
-      trigger_release:
-        description: 'Trigger release workflow after build'
-        required: false
-        default: false
-        type: boolean
+        default: 'amd64 arm64 armhf'
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -98,19 +80,11 @@ jobs:
       - name: Generate build matrix
         id: matrix
         run: |
-          ARCH_INPUT="${{ github.event.inputs.architecture }}"
-          if [ -z "$ARCH_INPUT" ] || [ "$ARCH_INPUT" = "all" ]; then
+          ARCH_INPUT="${{ inputs.architectures }}"
+          if [ -z "$ARCH_INPUT" ]; then
             ARCHES="amd64 arm64 armhf"
           else
             ARCHES="$ARCH_INPUT"
-          fi
-
-          # Only build amd64 for non-main/PR pushes (faster feedback on feature branches)
-          if [ "${{ github.event_name }}" = "push" ] && \
-             [ "${{ github.ref }}" != "refs/heads/main" ] && \
-             [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
-            ARCHES="amd64"
-            echo "Building only amd64 for feature/bugfix branch push"
           fi
 
           platform_for_arch() {
@@ -373,24 +347,3 @@ jobs:
   #  needs: [build]
   #  if: github.event_name == 'pull_request' && success()
   #  uses: ./.github/workflows/changelog.yml@main
-
-  trigger-release:
-    name: Trigger Release
-    needs: [prepare, build, sbom]
-    if: github.event_name == 'workflow_dispatch' && inputs.trigger_release == true
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger release workflow
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'release.yml',
-              ref: context.ref,
-              inputs: {
-                build_run_id: context.runId.toString(),
-                version: '${{ needs.prepare.outputs.version }}'
-              }
-            });

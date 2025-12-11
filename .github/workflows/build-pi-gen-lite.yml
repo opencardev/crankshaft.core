@@ -18,6 +18,27 @@
 name: build-pi-gen-lite
 
 on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version'
+        required: true
+        type: string
+      release:
+        description: 'Debian Release'
+        required: false
+        default: 'trixie'
+        type: string
+      auto_release:
+        description: 'Automatically create a GitHub release from this build'
+        required: false
+        default: false
+        type: boolean
+      create_release_draft:
+        description: 'Create the release as a draft'
+        required: false
+        default: false
+        type: boolean
   workflow_dispatch:
     inputs:
       version:
@@ -184,9 +205,9 @@ jobs:
         id: get_version
         run: |
           # Extract version from input or default
-          VERSION="${{ github.event.inputs.version || 'DEV' }}"
+          VERSION="${{ inputs.version || github.event.inputs.version || 'DEV' }}"
           ARCH="${{ matrix.arch }}"
-          RELEASE="${{ github.event.inputs.release || 'trixie' }}"
+          RELEASE="${{ inputs.release || github.event.inputs.release || 'trixie' }}"
           
           # Get git information
           BUILD_HASH=$(git rev-parse --short "$GITHUB_SHA")

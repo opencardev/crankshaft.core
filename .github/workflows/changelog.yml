@@ -18,6 +18,10 @@
 name: Changelog
 
 on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
   workflow_call:
     inputs:
       range:
@@ -25,10 +29,17 @@ on:
         required: false
         default: ''
         type: string
+    outputs:
+      version:
+        description: 'Generated version string'
+        value: ${{ jobs.generate.outputs.version }}
 
 jobs:
   generate:
+    if: github.event_name == 'workflow_call' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main')
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -63,11 +74,32 @@ jobs:
             git log --pretty=format:"- %h %s" ${RANGE}
           } > changelog-ci.md
 
+      - name: Generate version
+        id: version
+        run: |
+          BUILD_YEAR=$(date -u +"%Y")
+          BUILD_MONTH=$(date -u +"%m")
+          BUILD_DAY=$(date -u +"%d")
+          VERSION="${BUILD_YEAR}.${BUILD_MONTH}.${BUILD_DAY}"
+          COMMIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+          if [ "$COMMIT_SHA" != "unknown" ]; then
+            VERSION="${VERSION}+git.${COMMIT_SHA}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "${VERSION}" > version.txt
+
       - name: Upload changelog artifact
         uses: actions/upload-artifact@v4
         with:
           name: changelog-latest
           path: changelog-ci.md
+          retention-days: 30
+
+      - name: Upload version artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog-version
+          path: version.txt
           retention-days: 30
 
       - name: Print summary

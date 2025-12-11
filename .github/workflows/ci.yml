@@ -1,0 +1,57 @@
+# Project: Crankshaft
+# This file is part of Crankshaft project.
+# Copyright (C) 2025 OpenCarDev Team
+#
+#  Crankshaft is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Crankshaft is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
+
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+  pull_request:
+    branches:
+      - '**'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run lint checks
+        run: |
+          if [ -x ./scripts/lint.sh ]; then
+            ./scripts/lint.sh
+          else
+            echo "lint.sh not found; skipping lint" && exit 0
+          fi
+
+  build-packages:
+    needs: code-quality
+    uses: ./.github/workflows/build.yml
+    with:
+      architectures: ${{ (github.ref_name == 'main' || github.ref_name == 'develop' || github.base_ref == 'main' || github.base_ref == 'develop') && 'amd64 arm64 armhf' || 'amd64' }}
