@@ -71,7 +71,7 @@ RUN mkdir -p /output && cd build && \
 # Build source DEB containing full project sources
 RUN mkdir -p /srcpkg/DEBIAN /srcpkg/usr/share/crankshaft-source && \
     tar czf /srcpkg/usr/share/crankshaft-source/crankshaft-${VERSION}-source.tar.gz -C /build .. && \
-    cat > /srcpkg/DEBIAN/control << EOF
+    cat > /srcpkg/DEBIAN/control << 'EOF'
 Package: crankshaft-src
 Version: ${VERSION}
 Section: misc
@@ -81,7 +81,7 @@ Maintainer: OpenCarDev Team <opencardevuk@gmail.com>
 Description: Source package for Crankshaft
  Full project source code for the Crankshaft infotainment system.
 EOF
-    dpkg-deb --build /srcpkg /output/crankshaft-src_${VERSION}_all.deb 2>&1 | tee /build/logs/dpkg-src.log
+    && dpkg-deb --build /srcpkg /output/crankshaft-src_${VERSION}_all.deb 2>&1 | tee /build/logs/dpkg-src.log
 
 # Final stage - export artifacts
 FROM scratch AS exporter
