@@ -40,6 +40,10 @@ on:
           - bookworm
           - both
 
+permissions:
+  actions: write
+  contents: read
+
 jobs:
   publish-apt:
     runs-on: ubuntu-latest
