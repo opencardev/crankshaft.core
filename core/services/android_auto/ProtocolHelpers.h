@@ -20,11 +20,12 @@
 #ifndef PROTOCOLHELPERS_H
 #define PROTOCOLHELPERS_H
 
-#include <aasdk/Common/Data.hpp>
 #include <aap_protobuf/service/control/message/AudioFocusNotification.pb.h>
 #include <aap_protobuf/service/inputsource/message/InputReport.pb.h>
-#include <aap_protobuf/service/inputsource/message/TouchEvent.pb.h>
 #include <aap_protobuf/service/inputsource/message/KeyEvent.pb.h>
+#include <aap_protobuf/service/inputsource/message/TouchEvent.pb.h>
+
+#include <aasdk/Common/Data.hpp>
 
 namespace crankshaft {
 namespace protocol {
@@ -33,25 +34,25 @@ namespace protocol {
  * @brief Touch action types for touch input events
  */
 enum class TouchAction {
-  ACTION_DOWN = 0,   // Finger touches screen
-  ACTION_UP = 1,     // Finger lifts from screen
-  ACTION_MOVED = 2   // Finger moves on screen
+  ACTION_DOWN = 0,  // Finger touches screen
+  ACTION_UP = 1,    // Finger lifts from screen
+  ACTION_MOVED = 2  // Finger moves on screen
 };
 
 /**
  * @brief Key action types for key input events
  */
 enum class KeyAction {
-  ACTION_DOWN = 0,   // Key pressed
-  ACTION_UP = 1      // Key released
+  ACTION_DOWN = 0,  // Key pressed
+  ACTION_UP = 1     // Key released
 };
 
 /**
  * @brief Audio focus state types
  */
 enum class AudioFocusState {
-  GAIN = 1,   // Give audio focus to Android Auto
-  LOSS = 2    // Take audio focus from Android Auto
+  GAIN = 1,  // Give audio focus to Android Auto
+  LOSS = 2   // Take audio focus from Android Auto
 };
 
 /**
@@ -63,9 +64,8 @@ enum class AudioFocusState {
  * @param timestamp Event timestamp in microseconds
  * @return InputReport protobuf message
  */
-aap_protobuf::service::inputsource::message::InputReport createTouchInputReport(float x, float y, TouchAction action,
-                                          int pointerId = 0,
-                                          uint64_t timestamp = 0);
+aap_protobuf::service::inputsource::message::InputReport createTouchInputReport(
+    float x, float y, TouchAction action, int pointerId = 0, uint64_t timestamp = 0);
 
 /**
  * @brief Create a key input report message
@@ -76,17 +76,17 @@ aap_protobuf::service::inputsource::message::InputReport createTouchInputReport(
  * @param metaState Key modifier state (Shift, Ctrl, Alt, etc.)
  * @return InputReport protobuf message
  */
-aap_protobuf::service::inputsource::message::InputReport createKeyInputReport(int keyCode, KeyAction action,
-                                        uint64_t timestamp = 0,
-                                        bool longPress = false,
-                                        int metaState = 0);
+aap_protobuf::service::inputsource::message::InputReport createKeyInputReport(
+    int keyCode, KeyAction action, uint64_t timestamp = 0, bool longPress = false,
+    int metaState = 0);
 
 /**
  * @brief Create an audio focus notification message
  * @param focusState Focus state to set (GAIN or LOSS)
  * @return AudioFocusNotification protobuf message
  */
-aap_protobuf::service::control::message::AudioFocusNotification createAudioFocusNotification(AudioFocusState focusState);
+aap_protobuf::service::control::message::AudioFocusNotification createAudioFocusNotification(
+    AudioFocusState focusState);
 
 /**
  * @brief Get current timestamp in microseconds

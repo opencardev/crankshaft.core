@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <QString>
-#include <QObject>
 #include <QIODevice>
+#include <QObject>
+#include <QString>
 #include <memory>
 
 /**
@@ -109,8 +109,7 @@ class AudioOutputDevice : public AudioDevice {
   Q_OBJECT
 
  public:
-  explicit AudioOutputDevice(QObject* parent = nullptr)
-      : AudioDevice(parent) {}
+  explicit AudioOutputDevice(QObject* parent = nullptr) : AudioDevice(parent) {}
   ~AudioOutputDevice() override = default;
 
   /**
@@ -160,8 +159,7 @@ class AudioInputDevice : public AudioDevice {
   Q_OBJECT
 
  public:
-  explicit AudioInputDevice(QObject* parent = nullptr)
-      : AudioDevice(parent) {}
+  explicit AudioInputDevice(QObject* parent = nullptr) : AudioDevice(parent) {}
   ~AudioInputDevice() override = default;
 
   /**

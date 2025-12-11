@@ -17,15 +17,15 @@
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../wireless/BluetoothManager.h"
 #include <QDebug>
+
+#include "../wireless/BluetoothManager.h"
 
 // Placeholder implementation of BluetoothManager
 
 class BluetoothManagerImpl : public BluetoothManager {
  public:
-  explicit BluetoothManagerImpl(QObject* parent = nullptr)
-      : BluetoothManager(parent) {}
+  explicit BluetoothManagerImpl(QObject* parent = nullptr) : BluetoothManager(parent) {}
 
   bool initialise() override {
     qDebug() << "[Bluetooth] Initialising BluetoothManager";
@@ -37,8 +37,12 @@ class BluetoothManagerImpl : public BluetoothManager {
     qDebug() << "[Bluetooth] Deinitialising BluetoothManager";
   }
 
-  bool isEnabled() const override { return true; }
-  bool setEnabled(bool enabled) override { return true; }
+  bool isEnabled() const override {
+    return true;
+  }
+  bool setEnabled(bool enabled) override {
+    return true;
+  }
 
   ConnectionState getConnectionState() const override {
     return ConnectionState::ON;
@@ -62,7 +66,9 @@ class BluetoothManagerImpl : public BluetoothManager {
     return true;
   }
 
-  bool isDiscovering() const override { return false; }
+  bool isDiscovering() const override {
+    return false;
+  }
 
   QVector<BluetoothDevice> getDiscoveredDevices() const override {
     return {};
@@ -70,8 +76,13 @@ class BluetoothManagerImpl : public BluetoothManager {
 
   QVector<BluetoothDevice> getPairedDevices() const override {
     return {
-        {"Phone", "AA:BB:CC:DD:EE:FF", DeviceType::PHONE, -50, true,
-         true, {AudioProfile::A2DP, AudioProfile::HFP}},
+        {"Phone",
+         "AA:BB:CC:DD:EE:FF",
+         DeviceType::PHONE,
+         -50,
+         true,
+         true,
+         {AudioProfile::A2DP, AudioProfile::HFP}},
     };
   }
 
@@ -99,22 +110,26 @@ class BluetoothManagerImpl : public BluetoothManager {
 
   QVector<BluetoothDevice> getConnectedDevices() const override {
     return {
-        {"Phone", "AA:BB:CC:DD:EE:FF", DeviceType::PHONE, -50, true,
-         true, {AudioProfile::A2DP, AudioProfile::HFP}},
+        {"Phone",
+         "AA:BB:CC:DD:EE:FF",
+         DeviceType::PHONE,
+         -50,
+         true,
+         true,
+         {AudioProfile::A2DP, AudioProfile::HFP}},
     };
   }
 
   bool connectAudio(const QString& address, AudioProfile profile) override {
-    qDebug() << "[Bluetooth] Connecting audio profile" << static_cast<int>(profile)
-             << "on" << address;
+    qDebug() << "[Bluetooth] Connecting audio profile" << static_cast<int>(profile) << "on"
+             << address;
     emit audioConnected(address, profile);
     return true;
   }
 
-  bool disconnectAudio(const QString& address,
-                      AudioProfile profile) override {
-    qDebug() << "[Bluetooth] Disconnecting audio profile"
-             << static_cast<int>(profile) << "on" << address;
+  bool disconnectAudio(const QString& address, AudioProfile profile) override {
+    qDebug() << "[Bluetooth] Disconnecting audio profile" << static_cast<int>(profile) << "on"
+             << address;
     emit audioDisconnected(address, profile);
     return true;
   }

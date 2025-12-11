@@ -19,12 +19,13 @@
 
 #pragma once
 
-#include "VideoDevice.h"
-#include <QString>
 #include <QObject>
-#include <QVector>
 #include <QSize>
+#include <QString>
+#include <QVector>
 #include <memory>
+
+#include "VideoDevice.h"
 
 /**
  * @brief Video system manager
@@ -70,8 +71,7 @@ class VideoManager : public QObject {
   /**
    * @brief Get output device by name
    */
-  virtual VideoOutputDevicePtr getOutputDevice(
-      const QString& name) const = 0;
+  virtual VideoOutputDevicePtr getOutputDevice(const QString& name) const = 0;
 
   /**
    * @brief Get input device by name

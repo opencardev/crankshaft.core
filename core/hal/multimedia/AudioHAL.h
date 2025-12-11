@@ -19,27 +19,21 @@
 
 #pragma once
 
+#include <QByteArray>
 #include <QObject>
 #include <QString>
 #include <QStringList>
-#include <QByteArray>
 
 /**
  * @brief Hardware Abstraction Layer for audio devices
- * 
+ *
  * Provides low-level audio hardware control and configuration.
  */
 class AudioHAL : public QObject {
   Q_OBJECT
 
  public:
-  enum class AudioRoute {
-    Default,
-    Speakers,
-    Headphones,
-    Bluetooth,
-    USB
-  };
+  enum class AudioRoute { Default, Speakers, Headphones, Bluetooth, USB };
   Q_ENUM(AudioRoute)
 
   explicit AudioHAL(QObject* parent = nullptr);
@@ -47,17 +41,17 @@ class AudioHAL : public QObject {
 
   bool setVolume(int volume);
   int getVolume() const;
-  
+
   bool setMute(bool muted);
   bool isMuted() const;
-  
+
   bool setRoute(AudioRoute route);
   AudioRoute getCurrentRoute() const;
-  
+
   bool startStream(const QString& streamName, int sampleRate, int channels);
   bool stopStream(const QString& streamName);
   bool pushAudioData(const QByteArray& data);
-  
+
   QStringList getAvailableDevices() const;
 
  signals:

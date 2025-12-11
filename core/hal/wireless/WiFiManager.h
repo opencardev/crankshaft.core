@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include <QString>
-#include <QObject>
-#include <QVector>
 #include <QJsonObject>
+#include <QObject>
+#include <QString>
+#include <QVector>
 #include <memory>
 
 /**
@@ -110,8 +110,7 @@ class WiFiManager : public QObject {
    * @param password Network password (empty for open networks)
    * @param security Security type
    */
-  virtual bool connect(const QString& ssid, const QString& password,
-                       Security security) = 0;
+  virtual bool connect(const QString& ssid, const QString& password, Security security) = 0;
 
   /**
    * @brief Disconnect from current network

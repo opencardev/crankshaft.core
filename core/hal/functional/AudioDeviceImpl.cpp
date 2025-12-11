@@ -23,26 +23,52 @@
 
 class AudioOutputDeviceImpl : public AudioOutputDevice {
  public:
-  bool initialise(const AudioConfig& config) override { return true; }
+  bool initialise(const AudioConfig& config) override {
+    return true;
+  }
   void deinitialise() override {}
-  bool isInitialised() const override { return true; }
-  AudioConfig getConfig() const override { return {}; }
-  QString getDeviceName() const override { return "Speaker"; }
-  int write(const char* data, int size) override { return size; }
+  bool isInitialised() const override {
+    return true;
+  }
+  AudioConfig getConfig() const override {
+    return {};
+  }
+  QString getDeviceName() const override {
+    return "Speaker";
+  }
+  int write(const char* data, int size) override {
+    return size;
+  }
   void setVolume(int percent) override {}
-  int getVolume() const override { return 70; }
+  int getVolume() const override {
+    return 70;
+  }
   void setMuted(bool muted) override {}
-  bool isMuted() const override { return false; }
+  bool isMuted() const override {
+    return false;
+  }
 };
 
 class AudioInputDeviceImpl : public AudioInputDevice {
  public:
-  bool initialise(const AudioConfig& config) override { return true; }
+  bool initialise(const AudioConfig& config) override {
+    return true;
+  }
   void deinitialise() override {}
-  bool isInitialised() const override { return true; }
-  AudioConfig getConfig() const override { return {}; }
-  QString getDeviceName() const override { return "Microphone"; }
-  int read(char* buffer, int size) override { return 0; }
+  bool isInitialised() const override {
+    return true;
+  }
+  AudioConfig getConfig() const override {
+    return {};
+  }
+  QString getDeviceName() const override {
+    return "Microphone";
+  }
+  int read(char* buffer, int size) override {
+    return 0;
+  }
   void setGain(int percent) override {}
-  int getGain() const override { return 50; }
+  int getGain() const override {
+    return 50;
+  }
 };

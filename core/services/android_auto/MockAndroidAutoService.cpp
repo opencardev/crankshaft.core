@@ -18,12 +18,12 @@
  */
 
 #include "MockAndroidAutoService.h"
-#include <QJsonObject>
-#include <QRandomGenerator>
-#include <QPainter>
 
-MockAndroidAutoService::MockAndroidAutoService(QObject* parent)
-    : AndroidAutoService(parent) {
+#include <QJsonObject>
+#include <QPainter>
+#include <QRandomGenerator>
+
+MockAndroidAutoService::MockAndroidAutoService(QObject* parent) : AndroidAutoService(parent) {
   // Initialize mock device info
   m_device.serialNumber = "MOCK_AA_DEVICE_001";
   m_device.manufacturer = "Google";
@@ -38,17 +38,15 @@ MockAndroidAutoService::MockAndroidAutoService(QObject* parent)
   m_audioTimer = new QTimer(this);
   m_statsTimer = new QTimer(this);
 
-  connect(m_connectionTimer, &QTimer::timeout, this,
-          &MockAndroidAutoService::onConnectionTimer);
-  connect(m_videoTimer, &QTimer::timeout, this,
-          &MockAndroidAutoService::onVideoFrameTimer);
-  connect(m_audioTimer, &QTimer::timeout, this,
-          &MockAndroidAutoService::onAudioDataTimer);
-  connect(m_statsTimer, &QTimer::timeout, this,
-          &MockAndroidAutoService::onStatsTimer);
+  connect(m_connectionTimer, &QTimer::timeout, this, &MockAndroidAutoService::onConnectionTimer);
+  connect(m_videoTimer, &QTimer::timeout, this, &MockAndroidAutoService::onVideoFrameTimer);
+  connect(m_audioTimer, &QTimer::timeout, this, &MockAndroidAutoService::onAudioDataTimer);
+  connect(m_statsTimer, &QTimer::timeout, this, &MockAndroidAutoService::onStatsTimer);
 }
 
-MockAndroidAutoService::~MockAndroidAutoService() { deinitialise(); }
+MockAndroidAutoService::~MockAndroidAutoService() {
+  deinitialise();
+}
 
 bool MockAndroidAutoService::initialise() {
   if (m_state != ConnectionState::DISCONNECTED) {
@@ -68,8 +66,7 @@ void MockAndroidAutoService::deinitialise() {
 }
 
 bool MockAndroidAutoService::startSearching() {
-  if (m_state != ConnectionState::DISCONNECTED &&
-      m_state != ConnectionState::SEARCHING) {
+  if (m_state != ConnectionState::DISCONNECTED && m_state != ConnectionState::SEARCHING) {
     return false;
   }
 
@@ -92,8 +89,7 @@ void MockAndroidAutoService::stopSearching() {
 }
 
 bool MockAndroidAutoService::connectToDevice(const QString& serial) {
-  if (m_state != ConnectionState::SEARCHING &&
-      m_state != ConnectionState::DISCONNECTED) {
+  if (m_state != ConnectionState::SEARCHING && m_state != ConnectionState::DISCONNECTED) {
     return false;
   }
 
@@ -196,7 +192,7 @@ bool MockAndroidAutoService::setAudioEnabled(bool enabled) {
 
   if (isConnected()) {
     if (enabled && !m_audioTimer->isActive() && m_generateAudio) {
-      m_audioTimer->start(20); // 50 Hz audio updates
+      m_audioTimer->start(20);  // 50 Hz audio updates
     } else if (!enabled && m_audioTimer->isActive()) {
       m_audioTimer->stop();
     }
@@ -229,7 +225,7 @@ void MockAndroidAutoService::setGenerateTestAudio(bool enabled) {
   m_generateAudio = enabled;
 
   if (enabled && isConnected() && m_audioEnabled && !m_audioTimer->isActive()) {
-    m_audioTimer->start(20); // 50 Hz
+    m_audioTimer->start(20);  // 50 Hz
   } else if (!enabled && m_audioTimer->isActive()) {
     m_audioTimer->stop();
   }
@@ -341,7 +337,7 @@ void MockAndroidAutoService::generateTestAudioData() {
   QByteArray audioData(samplesPerFrame * bytesPerSample, 0);
   qint16* samples = reinterpret_cast<qint16*>(audioData.data());
 
-  const double frequency = 440.0;  // A4 note
+  const double frequency = 440.0;   // A4 note
   const double amplitude = 8192.0;  // -12 dB
 
   for (int i = 0; i < samplesPerFrame; i++) {
@@ -364,8 +360,7 @@ QImage MockAndroidAutoService::createTestPattern(int frameNumber) {
 
   // Animated gradient background
   int offset = (frameNumber * 2) % m_resolution.width();
-  QLinearGradient gradient(offset, 0, m_resolution.width() + offset,
-                           m_resolution.height());
+  QLinearGradient gradient(offset, 0, m_resolution.width() + offset, m_resolution.height());
   gradient.setColorAt(0, QColor(20, 20, 40));
   gradient.setColorAt(0.5, QColor(40, 40, 80));
   gradient.setColorAt(1, QColor(20, 20, 40));

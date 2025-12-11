@@ -19,12 +19,13 @@
 
 #pragma once
 
-#include "WiFiHAL.h"
-#include "BluetoothHAL.h"
-#include <QString>
 #include <QObject>
+#include <QString>
 #include <QVector>
 #include <memory>
+
+#include "BluetoothHAL.h"
+#include "WiFiHAL.h"
 
 /**
  * @brief Network connectivity service

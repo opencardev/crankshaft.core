@@ -19,21 +19,22 @@
 
 #pragma once
 
-#include "../../transport/Transport.h"
-#include <QTimer>
-#include <QTime>
 #include <QQueue>
+#include <QTime>
+#include <QTimer>
+
+#include "../../transport/Transport.h"
 
 /**
  * @brief Mock/virtual transport for testing
- * 
+ *
  * Simulates a transport layer without requiring actual hardware.
  * Useful for:
  *   - Unit testing functional devices
  *   - Development without hardware
  *   - Simulating multiple devices
  *   - Testing error conditions
- * 
+ *
  * Can inject data to simulate received data, and captures
  * written data for verification in tests.
  */
@@ -44,13 +45,21 @@ class MockTransport : public Transport {
   explicit MockTransport(const QString& name = "Mock", QObject* parent = nullptr);
   ~MockTransport() override;
 
-  TransportType getType() const override { return TransportType::VIRTUAL; }
-  QString getName() const override { return m_name; }
+  TransportType getType() const override {
+    return TransportType::VIRTUAL;
+  }
+  QString getName() const override {
+    return m_name;
+  }
 
   bool open() override;
   void close() override;
-  bool isOpen() const override { return m_isOpen; }
-  TransportState getState() const override { return m_state; }
+  bool isOpen() const override {
+    return m_isOpen;
+  }
+  TransportState getState() const override {
+    return m_state;
+  }
 
   qint64 write(const QByteArray& data) override;
   QByteArray read(qint64 maxSize = 0) override;

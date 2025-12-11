@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include <QString>
 #include <QObject>
 #include <QSize>
+#include <QString>
 #include <memory>
 
 /**
@@ -121,8 +121,7 @@ class VideoOutputDevice : public VideoDevice {
   Q_OBJECT
 
  public:
-  explicit VideoOutputDevice(QObject* parent = nullptr)
-      : VideoDevice(parent) {}
+  explicit VideoOutputDevice(QObject* parent = nullptr) : VideoDevice(parent) {}
   ~VideoOutputDevice() override = default;
 
   /**
@@ -187,8 +186,7 @@ class VideoInputDevice : public VideoDevice {
   Q_OBJECT
 
  public:
-  explicit VideoInputDevice(QObject* parent = nullptr)
-      : VideoDevice(parent) {}
+  explicit VideoInputDevice(QObject* parent = nullptr) : VideoDevice(parent) {}
   ~VideoInputDevice() override = default;
 
   /**

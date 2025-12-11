@@ -25,7 +25,7 @@
 
 /**
  * @brief Abstract interface for audio mixers
- * 
+ *
  * Provides a swappable interface for mixing multiple audio streams.
  * Supports volume control, muting, and automatic format conversion.
  */
@@ -49,9 +49,9 @@ class IAudioMixer : public QObject {
 
   struct ChannelConfig {
     ChannelId id;
-    float volume{1.0f};     // 0.0 to 1.0
+    float volume{1.0f};  // 0.0 to 1.0
     bool muted{false};
-    int priority{0};        // Higher = higher priority
+    int priority{0};  // Higher = higher priority
     AudioFormat format;
   };
 

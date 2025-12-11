@@ -19,32 +19,33 @@
 
 #pragma once
 
+#include <QByteArray>
+#include <QObject>
+#include <QString>
+#include <memory>
+
 #include "AudioHAL.h"
 #include "VideoHAL.h"
-#include <QString>
-#include <QObject>
-#include <QByteArray>
-#include <memory>
 
 /**
  * @brief Configuration for media pipeline
  */
 struct MediaConfig {
-    QString streamName;
-    
-    // Audio configuration
-    bool enableAudio = false;
-    int audioVolume = 100;
-    AudioHAL::AudioRoute audioRoute = AudioHAL::AudioRoute::Default;
-    int audioSampleRate = 48000;
-    int audioChannels = 2;
-    
-    // Video configuration
-    bool enableVideo = false;
-    VideoHAL::VideoResolution videoResolution = VideoHAL::VideoResolution::HD_720p;
-    int videoBrightness = 50;
-    int videoContrast = 50;
-    QString videoCodec = "H264";
+  QString streamName;
+
+  // Audio configuration
+  bool enableAudio = false;
+  int audioVolume = 100;
+  AudioHAL::AudioRoute audioRoute = AudioHAL::AudioRoute::Default;
+  int audioSampleRate = 48000;
+  int audioChannels = 2;
+
+  // Video configuration
+  bool enableVideo = false;
+  VideoHAL::VideoResolution videoResolution = VideoHAL::VideoResolution::HD_720p;
+  int videoBrightness = 50;
+  int videoContrast = 50;
+  QString videoCodec = "H264";
 };
 
 /**
@@ -125,7 +126,7 @@ class MediaPipeline : public QObject {
   void onAudioStreamStarted(const QString& streamName);
   void onAudioStreamStopped(const QString& streamName);
   void onAudioError(const QString& error);
-  
+
   void onVideoResolutionChanged(VideoHAL::VideoResolution resolution);
   void onVideoBrightnessChanged(int brightness);
   void onVideoContrastChanged(int contrast);

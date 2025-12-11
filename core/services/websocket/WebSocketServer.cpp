@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 #include "WebSocketServer.h"
 
@@ -27,14 +27,17 @@
 #include "../logging/Logger.h"
 
 WebSocketServer::WebSocketServer(quint16 port, QObject* parent)
-    : QObject(parent), m_server(new QWebSocketServer("CrankshaftCore", QWebSocketServer::NonSecureMode, this)) {
+    : QObject(parent),
+      m_server(new QWebSocketServer("CrankshaftCore", QWebSocketServer::NonSecureMode, this)) {
   Logger::instance().info(QString("Initializing WebSocket server on port %1...").arg(port));
-  
+
   if (m_server->listen(QHostAddress::Any, port)) {
     Logger::instance().info(QString("WebSocket server listening on port %1").arg(port));
     connect(m_server, &QWebSocketServer::newConnection, this, &WebSocketServer::onNewConnection);
   } else {
-    Logger::instance().error(QString("Failed to start WebSocket server on port %1: %2").arg(port).arg(m_server->errorString()));
+    Logger::instance().error(QString("Failed to start WebSocket server on port %1: %2")
+                                 .arg(port)
+                                 .arg(m_server->errorString()));
   }
 }
 
@@ -43,12 +46,15 @@ WebSocketServer::~WebSocketServer() {
   qDeleteAll(m_clients);
 }
 
-bool WebSocketServer::isListening() const { return m_server->isListening(); }
+bool WebSocketServer::isListening() const {
+  return m_server->isListening();
+}
 
 void WebSocketServer::onNewConnection() {
   QWebSocket* client = m_server->nextPendingConnection();
 
-  Logger::instance().info(QString("New WebSocket connection from %1").arg(client->peerAddress().toString()));
+  Logger::instance().info(
+      QString("New WebSocket connection from %1").arg(client->peerAddress().toString()));
 
   connect(client, &QWebSocket::textMessageReceived, this, &WebSocketServer::onTextMessageReceived);
   connect(client, &QWebSocket::disconnected, this, &WebSocketServer::onClientDisconnected);
@@ -82,7 +88,8 @@ void WebSocketServer::onTextMessageReceived(const QString& message) {
 void WebSocketServer::onClientDisconnected() {
   QWebSocket* client = qobject_cast<QWebSocket*>(sender());
   if (client) {
-    Logger::instance().info(QString("Client disconnected: %1").arg(client->peerAddress().toString()));
+    Logger::instance().info(
+        QString("Client disconnected: %1").arg(client->peerAddress().toString()));
     m_clients.removeOne(client);
     m_subscriptions.remove(client);
     client->deleteLater();

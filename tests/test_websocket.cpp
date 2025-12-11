@@ -15,9 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#include <catch2/catch_all.hpp>
+ */
 
 #include <QCoreApplication>
 #include <QJsonDocument>
@@ -25,6 +23,7 @@
 #include <QSignalSpy>
 #include <QTest>
 #include <QWebSocket>
+#include <catch2/catch_all.hpp>
 
 #include "services/eventbus/EventBus.h"
 #include "services/websocket/WebSocketServer.h"
@@ -141,7 +140,7 @@ TEST_CASE("WebSocketServer multiple clients", "[websocket]") {
   // Connect clients sequentially to avoid race conditions
   client1.open(QUrl("ws://localhost:8085"));
   REQUIRE(connected1.wait(2000));
-  
+
   client2.open(QUrl("ws://localhost:8085"));
   REQUIRE(connected2.wait(2000));
 

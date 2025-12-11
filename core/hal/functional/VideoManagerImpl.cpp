@@ -17,15 +17,15 @@
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../multimedia/VideoManager.h"
 #include <QDebug>
+
+#include "../multimedia/VideoManager.h"
 
 // Placeholder implementation of VideoManager
 
 class VideoManagerImpl : public VideoManager {
  public:
-  explicit VideoManagerImpl(QObject* parent = nullptr)
-      : VideoManager(parent) {}
+  explicit VideoManagerImpl(QObject* parent = nullptr) : VideoManager(parent) {}
 
   bool initialise() override {
     qDebug() << "[Video] Initialising VideoManager";

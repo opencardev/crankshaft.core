@@ -19,26 +19,21 @@
 
 #pragma once
 
+#include <QByteArray>
 #include <QObject>
 #include <QString>
 #include <QStringList>
-#include <QByteArray>
 
 /**
  * @brief Hardware Abstraction Layer for video devices
- * 
+ *
  * Provides low-level video hardware control and configuration.
  */
 class VideoHAL : public QObject {
   Q_OBJECT
 
  public:
-  enum class VideoResolution {
-    SD_480p,
-    HD_720p,
-    FullHD_1080p,
-    UHD_4K
-  };
+  enum class VideoResolution { SD_480p, HD_720p, FullHD_1080p, UHD_4K };
   Q_ENUM(VideoResolution)
 
   explicit VideoHAL(QObject* parent = nullptr);
@@ -46,17 +41,17 @@ class VideoHAL : public QObject {
 
   bool setResolution(VideoResolution resolution);
   VideoResolution getResolution() const;
-  
+
   bool setBrightness(int brightness);
   int getBrightness() const;
-  
+
   bool setContrast(int contrast);
   int getContrast() const;
-  
+
   bool startVideoStream(const QString& streamName, const QString& codec);
   bool stopVideoStream(const QString& streamName);
   bool pushVideoFrame(const QByteArray& frameData);
-  
+
   QStringList getSupportedCodecs() const;
   bool setVideoSink(const QString& sinkName);
 

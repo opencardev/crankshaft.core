@@ -17,8 +17,9 @@
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../multimedia/MediaPipeline.h"
 #include <QDebug>
+
+#include "../multimedia/MediaPipeline.h"
 
 // Placeholder implementation
 
@@ -34,21 +35,25 @@ class MediaPipelineImpl : public MediaPipeline {
     qDebug() << "[Media] Deinitialising pipeline";
   }
 
-  bool play() override { return true; }
-  bool pause() override { return true; }
-  bool stop() override { return true; }
+  bool play() override {
+    return true;
+  }
+  bool pause() override {
+    return true;
+  }
+  bool stop() override {
+    return true;
+  }
 
   State getState() const override {
     return State::PLAYING;
   }
 
-  bool linkAudioPath(AudioInputDevicePtr input,
-                     AudioOutputDevicePtr output) override {
+  bool linkAudioPath(AudioInputDevicePtr input, AudioOutputDevicePtr output) override {
     return true;
   }
 
-  bool linkVideoPath(VideoInputDevicePtr input,
-                     VideoOutputDevicePtr output) override {
+  bool linkVideoPath(VideoInputDevicePtr input, VideoOutputDevicePtr output) override {
     return true;
   }
 

@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include <QString>
-#include <QMap>
-#include <QList>
-#include <QVariant>
 #include <QDateTime>
+#include <QList>
+#include <QMap>
+#include <QString>
+#include <QVariant>
 #include <memory>
 
 /**
@@ -31,7 +31,7 @@
  */
 struct DeviceConfig {
   QString name;
-  QString type;              // DeviceInterfaceType as string
+  QString type;  // DeviceInterfaceType as string
   bool enabled{true};
   bool useMock{true};
   QMap<QString, QVariant> settings;
@@ -78,12 +78,12 @@ struct VehicleProfile {
   QDateTime modifiedAt;
 
   // Vehicle information
-  QString make;              // e.g., "Tesla"
-  QString model;             // e.g., "Model 3"
+  QString make;   // e.g., "Tesla"
+  QString model;  // e.g., "Model 3"
   QString year;
   QString vin;
   QString licensePlate;
-  QString vehicleType;       // "car", "truck", "bus", "van", etc.
+  QString vehicleType;  // "car", "truck", "bus", "van", etc.
 
   // Vehicle capabilities
   QList<QString> supportedModes;  // e.g., "PARK", "REVERSE", "NEUTRAL", "DRIVE"

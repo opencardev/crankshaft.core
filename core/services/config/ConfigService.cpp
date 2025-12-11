@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 #include "ConfigService.h"
 
@@ -82,28 +82,28 @@ QVariant ConfigService::get(const QString& key, const QVariant& defaultValue) co
 
 void ConfigService::set(const QString& key, const QVariant& value) {
   QStringList keys = key.split('.');
-  
+
   // Convert to JSON for easier nested modification
   QJsonObject root = QJsonObject::fromVariantMap(m_config);
   QJsonObject* current = &root;
-  
+
   // Navigate to the parent object
   for (int i = 0; i < keys.size() - 1; ++i) {
     if (!current->contains(keys[i])) {
       current->insert(keys[i], QJsonObject());
     }
-    
+
     QJsonValue val = (*current)[keys[i]];
     if (!val.isObject()) {
       current->insert(keys[i], QJsonObject());
       val = (*current)[keys[i]];
     }
-    
+
     // Can't get pointer to nested object, so we'll use a different approach
     // Just flatten the logic
     break;
   }
-  
+
   // Simpler approach: rebuild the path
   if (keys.size() == 1) {
     root[keys[0]] = QJsonValue::fromVariant(value);
@@ -118,7 +118,7 @@ void ConfigService::set(const QString& key, const QVariant& value) {
     level1[keys[1]] = level2;
     root[keys[0]] = level1;
   }
-  
+
   m_config = root.toVariantMap();
   emit configChanged(key, value);
 }

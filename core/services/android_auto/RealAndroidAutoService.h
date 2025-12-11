@@ -19,12 +19,13 @@
 
 #pragma once
 
-#include "AndroidAutoService.h"
-#include "../../hal/multimedia/IVideoDecoder.h"
-#include "../../hal/multimedia/IAudioMixer.h"
 #include <QThread>
 #include <boost/asio.hpp>
 #include <memory>
+
+#include "../../hal/multimedia/IAudioMixer.h"
+#include "../../hal/multimedia/IVideoDecoder.h"
+#include "AndroidAutoService.h"
 
 // Forward declarations for AASDK
 namespace aasdk {
@@ -84,7 +85,7 @@ class MediaPipeline;
 
 /**
  * @brief Real Android Auto service implementation using AASDK
- * 
+ *
  * Implements full Android Auto protocol using AASDK library.
  * Handles USB device detection, AOAP protocol, and media streaming.
  */
@@ -92,18 +93,21 @@ class RealAndroidAutoService : public AndroidAutoService {
   Q_OBJECT
 
  public:
-  explicit RealAndroidAutoService(MediaPipeline* mediaPipeline,
-                                  QObject* parent = nullptr);
+  explicit RealAndroidAutoService(MediaPipeline* mediaPipeline, QObject* parent = nullptr);
   ~RealAndroidAutoService() override;
 
   bool initialise() override;
   void deinitialise() override;
 
-  ConnectionState getConnectionState() const override { return m_state; }
+  ConnectionState getConnectionState() const override {
+    return m_state;
+  }
   bool isConnected() const override {
     return m_state == ConnectionState::CONNECTED;
   }
-  AndroidDevice getConnectedDevice() const override { return m_device; }
+  AndroidDevice getConnectedDevice() const override {
+    return m_device;
+  }
 
   bool startSearching() override;
   void stopSearching() override;
@@ -111,10 +115,14 @@ class RealAndroidAutoService : public AndroidAutoService {
   bool disconnect() override;
 
   bool setDisplayResolution(const QSize& resolution) override;
-  QSize getDisplayResolution() const override { return m_resolution; }
+  QSize getDisplayResolution() const override {
+    return m_resolution;
+  }
 
   bool setFramerate(int fps) override;
-  int getFramerate() const override { return m_fps; }
+  int getFramerate() const override {
+    return m_fps;
+  }
 
   bool sendTouchInput(int x, int y, int action) override;
   bool sendKeyInput(int key_code, int action) override;
@@ -122,8 +130,12 @@ class RealAndroidAutoService : public AndroidAutoService {
   bool requestAudioFocus() override;
   bool abandonAudioFocus() override;
 
-  int getFrameDropCount() const override { return m_droppedFrames; }
-  int getLatency() const override { return m_latency; }
+  int getFrameDropCount() const override {
+    return m_droppedFrames;
+  }
+  int getLatency() const override {
+    return m_latency;
+  }
 
   bool setAudioEnabled(bool enabled) override;
   QJsonObject getAudioConfig() const override;
@@ -141,7 +153,9 @@ class RealAndroidAutoService : public AndroidAutoService {
   };
 
   void setChannelConfig(const ChannelConfig& config);
-  ChannelConfig getChannelConfig() const { return m_channelConfig; }
+  ChannelConfig getChannelConfig() const {
+    return m_channelConfig;
+  }
 
  private:
   void setupAASDK();
@@ -154,7 +168,7 @@ class RealAndroidAutoService : public AndroidAutoService {
   void handleConnectionLost();
   void updateStats();
   void transitionToState(ConnectionState newState);
-  
+
   // Channel event handlers
   void onVideoChannelUpdate(const QByteArray& data, int width, int height);
   void onMediaAudioChannelUpdate(const QByteArray& data);
@@ -184,10 +198,10 @@ class RealAndroidAutoService : public AndroidAutoService {
   MediaPipeline* m_mediaPipeline{nullptr};
   std::shared_ptr<boost::asio::io_service> m_ioService;
   std::unique_ptr<QThread> m_aasdkThread;
-  
+
   // Strands for channel operations
   std::unique_ptr<boost::asio::io_service::strand> m_strand;
-  
+
   // Pointers to AASDK objects (owned by io_service)
   std::shared_ptr<aasdk::usb::IUSBWrapper> m_usbWrapper;
   std::shared_ptr<aasdk::usb::IAccessoryModeQueryFactory> m_queryFactory;
@@ -197,12 +211,14 @@ class RealAndroidAutoService : public AndroidAutoService {
   std::shared_ptr<aasdk::transport::ITransport> m_transport;
   std::shared_ptr<aasdk::messenger::ICryptor> m_cryptor;
   std::shared_ptr<aasdk::messenger::IMessenger> m_messenger;
-  
+
   // AASDK channels
   std::shared_ptr<aasdk::channel::mediasink::video::channel::VideoChannel> m_videoChannel;
   std::shared_ptr<aasdk::channel::mediasink::audio::channel::MediaAudioChannel> m_mediaAudioChannel;
-  std::shared_ptr<aasdk::channel::mediasink::audio::channel::SystemAudioChannel> m_systemAudioChannel;
-  std::shared_ptr<aasdk::channel::mediasink::audio::channel::GuidanceAudioChannel> m_speechAudioChannel;
+  std::shared_ptr<aasdk::channel::mediasink::audio::channel::SystemAudioChannel>
+      m_systemAudioChannel;
+  std::shared_ptr<aasdk::channel::mediasink::audio::channel::GuidanceAudioChannel>
+      m_speechAudioChannel;
   std::shared_ptr<aasdk::channel::inputsource::InputSourceService> m_inputChannel;
   std::shared_ptr<aasdk::channel::sensorsource::SensorSourceService> m_sensorChannel;
   std::shared_ptr<aasdk::channel::bluetooth::BluetoothService> m_bluetoothChannel;

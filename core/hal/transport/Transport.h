@@ -19,48 +19,48 @@
 
 #pragma once
 
+#include <QByteArray>
 #include <QObject>
 #include <QString>
-#include <QByteArray>
 #include <QVariantMap>
 
 /**
  * @brief Transport layer types
- * 
+ *
  * Represents the physical/logical communication channels used to
  * transfer data between functional devices and hardware.
  */
 enum class TransportType {
-  UART,           // Serial/UART transport
-  USB,            // USB transport
-  SPI,            // SPI bus transport
-  I2C,            // I2C bus transport
-  BLUETOOTH,      // Bluetooth transport
-  WIFI,           // WiFi/Network transport
-  ETHERNET,       // Ethernet transport
-  CAN,            // Native CAN bus transport
-  LIN,            // LIN bus transport
-  VIRTUAL,        // Virtual/mock transport for testing
-  MEMORY          // Shared memory transport
+  UART,       // Serial/UART transport
+  USB,        // USB transport
+  SPI,        // SPI bus transport
+  I2C,        // I2C bus transport
+  BLUETOOTH,  // Bluetooth transport
+  WIFI,       // WiFi/Network transport
+  ETHERNET,   // Ethernet transport
+  CAN,        // Native CAN bus transport
+  LIN,        // LIN bus transport
+  VIRTUAL,    // Virtual/mock transport for testing
+  MEMORY      // Shared memory transport
 };
 
 /**
  * @brief Transport state enumeration
  */
 enum class TransportState {
-  DISCONNECTED,   // Not connected
-  CONNECTING,     // Connection in progress
-  CONNECTED,      // Connected and ready
-  ERROR           // Error state
+  DISCONNECTED,  // Not connected
+  CONNECTING,    // Connection in progress
+  CONNECTED,     // Connected and ready
+  ERROR          // Error state
 };
 
 /**
  * @brief Transport base class
- * 
+ *
  * Abstract base class for all transport layer implementations.
  * Handles the physical/logical communication channel independent
  * of the functional device using it.
- * 
+ *
  * Examples:
  *   - UART transport can be used by GPS, CAN adapter, or any serial device
  *   - USB transport can carry GPS data, CAN frames, camera streams, etc.

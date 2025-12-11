@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 #include "WebSocketClient.h"
 
@@ -24,10 +24,12 @@
 #include <QJsonObject>
 #include <QTimer>
 
-WebSocketClient::WebSocketClient(const QUrl& url, QObject* parent) : QObject(parent), m_socket(new QWebSocket()), m_url(url) {
+WebSocketClient::WebSocketClient(const QUrl& url, QObject* parent)
+    : QObject(parent), m_socket(new QWebSocket()), m_url(url) {
   connect(m_socket, &QWebSocket::connected, this, &WebSocketClient::onConnected);
   connect(m_socket, &QWebSocket::disconnected, this, &WebSocketClient::onDisconnected);
-  connect(m_socket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived);
+  connect(m_socket, &QWebSocket::textMessageReceived, this,
+          &WebSocketClient::onTextMessageReceived);
   connect(m_socket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::errorOccurred), this,
           &WebSocketClient::onError);
 
@@ -35,7 +37,9 @@ WebSocketClient::WebSocketClient(const QUrl& url, QObject* parent) : QObject(par
   m_socket->open(url);
 }
 
-bool WebSocketClient::isConnected() const { return m_socket->state() == QAbstractSocket::ConnectedState; }
+bool WebSocketClient::isConnected() const {
+  return m_socket->state() == QAbstractSocket::ConnectedState;
+}
 
 void WebSocketClient::subscribe(const QString& topic) {
   if (!m_subscriptions.contains(topic)) {

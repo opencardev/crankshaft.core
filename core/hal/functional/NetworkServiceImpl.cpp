@@ -17,15 +17,15 @@
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../wireless/NetworkService.h"
 #include <QDebug>
+
+#include "../wireless/NetworkService.h"
 
 // Placeholder implementation of NetworkService
 
 class NetworkServiceImpl : public NetworkService {
  public:
-  explicit NetworkServiceImpl(QObject* parent = nullptr)
-      : NetworkService(parent) {}
+  explicit NetworkServiceImpl(QObject* parent = nullptr) : NetworkService(parent) {}
 
   bool initialise() override {
     qDebug() << "[Network] Initialising NetworkService";
@@ -40,20 +40,19 @@ class NetworkServiceImpl : public NetworkService {
     return NetworkType::WIFI;
   }
 
-  bool isConnected() const override { return true; }
+  bool isConnected() const override {
+    return true;
+  }
 
   QVector<NetworkInterface> getNetworkInterfaces() const override {
     return {
-        {"eth0", "00:11:22:33:44:55", "192.168.1.100", "",
-         NetworkType::ETHERNET, true, 1500},
-        {"wlan0", "AA:BB:CC:DD:EE:FF", "192.168.1.101", "",
-         NetworkType::WIFI, true, 1500},
+        {"eth0", "00:11:22:33:44:55", "192.168.1.100", "", NetworkType::ETHERNET, true, 1500},
+        {"wlan0", "AA:BB:CC:DD:EE:FF", "192.168.1.101", "", NetworkType::WIFI, true, 1500},
     };
   }
 
   NetworkInterface getActiveInterface() const override {
-    return {"wlan0", "AA:BB:CC:DD:EE:FF", "192.168.1.101", "",
-            NetworkType::WIFI, true, 1500};
+    return {"wlan0", "AA:BB:CC:DD:EE:FF", "192.168.1.101", "", NetworkType::WIFI, true, 1500};
   }
 
   QString getHostname() const override {

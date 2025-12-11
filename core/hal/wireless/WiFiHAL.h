@@ -19,53 +19,41 @@
 
 #pragma once
 
+#include <QList>
 #include <QObject>
 #include <QString>
-#include <QList>
 #include <QStringList>
 #include <QVariantMap>
 
 /**
  * @brief WiFi security types
  */
-enum class WiFiSecurity {
-    Open,
-    WEP,
-    WPA_PSK,
-    WPA2_PSK,
-    WPA3_SAE
-};
+enum class WiFiSecurity { Open, WEP, WPA_PSK, WPA2_PSK, WPA3_SAE };
 
 /**
  * @brief WiFi network information
  */
 struct WiFiNetwork {
-    QString ssid;
-    QString bssid;
-    int signalStrength;  // -100 to 0 dBm
-    int quality;         // 0-100%
-    int frequency;       // MHz
-    WiFiSecurity security;
-    bool connected;
-    bool known;
+  QString ssid;
+  QString bssid;
+  int signalStrength;  // -100 to 0 dBm
+  int quality;         // 0-100%
+  int frequency;       // MHz
+  WiFiSecurity security;
+  bool connected;
+  bool known;
 };
 
 /**
  * @brief Hardware Abstraction Layer for WiFi
- * 
+ *
  * Provides WiFi scanning, connection management via NetworkManager DBus interface.
  */
 class WiFiHAL : public QObject {
   Q_OBJECT
 
  public:
-  enum class ConnectionState {
-    Unknown,
-    Disconnected,
-    Connecting,
-    Connected,
-    Failed
-  };
+  enum class ConnectionState { Unknown, Disconnected, Connecting, Connected, Failed };
   Q_ENUM(ConnectionState)
 
   explicit WiFiHAL(QObject* parent = nullptr);
@@ -73,16 +61,16 @@ class WiFiHAL : public QObject {
 
   bool isEnabled() const;
   bool setEnabled(bool enabled);
-  
+
   bool isScanning() const;
   bool startScan();
   QList<WiFiNetwork> getAvailableNetworks() const;
-  
+
   ConnectionState getConnectionState() const;
   QString getConnectedSSID() const;
   int getSignalStrength() const;
   QString getIPAddress() const;
-  
+
   bool connectToNetwork(const QString& ssid, const QString& password, WiFiSecurity security);
   bool disconnect();
   bool forgetNetwork(const QString& ssid);
@@ -98,7 +86,8 @@ class WiFiHAL : public QObject {
 
  private slots:
   void updateNetworkList();
-  void onDevicePropertiesChanged(const QString& interface, const QVariantMap& changedProperties, const QStringList& invalidatedProperties);
+  void onDevicePropertiesChanged(const QString& interface, const QVariantMap& changedProperties,
+                                 const QStringList& invalidatedProperties);
 
  private:
   class WiFiHALPrivate;

@@ -15,17 +15,17 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QCoreApplication>
 
+#include "services/android_auto/AndroidAutoService.h"
 #include "services/config/ConfigService.h"
 #include "services/eventbus/EventBus.h"
 #include "services/logging/Logger.h"
 #include "services/websocket/WebSocketServer.h"
-#include "services/android_auto/AndroidAutoService.h"
 
 int main(int argc, char* argv[]) {
   QCoreApplication app(argc, argv);
@@ -38,11 +38,12 @@ int main(int argc, char* argv[]) {
   parser.addHelpOption();
   parser.addVersionOption();
 
-  QCommandLineOption portOption(QStringList() << "p" << "port", "WebSocket server port", "port", "8080");
+  QCommandLineOption portOption(QStringList() << "p" << "port", "WebSocket server port", "port",
+                                "8080");
   parser.addOption(portOption);
 
-  QCommandLineOption configOption(QStringList() << "c" << "config", "Configuration file path", "config",
-                                  "../config/crankshaft.json");
+  QCommandLineOption configOption(QStringList() << "c" << "config", "Configuration file path",
+                                  "config", "../config/crankshaft.json");
   parser.addOption(configOption);
 
   parser.process(app);
@@ -77,7 +78,8 @@ int main(int argc, char* argv[]) {
   Logger::instance().info("WebSocket server listening on port " + QString::number(port));
 
   // Connect EventBus to WebSocket server (broadcasts all events)
-  QObject::connect(&EventBus::instance(), &EventBus::messagePublished, &server, &WebSocketServer::broadcastEvent);
+  QObject::connect(&EventBus::instance(), &EventBus::messagePublished, &server,
+                   &WebSocketServer::broadcastEvent);
 
   Logger::instance().info("Crankshaft Core started successfully");
   Logger::instance().info("Core services ready");

@@ -15,14 +15,13 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#include <catch2/catch_all.hpp>
+ */
 
 #include <QCoreApplication>
 #include <QSignalSpy>
 #include <QThread>
 #include <QVariantMap>
+#include <catch2/catch_all.hpp>
 
 #include "services/eventbus/EventBus.h"
 

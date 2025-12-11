@@ -18,13 +18,15 @@
  */
 
 #include "ProfileManager.h"
-#include "../logging/Logger.h"
+
+#include <QDir>
+#include <QFile>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
-#include <QFile>
-#include <QDir>
 #include <QUuid>
+
+#include "../logging/Logger.h"
 
 ProfileManager::ProfileManager(const QString& configDir, QObject* parent)
     : QObject(parent), m_configDir(configDir) {
@@ -54,8 +56,7 @@ void ProfileManager::initializeDefaultProfiles() {
   HostProfile devHostProfile;
   devHostProfile.id = QUuid::createUuid().toString();
   devHostProfile.name = "Development Host";
-  devHostProfile.description =
-      "Default development host with all mock devices enabled";
+  devHostProfile.description = "Default development host with all mock devices enabled";
   devHostProfile.isActive = true;
   devHostProfile.createdAt = QDateTime::currentDateTime();
   devHostProfile.modifiedAt = QDateTime::currentDateTime();
@@ -74,15 +75,15 @@ void ProfileManager::initializeDefaultProfiles() {
   androidAutoDevice.settings["fps"] = 30;
   androidAutoDevice.settings["generateTestVideo"] = true;
   androidAutoDevice.settings["generateTestAudio"] = false;
-    // Channel configuration
-    androidAutoDevice.settings["channels.video"] = true;
-    androidAutoDevice.settings["channels.mediaAudio"] = true;
-    androidAutoDevice.settings["channels.systemAudio"] = true;
-    androidAutoDevice.settings["channels.speechAudio"] = true;
-    androidAutoDevice.settings["channels.microphone"] = true;
-    androidAutoDevice.settings["channels.input"] = true;
-    androidAutoDevice.settings["channels.sensor"] = true;
-    androidAutoDevice.settings["channels.bluetooth"] = false;  // Disabled by default
+  // Channel configuration
+  androidAutoDevice.settings["channels.video"] = true;
+  androidAutoDevice.settings["channels.mediaAudio"] = true;
+  androidAutoDevice.settings["channels.systemAudio"] = true;
+  androidAutoDevice.settings["channels.speechAudio"] = true;
+  androidAutoDevice.settings["channels.microphone"] = true;
+  androidAutoDevice.settings["channels.input"] = true;
+  androidAutoDevice.settings["channels.sensor"] = true;
+  androidAutoDevice.settings["channels.bluetooth"] = false;  // Disabled by default
   devHostProfile.devices.append(androidAutoDevice);
 
   DeviceConfig bluetoothDevice;
@@ -137,15 +138,15 @@ bool ProfileManager::createHostProfile(const HostProfile& profile) {
   newProfile.modifiedAt = QDateTime::currentDateTime();
 
   m_hostProfiles[newProfile.id] = newProfile;
-  Logger::instance().info(QString("ProfileManager: Host profile created: %1 (%2)")
-                               .arg(newProfile.name, newProfile.id));
+  Logger::instance().info(
+      QString("ProfileManager: Host profile created: %1 (%2)").arg(newProfile.name, newProfile.id));
   return saveProfiles();
 }
 
 bool ProfileManager::updateHostProfile(const HostProfile& profile) {
   if (!m_hostProfiles.contains(profile.id)) {
-    Logger::instance().warning(QString("ProfileManager: Host profile not found: %1")
-                                    .arg(profile.id));
+    Logger::instance().warning(
+        QString("ProfileManager: Host profile not found: %1").arg(profile.id));
     return false;
   }
 
@@ -160,16 +161,14 @@ bool ProfileManager::updateHostProfile(const HostProfile& profile) {
 
 bool ProfileManager::deleteHostProfile(const QString& profileId) {
   if (!m_hostProfiles.contains(profileId)) {
-    Logger::instance().warning(QString("ProfileManager: Host profile not found: %1")
-                                    .arg(profileId));
+    Logger::instance().warning(
+        QString("ProfileManager: Host profile not found: %1").arg(profileId));
     return false;
   }
 
   m_hostProfiles.remove(profileId);
   if (m_activeHostProfileId == profileId) {
-    m_activeHostProfileId = m_hostProfiles.isEmpty()
-                                ? QString()
-                                : m_hostProfiles.firstKey();
+    m_activeHostProfileId = m_hostProfiles.isEmpty() ? QString() : m_hostProfiles.firstKey();
   }
 
   Logger::instance().info(QString("ProfileManager: Host profile deleted: %1").arg(profileId));
@@ -189,8 +188,8 @@ QList<HostProfile> ProfileManager::getAllHostProfiles() const {
 
 bool ProfileManager::setActiveHostProfile(const QString& profileId) {
   if (!m_hostProfiles.contains(profileId)) {
-    Logger::instance().warning(QString("ProfileManager: Host profile not found: %1")
-                                    .arg(profileId));
+    Logger::instance().warning(
+        QString("ProfileManager: Host profile not found: %1").arg(profileId));
     return false;
   }
 
@@ -208,7 +207,7 @@ bool ProfileManager::setActiveHostProfile(const QString& profileId) {
   m_activeHostProfileId = profileId;
 
   Logger::instance().info(QString("ProfileManager: Active host profile changed to: %1 (%2)")
-                               .arg(newProfile.name, profileId));
+                              .arg(newProfile.name, profileId));
   emit hostProfileChanged(profileId);
   return saveProfiles();
 }
@@ -230,14 +229,14 @@ bool ProfileManager::createVehicleProfile(const VehicleProfile& profile) {
 
   m_vehicleProfiles[newProfile.id] = newProfile;
   Logger::instance().info(QString("ProfileManager: Vehicle profile created: %1 (%2)")
-                               .arg(newProfile.name, newProfile.id));
+                              .arg(newProfile.name, newProfile.id));
   return saveProfiles();
 }
 
 bool ProfileManager::updateVehicleProfile(const VehicleProfile& profile) {
   if (!m_vehicleProfiles.contains(profile.id)) {
-    Logger::instance().warning(QString("ProfileManager: Vehicle profile not found: %1")
-                                    .arg(profile.id));
+    Logger::instance().warning(
+        QString("ProfileManager: Vehicle profile not found: %1").arg(profile.id));
     return false;
   }
 
@@ -245,33 +244,29 @@ bool ProfileManager::updateVehicleProfile(const VehicleProfile& profile) {
   updatedProfile.modifiedAt = QDateTime::currentDateTime();
   m_vehicleProfiles[profile.id] = updatedProfile;
 
-  Logger::instance().info(QString("ProfileManager: Vehicle profile updated: %1")
-                               .arg(profile.id));
+  Logger::instance().info(QString("ProfileManager: Vehicle profile updated: %1").arg(profile.id));
   emit vehicleProfileChanged(profile.id);
   return saveProfiles();
 }
 
 bool ProfileManager::deleteVehicleProfile(const QString& profileId) {
   if (!m_vehicleProfiles.contains(profileId)) {
-    Logger::instance().warning(QString("ProfileManager: Vehicle profile not found: %1")
-                                    .arg(profileId));
+    Logger::instance().warning(
+        QString("ProfileManager: Vehicle profile not found: %1").arg(profileId));
     return false;
   }
 
   m_vehicleProfiles.remove(profileId);
   if (m_activeVehicleProfileId == profileId) {
-    m_activeVehicleProfileId = m_vehicleProfiles.isEmpty()
-                                   ? QString()
-                                   : m_vehicleProfiles.firstKey();
+    m_activeVehicleProfileId =
+        m_vehicleProfiles.isEmpty() ? QString() : m_vehicleProfiles.firstKey();
   }
 
-  Logger::instance().info(QString("ProfileManager: Vehicle profile deleted: %1")
-                               .arg(profileId));
+  Logger::instance().info(QString("ProfileManager: Vehicle profile deleted: %1").arg(profileId));
   return saveProfiles();
 }
 
-VehicleProfile ProfileManager::getVehicleProfile(
-    const QString& profileId) const {
+VehicleProfile ProfileManager::getVehicleProfile(const QString& profileId) const {
   if (m_vehicleProfiles.contains(profileId)) {
     return m_vehicleProfiles.value(profileId);
   }
@@ -284,8 +279,8 @@ QList<VehicleProfile> ProfileManager::getAllVehicleProfiles() const {
 
 bool ProfileManager::setActiveVehicleProfile(const QString& profileId) {
   if (!m_vehicleProfiles.contains(profileId)) {
-    Logger::instance().warning(QString("ProfileManager: Vehicle profile not found: %1")
-                                    .arg(profileId));
+    Logger::instance().warning(
+        QString("ProfileManager: Vehicle profile not found: %1").arg(profileId));
     return false;
   }
 
@@ -303,7 +298,7 @@ bool ProfileManager::setActiveVehicleProfile(const QString& profileId) {
   m_activeVehicleProfileId = profileId;
 
   Logger::instance().info(QString("ProfileManager: Active vehicle profile changed to: %1 (%2)")
-                               .arg(newProfile.name, profileId));
+                              .arg(newProfile.name, profileId));
   emit vehicleProfileChanged(profileId);
   return saveProfiles();
 }
@@ -315,11 +310,10 @@ VehicleProfile ProfileManager::getActiveVehicleProfile() const {
   return VehicleProfile();
 }
 
-bool ProfileManager::addDeviceToHostProfile(const QString& profileId,
-                                             const DeviceConfig& device) {
+bool ProfileManager::addDeviceToHostProfile(const QString& profileId, const DeviceConfig& device) {
   if (!m_hostProfiles.contains(profileId)) {
-    Logger::instance().warning(QString("ProfileManager: Host profile not found: %1")
-                                    .arg(profileId));
+    Logger::instance().warning(
+        QString("ProfileManager: Host profile not found: %1").arg(profileId));
     return false;
   }
 
@@ -327,36 +321,34 @@ bool ProfileManager::addDeviceToHostProfile(const QString& profileId,
   profile.devices.append(device);
   m_hostProfiles[profileId] = profile;
 
-  Logger::instance().info(QString("ProfileManager: Device added to host profile %1: %2")
-                               .arg(profileId, device.name));
+  Logger::instance().info(
+      QString("ProfileManager: Device added to host profile %1: %2").arg(profileId, device.name));
   emit deviceConfigChanged(profileId, device.name);
   return saveProfiles();
 }
 
 bool ProfileManager::removeDeviceFromHostProfile(const QString& profileId,
-                                                  const QString& deviceName) {
+                                                 const QString& deviceName) {
   if (!m_hostProfiles.contains(profileId)) {
-    Logger::instance().warning(QString("ProfileManager: Host profile not found: %1")
-                                    .arg(profileId));
+    Logger::instance().warning(
+        QString("ProfileManager: Host profile not found: %1").arg(profileId));
     return false;
   }
 
   HostProfile profile = m_hostProfiles[profileId];
-  profile.devices.erase(
-      std::remove_if(profile.devices.begin(), profile.devices.end(),
-                     [&](const DeviceConfig& d) { return d.name == deviceName; }),
-      profile.devices.end());
+  profile.devices.erase(std::remove_if(profile.devices.begin(), profile.devices.end(),
+                                       [&](const DeviceConfig& d) { return d.name == deviceName; }),
+                        profile.devices.end());
   m_hostProfiles[profileId] = profile;
 
   Logger::instance().info(QString("ProfileManager: Device removed from host profile %1: %2")
-                               .arg(profileId, deviceName));
+                              .arg(profileId, deviceName));
   emit deviceConfigChanged(profileId, deviceName);
   return saveProfiles();
 }
 
-bool ProfileManager::setDeviceEnabled(const QString& profileId,
-                                       const QString& deviceName,
-                                       bool enabled) {
+bool ProfileManager::setDeviceEnabled(const QString& profileId, const QString& deviceName,
+                                      bool enabled) {
   if (!m_hostProfiles.contains(profileId)) {
     return false;
   }
@@ -366,9 +358,8 @@ bool ProfileManager::setDeviceEnabled(const QString& profileId,
     if (device.name == deviceName) {
       device.enabled = enabled;
       m_hostProfiles[profileId] = profile;
-      Logger::instance().debug(
-          QString("ProfileManager: Device %1 in profile %2 set to %3")
-              .arg(deviceName, profileId, enabled ? "enabled" : "disabled"));
+      Logger::instance().debug(QString("ProfileManager: Device %1 in profile %2 set to %3")
+                                   .arg(deviceName, profileId, enabled ? "enabled" : "disabled"));
       emit deviceConfigChanged(profileId, deviceName);
       return saveProfiles();
     }
@@ -377,9 +368,8 @@ bool ProfileManager::setDeviceEnabled(const QString& profileId,
   return false;
 }
 
-bool ProfileManager::setDeviceUseMock(const QString& profileId,
-                                       const QString& deviceName,
-                                       bool useMock) {
+bool ProfileManager::setDeviceUseMock(const QString& profileId, const QString& deviceName,
+                                      bool useMock) {
   if (!m_hostProfiles.contains(profileId)) {
     return false;
   }
@@ -389,9 +379,8 @@ bool ProfileManager::setDeviceUseMock(const QString& profileId,
     if (device.name == deviceName) {
       device.useMock = useMock;
       m_hostProfiles[profileId] = profile;
-      Logger::instance().debug(
-          QString("ProfileManager: Device %1 in profile %2 set to use %3")
-              .arg(deviceName, profileId, useMock ? "mock" : "real"));
+      Logger::instance().debug(QString("ProfileManager: Device %1 in profile %2 set to use %3")
+                                   .arg(deviceName, profileId, useMock ? "mock" : "real"));
       emit deviceConfigChanged(profileId, deviceName);
       return saveProfiles();
     }
@@ -400,8 +389,7 @@ bool ProfileManager::setDeviceUseMock(const QString& profileId,
   return false;
 }
 
-QList<DeviceConfig> ProfileManager::getProfileDevices(
-    const QString& profileId) const {
+QList<DeviceConfig> ProfileManager::getProfileDevices(const QString& profileId) const {
   if (m_hostProfiles.contains(profileId)) {
     return m_hostProfiles.value(profileId).devices;
   }
@@ -409,10 +397,8 @@ QList<DeviceConfig> ProfileManager::getProfileDevices(
 }
 
 bool ProfileManager::loadProfiles() {
-  QString hostProfilesPath =
-      QDir(m_configDir).filePath("host_profiles.json");
-  QString vehicleProfilesPath =
-      QDir(m_configDir).filePath("vehicle_profiles.json");
+  QString hostProfilesPath = QDir(m_configDir).filePath("host_profiles.json");
+  QString vehicleProfilesPath = QDir(m_configDir).filePath("vehicle_profiles.json");
 
   // Load host profiles
   QFile hostFile(hostProfilesPath);
@@ -446,10 +432,8 @@ bool ProfileManager::loadProfiles() {
 }
 
 bool ProfileManager::saveProfiles() {
-  QString hostProfilesPath =
-      QDir(m_configDir).filePath("host_profiles.json");
-  QString vehicleProfilesPath =
-      QDir(m_configDir).filePath("vehicle_profiles.json");
+  QString hostProfilesPath = QDir(m_configDir).filePath("host_profiles.json");
+  QString vehicleProfilesPath = QDir(m_configDir).filePath("vehicle_profiles.json");
 
   // Save host profiles
   QJsonArray hostArray;

@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 #include "Logger.h"
 
@@ -29,17 +29,29 @@ Logger& Logger::instance() {
   return instance;
 }
 
-void Logger::setLevel(Level level) { m_level = level; }
+void Logger::setLevel(Level level) {
+  m_level = level;
+}
 
-void Logger::setLogFile(const QString& filePath) { m_logFile = filePath; }
+void Logger::setLogFile(const QString& filePath) {
+  m_logFile = filePath;
+}
 
-void Logger::debug(const QString& message) { log(Level::Debug, message); }
+void Logger::debug(const QString& message) {
+  log(Level::Debug, message);
+}
 
-void Logger::info(const QString& message) { log(Level::Info, message); }
+void Logger::info(const QString& message) {
+  log(Level::Info, message);
+}
 
-void Logger::warning(const QString& message) { log(Level::Warning, message); }
+void Logger::warning(const QString& message) {
+  log(Level::Warning, message);
+}
 
-void Logger::error(const QString& message) { log(Level::Error, message); }
+void Logger::error(const QString& message) {
+  log(Level::Error, message);
+}
 
 void Logger::log(Level level, const QString& message) {
   if (level < m_level) return;

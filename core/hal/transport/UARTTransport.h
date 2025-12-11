@@ -23,10 +23,10 @@
 
 /**
  * @brief UART/Serial transport implementation
- * 
+ *
  * Provides serial communication for devices that use UART/RS232.
  * Can be used by: GPS receivers, CAN adapters, debug consoles, etc.
- * 
+ *
  * Configuration keys:
  *   - "port": Serial port path (e.g., "/dev/ttyUSB0")
  *   - "baudRate": Baud rate (e.g., 9600, 115200)
@@ -42,7 +42,9 @@ class UARTTransport : public Transport {
   explicit UARTTransport(const QString& portName, QObject* parent = nullptr);
   ~UARTTransport() override;
 
-  TransportType getType() const override { return TransportType::UART; }
+  TransportType getType() const override {
+    return TransportType::UART;
+  }
   QString getName() const override;
 
   bool open() override;
@@ -69,7 +71,7 @@ class UARTTransport : public Transport {
   QString m_portName;
   TransportState m_state;
   QVariantMap m_config;
-  
+
   // Platform-specific serial port handle would go here
   // void* m_serialHandle;
 };

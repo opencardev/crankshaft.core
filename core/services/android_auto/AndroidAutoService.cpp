@@ -18,14 +18,17 @@
  */
 
 #include "AndroidAutoService.h"
-#include "MockAndroidAutoService.h"
-#include "RealAndroidAutoService.h"
-#include "../../hal/multimedia/MediaPipeline.h"
-#include "../logging/Logger.h"
-#include <QTimer>
+
 #include <libusb-1.0/libusb.h>
+
 #include <QDebug>
 #include <QJsonDocument>
+#include <QTimer>
+
+#include "../../hal/multimedia/MediaPipeline.h"
+#include "../logging/Logger.h"
+#include "MockAndroidAutoService.h"
+#include "RealAndroidAutoService.h"
 
 class AndroidAutoServiceImpl : public AndroidAutoService {
   Q_OBJECT
@@ -44,7 +47,9 @@ class AndroidAutoServiceImpl : public AndroidAutoService {
         frame_drop_count_(0),
         latency_ms_(0) {}
 
-  ~AndroidAutoServiceImpl() override { deinitialise(); }
+  ~AndroidAutoServiceImpl() override {
+    deinitialise();
+  }
 
   bool initialise() override {
     Logger::instance().info(QString("[AndroidAuto] Initialising Android Auto service"));
@@ -52,7 +57,8 @@ class AndroidAutoServiceImpl : public AndroidAutoService {
     // Initialize libusb
     int ret = libusb_init(&usb_context_);
     if (ret < 0) {
-      Logger::instance().error(QString("[AndroidAuto] Failed to initialize libusb: %1").arg(libusb_error_name(ret)));
+      Logger::instance().error(
+          QString("[AndroidAuto] Failed to initialize libusb: %1").arg(libusb_error_name(ret)));
       return false;
     }
 
@@ -70,11 +76,17 @@ class AndroidAutoServiceImpl : public AndroidAutoService {
     }
   }
 
-  ConnectionState getConnectionState() const override { return state_; }
+  ConnectionState getConnectionState() const override {
+    return state_;
+  }
 
-  bool isConnected() const override { return state_ == ConnectionState::CONNECTED; }
+  bool isConnected() const override {
+    return state_ == ConnectionState::CONNECTED;
+  }
 
-  AndroidDevice getConnectedDevice() const override { return connected_device_; }
+  AndroidDevice getConnectedDevice() const override {
+    return connected_device_;
+  }
 
   bool startSearching() override {
     if (state_ != ConnectionState::DISCONNECTED) {
@@ -112,11 +124,13 @@ class AndroidAutoServiceImpl : public AndroidAutoService {
 
   bool connectToDevice(const QString& serial) override {
     if (state_ != ConnectionState::DISCONNECTED && state_ != ConnectionState::SEARCHING) {
-      Logger::instance().warning(QString("[AndroidAuto] Invalid state for connection: %1").arg(static_cast<int>(state_)));
+      Logger::instance().warning(
+          QString("[AndroidAuto] Invalid state for connection: %1").arg(static_cast<int>(state_)));
       return false;
     }
 
-    Logger::instance().info(QString("[AndroidAuto] Attempting to connect to device: %1").arg(serial));
+    Logger::instance().info(
+        QString("[AndroidAuto] Attempting to connect to device: %1").arg(serial));
     setState(ConnectionState::CONNECTING);
 
     // In a real implementation, this would set up USB enumeration filters,
@@ -152,7 +166,9 @@ class AndroidAutoServiceImpl : public AndroidAutoService {
   bool setDisplayResolution(const QSize& resolution) override {
     display_width_ = resolution.width();
     display_height_ = resolution.height();
-    Logger::instance().info(QString("[AndroidAuto] Display resolution set to %1x%2").arg(display_width_).arg(display_height_));
+    Logger::instance().info(QString("[AndroidAuto] Display resolution set to %1x%2")
+                                .arg(display_width_)
+                                .arg(display_height_));
     return true;
   }
 
@@ -166,13 +182,16 @@ class AndroidAutoServiceImpl : public AndroidAutoService {
     return true;
   }
 
-  int getFramerate() const override { return framerate_; }
+  int getFramerate() const override {
+    return framerate_;
+  }
 
   bool sendTouchInput(int x, int y, int action) override {
     if (!isConnected()) {
       return false;
     }
-    Logger::instance().debug(QString("[AndroidAuto] Touch input: (%1, %2) action=%3").arg(x).arg(y).arg(action));
+    Logger::instance().debug(
+        QString("[AndroidAuto] Touch input: (%1, %2) action=%3").arg(x).arg(y).arg(action));
     return true;
   }
 
@@ -180,7 +199,8 @@ class AndroidAutoServiceImpl : public AndroidAutoService {
     if (!isConnected()) {
       return false;
     }
-    Logger::instance().debug(QString("[AndroidAuto] Key input: code=%1 action=%2").arg(key_code).arg(action));
+    Logger::instance().debug(
+        QString("[AndroidAuto] Key input: code=%1 action=%2").arg(key_code).arg(action));
     return true;
   }
 
@@ -200,13 +220,18 @@ class AndroidAutoServiceImpl : public AndroidAutoService {
     return true;
   }
 
-  int getFrameDropCount() const override { return frame_drop_count_; }
+  int getFrameDropCount() const override {
+    return frame_drop_count_;
+  }
 
-  int getLatency() const override { return latency_ms_; }
+  int getLatency() const override {
+    return latency_ms_;
+  }
 
   bool setAudioEnabled(bool enabled) override {
     audio_enabled_ = enabled;
-    Logger::instance().info(QString("[AndroidAuto] Audio %1").arg(enabled ? "enabled" : "disabled"));
+    Logger::instance().info(
+        QString("[AndroidAuto] Audio %1").arg(enabled ? "enabled" : "disabled"));
     return true;
   }
 
@@ -272,22 +297,20 @@ AndroidAutoService::AndroidAutoService(QObject* parent) : QObject(parent) {}
 AndroidAutoService::~AndroidAutoService() {}
 
 // Static factory function
-AndroidAutoService* AndroidAutoService::create(MediaPipeline* mediaPipeline,
-                                               QObject* parent) {
+AndroidAutoService* AndroidAutoService::create(MediaPipeline* mediaPipeline, QObject* parent) {
   // Check environment variable to determine which implementation to use
   QByteArray useMock = qgetenv("CRANKSHAFT_USE_MOCK_AA");
-  bool mockEnabled = !useMock.isEmpty() &&
-                     (useMock == "1" || useMock.toLower() == "true");
+  bool mockEnabled = !useMock.isEmpty() && (useMock == "1" || useMock.toLower() == "true");
 
   AndroidAutoService* service = nullptr;
 
   if (mockEnabled) {
-    Logger::instance().info(
-        "Creating Mock Android Auto service (CRANKSHAFT_USE_MOCK_AA=1)");
+    Logger::instance().info("Creating Mock Android Auto service (CRANKSHAFT_USE_MOCK_AA=1)");
     service = new MockAndroidAutoService(parent);
   } else {
-    Logger::instance().warning("Real Android Auto service not yet available - using Mock. "
-                               "TODO: Fix AASDK header paths in RealAndroidAutoService");
+    Logger::instance().warning(
+        "Real Android Auto service not yet available - using Mock. "
+        "TODO: Fix AASDK header paths in RealAndroidAutoService");
     service = new MockAndroidAutoService(parent);
     // TODO: Uncomment when AASDK headers are fixed:
     // service = new RealAndroidAutoService(mediaPipeline, parent);

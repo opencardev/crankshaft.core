@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include <QString>
-#include <QObject>
-#include <QVector>
 #include <QBluetoothAddress>
+#include <QObject>
+#include <QString>
+#include <QVector>
 #include <memory>
 
 /**
@@ -54,10 +54,10 @@ class BluetoothManager : public QObject {
 
   enum class AudioProfile {
     NONE,
-    A2DP,       // Audio streaming
-    HFP,        // Hands-free profile
-    HSP,        // Headset profile
-    AVRCP,      // Remote control
+    A2DP,   // Audio streaming
+    HFP,    // Hands-free profile
+    HSP,    // Headset profile
+    AVRCP,  // Remote control
   };
 
   struct BluetoothDevice {
@@ -161,14 +161,12 @@ class BluetoothManager : public QObject {
   /**
    * @brief Connect audio profile on device
    */
-  virtual bool connectAudio(const QString& address,
-                           AudioProfile profile) = 0;
+  virtual bool connectAudio(const QString& address, AudioProfile profile) = 0;
 
   /**
    * @brief Disconnect audio profile on device
    */
-  virtual bool disconnectAudio(const QString& address,
-                              AudioProfile profile) = 0;
+  virtual bool disconnectAudio(const QString& address, AudioProfile profile) = 0;
 
  signals:
   /**

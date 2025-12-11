@@ -17,15 +17,15 @@
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../wireless/WiFiManager.h"
 #include <QDebug>
+
+#include "../wireless/WiFiManager.h"
 
 // Placeholder implementation of WiFiManager
 
 class WiFiManagerImpl : public WiFiManager {
  public:
-  explicit WiFiManagerImpl(QObject* parent = nullptr)
-      : WiFiManager(parent) {}
+  explicit WiFiManagerImpl(QObject* parent = nullptr) : WiFiManager(parent) {}
 
   bool initialise() override {
     qDebug() << "[WiFi] Initialising WiFiManager";
@@ -37,8 +37,12 @@ class WiFiManagerImpl : public WiFiManager {
     qDebug() << "[WiFi] Deinitialising WiFiManager";
   }
 
-  bool isEnabled() const override { return true; }
-  bool setEnabled(bool enabled) override { return true; }
+  bool isEnabled() const override {
+    return true;
+  }
+  bool setEnabled(bool enabled) override {
+    return true;
+  }
 
   ConnectionState getConnectionState() const override {
     return ConnectionState::CONNECTED;
@@ -48,7 +52,9 @@ class WiFiManagerImpl : public WiFiManager {
     return "MyNetwork";
   }
 
-  bool startScan() override { return true; }
+  bool startScan() override {
+    return true;
+  }
 
   QVector<WiFiNetwork> getAvailableNetworks() const override {
     return {
@@ -57,13 +63,14 @@ class WiFiManagerImpl : public WiFiManager {
     };
   }
 
-  bool connect(const QString& ssid, const QString& password,
-               Security security) override {
+  bool connect(const QString& ssid, const QString& password, Security security) override {
     qDebug() << "[WiFi] Connecting to" << ssid;
     return true;
   }
 
-  bool disconnect() override { return true; }
+  bool disconnect() override {
+    return true;
+  }
 
   bool forgetNetwork(const QString& ssid) override {
     return true;
@@ -73,7 +80,9 @@ class WiFiManagerImpl : public WiFiManager {
     return {"MyNetwork"};
   }
 
-  int getSignalStrength() const override { return 80; }
+  int getSignalStrength() const override {
+    return 80;
+  }
 
   QString getIPAddress() const override {
     return "192.168.1.100";

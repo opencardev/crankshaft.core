@@ -19,14 +19,15 @@
 
 #pragma once
 
-#include "IAudioMixer.h"
 #include <QMap>
 #include <QMutex>
 #include <QVector>
 
+#include "IAudioMixer.h"
+
 /**
  * @brief Software audio mixer implementation
- * 
+ *
  * Mixes multiple PCM audio streams with volume control and format conversion.
  * Supports mixing channels with different sample rates and channel counts.
  * Uses priority-based mixing when channels overlap.
@@ -52,10 +53,16 @@ class AudioMixer : public IAudioMixer {
   bool isChannelMuted(ChannelId channelId) const override;
 
   void setMasterVolume(float volume) override;
-  float getMasterVolume() const override { return m_masterVolume; }
+  float getMasterVolume() const override {
+    return m_masterVolume;
+  }
 
-  bool isReady() const override { return m_isInitialized; }
-  QString getMixerName() const override { return "Software PCM Mixer"; }
+  bool isReady() const override {
+    return m_isInitialized;
+  }
+  QString getMixerName() const override {
+    return "Software PCM Mixer";
+  }
 
  private:
   struct ChannelData {
@@ -64,14 +71,10 @@ class AudioMixer : public IAudioMixer {
     bool active{false};
   };
 
-  QByteArray convertFormat(const QByteArray& input,
-                          const AudioFormat& inputFormat,
-                          const AudioFormat& outputFormat);
-  QByteArray resample(const QByteArray& input,
-                     int inputSampleRate,
-                     int outputSampleRate,
-                     int channels,
-                     int bitsPerSample);
+  QByteArray convertFormat(const QByteArray& input, const AudioFormat& inputFormat,
+                           const AudioFormat& outputFormat);
+  QByteArray resample(const QByteArray& input, int inputSampleRate, int outputSampleRate,
+                      int channels, int bitsPerSample);
   void mixBuffers();
   float applySaturation(float sample);
 

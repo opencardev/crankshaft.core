@@ -18,6 +18,7 @@
  */
 
 #include "CANDevice.h"
+
 #include "../../services/logging/Logger.h"
 
 CANDevice::CANDevice(Transport* transport, QObject* parent)
@@ -71,7 +72,8 @@ bool CANDevice::initialize() {
   m_state = DeviceState::ONLINE;
   emit stateChanged(m_state);
   emit busStatusChanged(true);
-  Logger::instance().info(QString("CANDevice: Initialization complete, bit rate %1").arg(m_bitRate));
+  Logger::instance().info(
+      QString("CANDevice: Initialization complete, bit rate %1").arg(m_bitRate));
   return true;
 }
 
@@ -172,7 +174,7 @@ void CANDevice::parseCANData(const QByteArray& data) {
 
   while (end != -1) {
     QByteArray frame = m_buffer.mid(start, end - start);
-    
+
     if (frame.startsWith('t') || frame.startsWith('T')) {
       // Standard or extended CAN frame
       CANMessage message;
@@ -190,7 +192,8 @@ void CANDevice::parseCANData(const QByteArray& data) {
       QString dataStr = frameStr.mid(message.extended ? 10 : 5, len * 2);
       message.data = QByteArray::fromHex(dataStr.toLatin1());
 
-      Logger::instance().info(QString("CANDevice: Received message ID 0x%1").arg(message.id, 0, 16));
+      Logger::instance().info(
+          QString("CANDevice: Received message ID 0x%1").arg(message.id, 0, 16));
       emit messageReceived(message);
     }
 

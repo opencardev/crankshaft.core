@@ -18,11 +18,11 @@
  */
 
 #include "GPSDevice.h"
+
 #include "../../services/logging/Logger.h"
 
 GPSDevice::GPSDevice(Transport* transport, QObject* parent)
     : FunctionalDevice(transport, parent), m_state(DeviceState::OFFLINE) {
-  
   // Initialize location with invalid values
   m_currentLocation.latitude = 0.0;
   m_currentLocation.longitude = 0.0;
@@ -129,20 +129,20 @@ void GPSDevice::parseNMEA(const QByteArray& data) {
 
   while (end != -1) {
     QByteArray sentence = m_buffer.mid(start, end - start);
-    
+
     // Process NMEA sentence
     QString line = QString::fromLatin1(sentence).trimmed();
     if (line.startsWith("$GPGGA") || line.startsWith("$GNGGA")) {
       // Parse GGA sentence for location and satellite count
       // TODO: Implement NMEA parsing
       Logger::instance().info(QString("GPSDevice: Received GGA: %1").arg(line));
-      
+
       // Example: Update location (simplified)
       QMutexLocker locker(&m_mutex);
       m_currentLocation.satellites = 8;  // Would parse from sentence
       m_currentLocation.fixType = "3D";
       m_currentLocation.timestamp = QDateTime::currentDateTime();
-      
+
       emit locationUpdated(m_currentLocation);
       emit satellitesChanged(m_currentLocation.satellites);
     }

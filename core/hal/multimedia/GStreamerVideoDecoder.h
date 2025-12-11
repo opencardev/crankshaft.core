@@ -19,18 +19,20 @@
 
 #pragma once
 
-#include "IVideoDecoder.h"
-#include <gst/gst.h>
-#include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
+#include <gst/app/gstappsrc.h>
+#include <gst/gst.h>
+
 #include <QMutex>
+
+#include "IVideoDecoder.h"
 
 /**
  * @brief GStreamer-based video decoder
- * 
+ *
  * Uses GStreamer pipeline for hardware-accelerated or software H.264 decoding.
  * Pipeline: appsrc ! h264parse ! avdec_h264 ! videoconvert ! video/x-raw,format=RGBA ! appsink
- * 
+ *
  * Supports hardware acceleration via:
  * - VA-API (Linux)
  * - OMX (Raspberry Pi)
@@ -46,9 +48,15 @@ class GStreamerVideoDecoder : public IVideoDecoder {
   bool initialize(const DecoderConfig& config) override;
   void deinitialize() override;
   bool decodeFrame(const QByteArray& encodedData) override;
-  bool isReady() const override { return m_isInitialized; }
-  QString getDecoderName() const override { return "GStreamer"; }
-  DecoderConfig getConfig() const override { return m_config; }
+  bool isReady() const override {
+    return m_isInitialized;
+  }
+  QString getDecoderName() const override {
+    return "GStreamer";
+  }
+  DecoderConfig getConfig() const override {
+    return m_config;
+  }
 
  private:
   bool createPipeline();

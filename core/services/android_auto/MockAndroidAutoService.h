@@ -19,14 +19,15 @@
 
 #pragma once
 
-#include "AndroidAutoService.h"
-#include <QTimer>
 #include <QElapsedTimer>
 #include <QImage>
+#include <QTimer>
+
+#include "AndroidAutoService.h"
 
 /**
  * @brief Mock Android Auto service for testing/development
- * 
+ *
  * Simulates an Android Auto connection without requiring actual hardware.
  * Useful for:
  *   - Development without physical device
@@ -44,9 +45,15 @@ class MockAndroidAutoService : public AndroidAutoService {
   bool initialise() override;
   void deinitialise() override;
 
-  ConnectionState getConnectionState() const override { return m_state; }
-  bool isConnected() const override { return m_state == ConnectionState::CONNECTED; }
-  AndroidDevice getConnectedDevice() const override { return m_device; }
+  ConnectionState getConnectionState() const override {
+    return m_state;
+  }
+  bool isConnected() const override {
+    return m_state == ConnectionState::CONNECTED;
+  }
+  AndroidDevice getConnectedDevice() const override {
+    return m_device;
+  }
 
   bool startSearching() override;
   void stopSearching() override;
@@ -54,10 +61,14 @@ class MockAndroidAutoService : public AndroidAutoService {
   bool disconnect() override;
 
   bool setDisplayResolution(const QSize& resolution) override;
-  QSize getDisplayResolution() const override { return m_resolution; }
+  QSize getDisplayResolution() const override {
+    return m_resolution;
+  }
 
   bool setFramerate(int fps) override;
-  int getFramerate() const override { return m_fps; }
+  int getFramerate() const override {
+    return m_fps;
+  }
 
   bool sendTouchInput(int x, int y, int action) override;
   bool sendKeyInput(int key_code, int action) override;
@@ -65,15 +76,23 @@ class MockAndroidAutoService : public AndroidAutoService {
   bool requestAudioFocus() override;
   bool abandonAudioFocus() override;
 
-  int getFrameDropCount() const override { return m_droppedFrames; }
-  int getLatency() const override { return m_latency; }
+  int getFrameDropCount() const override {
+    return m_droppedFrames;
+  }
+  int getLatency() const override {
+    return m_latency;
+  }
 
   bool setAudioEnabled(bool enabled) override;
   QJsonObject getAudioConfig() const override;
 
   // Mock-specific configuration
-  void setSimulateConnectionDelay(int ms) { m_connectionDelayMs = ms; }
-  void setSimulateErrors(bool enabled) { m_simulateErrors = enabled; }
+  void setSimulateConnectionDelay(int ms) {
+    m_connectionDelayMs = ms;
+  }
+  void setSimulateErrors(bool enabled) {
+    m_simulateErrors = enabled;
+  }
   void setGenerateTestVideo(bool enabled);
   void setGenerateTestAudio(bool enabled);
 

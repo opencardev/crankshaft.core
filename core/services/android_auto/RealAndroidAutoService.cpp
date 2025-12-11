@@ -18,39 +18,39 @@
  */
 
 #include "RealAndroidAutoService.h"
-#include "../logging/Logger.h"
-#include "../../hal/multimedia/GStreamerVideoDecoder.h"
-#include "../../hal/multimedia/AudioMixer.h"
-#include "ProtocolHelpers.h"
-#include <QJsonObject>
+
 #include <QImage>
+#include <QJsonObject>
+
+#include "../../hal/multimedia/AudioMixer.h"
+#include "../../hal/multimedia/GStreamerVideoDecoder.h"
+#include "../logging/Logger.h"
+#include "ProtocolHelpers.h"
 
 // AASDK includes
-#include <aasdk/USB/USBWrapper.hpp>
-#include <aasdk/USB/USBHub.hpp>
-#include <aasdk/USB/AOAPDevice.hpp>
-#include <aasdk/Transport/USBTransport.hpp>
-#include <aasdk/Transport/SSLWrapper.hpp>
-#include <aasdk/Messenger/Cryptor.hpp>
-#include <aasdk/Messenger/Messenger.hpp>
-#include <aasdk/Messenger/MessageInStream.hpp>
-#include <aasdk/Messenger/MessageOutStream.hpp>
-#include <aasdk/USB/AccessoryModeQueryFactory.hpp>
-#include <aasdk/USB/AccessoryModeQueryChainFactory.hpp>
-#include <aasdk/Channel/MediaSink/Video/Channel/VideoChannel.hpp>
-#include <aasdk/Channel/MediaSink/Audio/Channel/MediaAudioChannel.hpp>
-#include <aasdk/Channel/MediaSink/Audio/Channel/SystemAudioChannel.hpp>
-#include <aasdk/Channel/MediaSink/Audio/Channel/GuidanceAudioChannel.hpp>
-#include <aasdk/Channel/InputSource/InputSourceService.hpp>
-#include <aasdk/Channel/SensorSource/SensorSourceService.hpp>
 #include <aasdk/Channel/Bluetooth/BluetoothService.hpp>
 #include <aasdk/Channel/Control/ControlServiceChannel.hpp>
+#include <aasdk/Channel/InputSource/InputSourceService.hpp>
+#include <aasdk/Channel/MediaSink/Audio/Channel/GuidanceAudioChannel.hpp>
+#include <aasdk/Channel/MediaSink/Audio/Channel/MediaAudioChannel.hpp>
+#include <aasdk/Channel/MediaSink/Audio/Channel/SystemAudioChannel.hpp>
+#include <aasdk/Channel/MediaSink/Video/Channel/VideoChannel.hpp>
+#include <aasdk/Channel/SensorSource/SensorSourceService.hpp>
+#include <aasdk/Messenger/Cryptor.hpp>
+#include <aasdk/Messenger/MessageInStream.hpp>
+#include <aasdk/Messenger/MessageOutStream.hpp>
+#include <aasdk/Messenger/Messenger.hpp>
+#include <aasdk/Transport/SSLWrapper.hpp>
+#include <aasdk/Transport/USBTransport.hpp>
+#include <aasdk/USB/AOAPDevice.hpp>
+#include <aasdk/USB/AccessoryModeQueryChainFactory.hpp>
+#include <aasdk/USB/AccessoryModeQueryFactory.hpp>
+#include <aasdk/USB/USBHub.hpp>
+#include <aasdk/USB/USBWrapper.hpp>
 #include <boost/asio.hpp>
 
-RealAndroidAutoService::RealAndroidAutoService(MediaPipeline* mediaPipeline,
-                                               QObject* parent)
+RealAndroidAutoService::RealAndroidAutoService(MediaPipeline* mediaPipeline, QObject* parent)
     : AndroidAutoService(parent), m_mediaPipeline(mediaPipeline) {
-  
   // Create AASDK thread
   m_aasdkThread = std::make_unique<QThread>();
   m_aasdkThread->setObjectName("AASDKThread");
@@ -58,7 +58,7 @@ RealAndroidAutoService::RealAndroidAutoService(MediaPipeline* mediaPipeline,
 
 RealAndroidAutoService::~RealAndroidAutoService() {
   deinitialise();
-  
+
   if (m_aasdkThread && m_aasdkThread->isRunning()) {
     m_aasdkThread->quit();
     m_aasdkThread->wait();
@@ -78,8 +78,7 @@ bool RealAndroidAutoService::initialise() {
     Logger::instance().info("AndroidAutoService initialised successfully");
     return true;
   } catch (const std::exception& e) {
-    Logger::instance().error(
-        QString("Failed to initialise AndroidAutoService: %1").arg(e.what()));
+    Logger::instance().error(QString("Failed to initialise AndroidAutoService: %1").arg(e.what()));
     emit errorOccurred(QString("Initialisation failed: %1").arg(e.what()));
     return false;
   }
@@ -104,7 +103,7 @@ void RealAndroidAutoService::deinitialise() {
 void RealAndroidAutoService::setupAASDK() {
   // Create io_service
   m_ioService = std::make_shared<boost::asio::io_service>();
-  
+
   // Create strand for channel operations
   m_strand = std::make_unique<boost::asio::io_service::strand>(*m_ioService);
 
@@ -112,8 +111,7 @@ void RealAndroidAutoService::setupAASDK() {
   libusb_context* usbContext = nullptr;
   int ret = libusb_init(&usbContext);
   if (ret != 0) {
-    Logger::instance().error(
-        QString("Failed to initialize libusb: %1").arg(ret));
+    Logger::instance().error(QString("Failed to initialize libusb: %1").arg(ret));
     throw std::runtime_error("libusb initialization failed");
   }
 
@@ -121,14 +119,14 @@ void RealAndroidAutoService::setupAASDK() {
   m_usbWrapper = std::make_shared<aasdk::usb::USBWrapper>(usbContext);
 
   // Create query factories for AOAP device initialization
-  m_queryFactory = std::make_shared<aasdk::usb::AccessoryModeQueryFactory>(
-      *m_usbWrapper, *m_ioService);
+  m_queryFactory =
+      std::make_shared<aasdk::usb::AccessoryModeQueryFactory>(*m_usbWrapper, *m_ioService);
   m_queryChainFactory = std::make_shared<aasdk::usb::AccessoryModeQueryChainFactory>(
       *m_usbWrapper, *m_ioService, *m_queryFactory);
 
   // Create USB hub for device hotplug detection
-  m_usbHub = std::make_shared<aasdk::usb::USBHub>(
-      *m_usbWrapper, *m_ioService, *m_queryChainFactory);
+  m_usbHub =
+      std::make_shared<aasdk::usb::USBHub>(*m_usbWrapper, *m_ioService, *m_queryChainFactory);
 
   // Start AASDK thread
   m_aasdkThread->start();
@@ -144,8 +142,7 @@ void RealAndroidAutoService::setupChannels() {
 
   try {
     // Create transport layer
-    m_transport = std::make_shared<aasdk::transport::USBTransport>(
-        *m_ioService, m_aoapDevice);
+    m_transport = std::make_shared<aasdk::transport::USBTransport>(*m_ioService, m_aoapDevice);
 
     // Create SSL/encryption layer
     auto sslWrapper = std::make_shared<aasdk::transport::SSLWrapper>();
@@ -153,16 +150,16 @@ void RealAndroidAutoService::setupChannels() {
     m_cryptor->init();
 
     // Create messenger
-    auto messageInStream = std::make_shared<aasdk::messenger::MessageInStream>(
-        *m_ioService, m_transport, m_cryptor);
-    auto messageOutStream = std::make_shared<aasdk::messenger::MessageOutStream>(
-        *m_ioService, m_transport, m_cryptor);
+    auto messageInStream =
+        std::make_shared<aasdk::messenger::MessageInStream>(*m_ioService, m_transport, m_cryptor);
+    auto messageOutStream =
+        std::make_shared<aasdk::messenger::MessageOutStream>(*m_ioService, m_transport, m_cryptor);
     m_messenger = std::make_shared<aasdk::messenger::Messenger>(
         *m_ioService, std::move(messageInStream), std::move(messageOutStream));
 
     // Create control channel (required)
-    m_controlChannel = std::make_shared<aasdk::channel::control::ControlServiceChannel>(
-        *m_strand, m_messenger);
+    m_controlChannel =
+        std::make_shared<aasdk::channel::control::ControlServiceChannel>(*m_strand, m_messenger);
 
     // Create video channel
     if (m_channelConfig.videoEnabled) {
@@ -173,29 +170,32 @@ void RealAndroidAutoService::setupChannels() {
 
     // Create media audio channel
     if (m_channelConfig.mediaAudioEnabled) {
-      m_mediaAudioChannel = std::make_shared<aasdk::channel::mediasink::audio::channel::MediaAudioChannel>(
-          *m_strand, m_messenger);
+      m_mediaAudioChannel =
+          std::make_shared<aasdk::channel::mediasink::audio::channel::MediaAudioChannel>(
+              *m_strand, m_messenger);
       Logger::instance().info("Media audio channel enabled");
     }
 
     // Create system audio channel
     if (m_channelConfig.systemAudioEnabled) {
-      m_systemAudioChannel = std::make_shared<aasdk::channel::mediasink::audio::channel::SystemAudioChannel>(
-          *m_strand, m_messenger);
+      m_systemAudioChannel =
+          std::make_shared<aasdk::channel::mediasink::audio::channel::SystemAudioChannel>(
+              *m_strand, m_messenger);
       Logger::instance().info("System audio channel enabled");
     }
 
     // Create speech audio channel (using GuidanceAudioChannel)
     if (m_channelConfig.speechAudioEnabled) {
-      m_speechAudioChannel = std::make_shared<aasdk::channel::mediasink::audio::channel::GuidanceAudioChannel>(
-          *m_strand, m_messenger);
+      m_speechAudioChannel =
+          std::make_shared<aasdk::channel::mediasink::audio::channel::GuidanceAudioChannel>(
+              *m_strand, m_messenger);
       Logger::instance().info("Speech audio channel enabled");
     }
 
     // Create input channel
     if (m_channelConfig.inputEnabled) {
-      m_inputChannel = std::make_shared<aasdk::channel::inputsource::InputSourceService>(
-          *m_strand, m_messenger);
+      m_inputChannel =
+          std::make_shared<aasdk::channel::inputsource::InputSourceService>(*m_strand, m_messenger);
       Logger::instance().info("Input channel enabled");
     }
 
@@ -208,15 +208,15 @@ void RealAndroidAutoService::setupChannels() {
 
     // Create bluetooth channel
     if (m_channelConfig.bluetoothEnabled) {
-      m_bluetoothChannel = std::make_shared<aasdk::channel::bluetooth::BluetoothService>(
-          *m_strand, m_messenger);
+      m_bluetoothChannel =
+          std::make_shared<aasdk::channel::bluetooth::BluetoothService>(*m_strand, m_messenger);
       Logger::instance().info("Bluetooth channel enabled");
     }
 
     // Initialize video decoder
     if (m_channelConfig.videoEnabled) {
       m_videoDecoder = new GStreamerVideoDecoder(this);
-      
+
       IVideoDecoder::DecoderConfig decoderConfig;
       decoderConfig.codec = IVideoDecoder::CodecType::H264;
       decoderConfig.width = m_resolution.width();
@@ -224,38 +224,36 @@ void RealAndroidAutoService::setupChannels() {
       decoderConfig.fps = m_fps;
       decoderConfig.outputFormat = IVideoDecoder::PixelFormat::RGBA;
       decoderConfig.hardwareAcceleration = true;
-      
+
       if (m_videoDecoder->initialize(decoderConfig)) {
-        connect(m_videoDecoder, &IVideoDecoder::frameDecoded,
-                this, [this](int width, int height, const uint8_t* data, int size) {
-          emit videoFrameReady(width, height, data, size);
-        });
-        
-        connect(m_videoDecoder, &IVideoDecoder::errorOccurred,
-                this, [](const QString& error) {
+        connect(m_videoDecoder, &IVideoDecoder::frameDecoded, this,
+                [this](int width, int height, const uint8_t* data, int size) {
+                  emit videoFrameReady(width, height, data, size);
+                });
+
+        connect(m_videoDecoder, &IVideoDecoder::errorOccurred, this, [](const QString& error) {
           Logger::instance().error("Video decoder error: " + error);
         });
-        
-        Logger::instance().info(QString("Video decoder initialized: %1")
-                               .arg(m_videoDecoder->getDecoderName()));
+
+        Logger::instance().info(
+            QString("Video decoder initialized: %1").arg(m_videoDecoder->getDecoderName()));
       } else {
         Logger::instance().error("Failed to initialize video decoder");
         delete m_videoDecoder;
         m_videoDecoder = nullptr;
       }
     }
-    
+
     // Initialize audio mixer
-    if (m_channelConfig.mediaAudioEnabled || 
-        m_channelConfig.systemAudioEnabled || 
+    if (m_channelConfig.mediaAudioEnabled || m_channelConfig.systemAudioEnabled ||
         m_channelConfig.speechAudioEnabled) {
       m_audioMixer = new AudioMixer(this);
-      
+
       IAudioMixer::AudioFormat masterFormat;
       masterFormat.sampleRate = 48000;
       masterFormat.channels = 2;
       masterFormat.bitsPerSample = 16;
-      
+
       if (m_audioMixer->initialize(masterFormat)) {
         // Add media audio channel (48kHz stereo)
         if (m_channelConfig.mediaAudioEnabled) {
@@ -266,7 +264,7 @@ void RealAndroidAutoService::setupChannels() {
           mediaConfig.format = masterFormat;
           m_audioMixer->addChannel(mediaConfig);
         }
-        
+
         // Add system audio channel (16kHz mono)
         if (m_channelConfig.systemAudioEnabled) {
           IAudioMixer::ChannelConfig systemConfig;
@@ -276,7 +274,7 @@ void RealAndroidAutoService::setupChannels() {
           systemConfig.format = {16000, 1, 16};
           m_audioMixer->addChannel(systemConfig);
         }
-        
+
         // Add speech audio channel (16kHz mono)
         if (m_channelConfig.speechAudioEnabled) {
           IAudioMixer::ChannelConfig speechConfig;
@@ -286,18 +284,15 @@ void RealAndroidAutoService::setupChannels() {
           speechConfig.format = {16000, 1, 16};
           m_audioMixer->addChannel(speechConfig);
         }
-        
+
         // Connect mixed audio output
-        connect(m_audioMixer, &IAudioMixer::audioMixed,
-                this, [this](const QByteArray& mixedData) {
-          emit audioDataReady(mixedData);
-        });
-        
-        connect(m_audioMixer, &IAudioMixer::errorOccurred,
-                this, [](const QString& error) {
+        connect(m_audioMixer, &IAudioMixer::audioMixed, this,
+                [this](const QByteArray& mixedData) { emit audioDataReady(mixedData); });
+
+        connect(m_audioMixer, &IAudioMixer::errorOccurred, this, [](const QString& error) {
           Logger::instance().error("Audio mixer error: " + error);
         });
-        
+
         Logger::instance().info("Audio mixer initialized with multiple channels");
       } else {
         Logger::instance().error("Failed to initialize audio mixer");
@@ -308,8 +303,7 @@ void RealAndroidAutoService::setupChannels() {
 
     Logger::instance().info("All enabled channels created successfully");
   } catch (const std::exception& e) {
-    Logger::instance().error(
-        QString("Failed to setup channels: %1").arg(e.what()));
+    Logger::instance().error(QString("Failed to setup channels: %1").arg(e.what()));
     emit errorOccurred(QString("Channel setup failed: %1").arg(e.what()));
   }
 }
@@ -357,14 +351,14 @@ void RealAndroidAutoService::cleanupChannels() {
     m_videoDecoder = nullptr;
     Logger::instance().info("Video decoder cleaned up");
   }
-  
+
   if (m_audioMixer) {
     m_audioMixer->deinitialize();
     delete m_audioMixer;
     m_audioMixer = nullptr;
     Logger::instance().info("Audio mixer cleaned up");
   }
-  
+
   // Reset all channel pointers
   m_videoChannel.reset();
   m_mediaAudioChannel.reset();
@@ -374,10 +368,10 @@ void RealAndroidAutoService::cleanupChannels() {
   m_sensorChannel.reset();
   m_bluetoothChannel.reset();
   m_controlChannel.reset();
-  
+
   m_transport.reset();
   m_cryptor.reset();
-  
+
   Logger::instance().info("Channels cleaned up");
 }
 
@@ -393,7 +387,7 @@ bool RealAndroidAutoService::startSearching() {
   }
 
   transitionToState(ConnectionState::SEARCHING);
-  
+
   // Start USB hub to detect devices
   auto promise = aasdk::usb::IUSBHub::Promise::defer(*m_ioService);
   promise->then(
@@ -407,7 +401,7 @@ bool RealAndroidAutoService::startSearching() {
         transitionToState(ConnectionState::DISCONNECTED);
       });
   m_usbHub->start(std::move(promise));
-  
+
   Logger::instance().info("Started searching for Android Auto devices");
   return true;
 }
@@ -437,7 +431,7 @@ bool RealAndroidAutoService::connectToDevice(const QString& serial) {
 
   // Connection will be handled by AOAP device setup
   // This is initiated from onUSBHotplug callback
-  
+
   return true;
 }
 
@@ -474,10 +468,8 @@ bool RealAndroidAutoService::setDisplayResolution(const QSize& resolution) {
 
   m_resolution = resolution;
   Logger::instance().info(
-      QString("Display resolution set to %1x%2")
-          .arg(resolution.width())
-          .arg(resolution.height()));
-  
+      QString("Display resolution set to %1x%2").arg(resolution.width()).arg(resolution.height()));
+
   return true;
 }
 
@@ -500,11 +492,11 @@ bool RealAndroidAutoService::sendTouchInput(int x, int y, int action) {
 
   try {
     using namespace crankshaft::protocol;
-    
+
     // Normalize coordinates to 0-1 range
     float normalizedX = static_cast<float>(x) / m_resolution.width();
     float normalizedY = static_cast<float>(y) / m_resolution.height();
-    
+
     // Map action (0=DOWN, 1=UP, 2=MOVE)
     TouchAction touchAction;
     if (action == 0) {
@@ -514,9 +506,9 @@ bool RealAndroidAutoService::sendTouchInput(int x, int y, int action) {
     } else {
       touchAction = TouchAction::ACTION_MOVED;
     }
-    
+
     auto data = createTouchInputReport(normalizedX, normalizedY, touchAction);
-    
+
     auto promise = aasdk::channel::SendPromise::defer(*m_strand);
     promise->then(
         []() {
@@ -524,20 +516,19 @@ bool RealAndroidAutoService::sendTouchInput(int x, int y, int action) {
         },
         [](const aasdk::error::Error& error) {
           Logger::instance().warning(
-              QString("Failed to send touch input: %1")
-                  .arg(QString::fromStdString(error.what())));
+              QString("Failed to send touch input: %1").arg(QString::fromStdString(error.what())));
         });
-    
+
     m_inputChannel->sendInputReport(data, std::move(promise));
-    
-    Logger::instance().debug(
-        QString("Touch input sent: x=%1, y=%2, action=%3")
-            .arg(normalizedX).arg(normalizedY).arg(action));
-    
+
+    Logger::instance().debug(QString("Touch input sent: x=%1, y=%2, action=%3")
+                                 .arg(normalizedX)
+                                 .arg(normalizedY)
+                                 .arg(action));
+
     return true;
   } catch (const std::exception& e) {
-    Logger::instance().error(
-        QString("Failed to send touch input: %1").arg(e.what()));
+    Logger::instance().error(QString("Failed to send touch input: %1").arg(e.what()));
     return false;
   }
 }
@@ -550,12 +541,12 @@ bool RealAndroidAutoService::sendKeyInput(int key_code, int action) {
 
   try {
     using namespace crankshaft::protocol;
-    
+
     // Map action (0=DOWN, 1=UP)
     KeyAction keyAction = (action == 0) ? KeyAction::ACTION_DOWN : KeyAction::ACTION_UP;
-    
+
     auto data = createKeyInputReport(key_code, keyAction);
-    
+
     auto promise = aasdk::channel::SendPromise::defer(*m_strand);
     promise->then(
         []() {
@@ -563,19 +554,17 @@ bool RealAndroidAutoService::sendKeyInput(int key_code, int action) {
         },
         [](const aasdk::error::Error& error) {
           Logger::instance().warning(
-              QString("Failed to send key input: %1")
-                  .arg(QString::fromStdString(error.what())));
+              QString("Failed to send key input: %1").arg(QString::fromStdString(error.what())));
         });
-    
+
     m_inputChannel->sendInputReport(data, std::move(promise));
-    
+
     Logger::instance().debug(
         QString("Key input sent: code=%1, action=%2").arg(key_code).arg(action));
-    
+
     return true;
   } catch (const std::exception& e) {
-    Logger::instance().error(
-        QString("Failed to send key input: %1").arg(e.what()));
+    Logger::instance().error(QString("Failed to send key input: %1").arg(e.what()));
     return false;
   }
 }
@@ -588,26 +577,21 @@ bool RealAndroidAutoService::requestAudioFocus() {
 
   try {
     using namespace crankshaft::protocol;
-    
+
     auto data = createAudioFocusNotification(AudioFocusState::GAIN);
-    
+
     auto promise = aasdk::channel::SendPromise::defer(*m_strand);
-    promise->then(
-        []() {
-          Logger::instance().info("Audio focus granted to Android Auto");
-        },
-        [](const aasdk::error::Error& error) {
-          Logger::instance().warning(
-              QString("Failed to request audio focus: %1")
-                  .arg(QString::fromStdString(error.what())));
-        });
-    
+    promise->then([]() { Logger::instance().info("Audio focus granted to Android Auto"); },
+                  [](const aasdk::error::Error& error) {
+                    Logger::instance().warning(QString("Failed to request audio focus: %1")
+                                                   .arg(QString::fromStdString(error.what())));
+                  });
+
     m_controlChannel->sendAudioFocusResponse(data, std::move(promise));
-    
+
     return true;
   } catch (const std::exception& e) {
-    Logger::instance().error(
-        QString("Failed to request audio focus: %1").arg(e.what()));
+    Logger::instance().error(QString("Failed to request audio focus: %1").arg(e.what()));
     return false;
   }
 }
@@ -620,50 +604,44 @@ bool RealAndroidAutoService::abandonAudioFocus() {
 
   try {
     using namespace crankshaft::protocol;
-    
+
     auto data = createAudioFocusNotification(AudioFocusState::LOSS);
-    
+
     auto promise = aasdk::channel::SendPromise::defer(*m_strand);
-    promise->then(
-        []() {
-          Logger::instance().info("Audio focus removed from Android Auto");
-        },
-        [](const aasdk::error::Error& error) {
-          Logger::instance().warning(
-              QString("Failed to abandon audio focus: %1")
-                  .arg(QString::fromStdString(error.what())));
-        });
-    
+    promise->then([]() { Logger::instance().info("Audio focus removed from Android Auto"); },
+                  [](const aasdk::error::Error& error) {
+                    Logger::instance().warning(QString("Failed to abandon audio focus: %1")
+                                                   .arg(QString::fromStdString(error.what())));
+                  });
+
     m_controlChannel->sendAudioFocusResponse(data, std::move(promise));
-    
+
     return true;
   } catch (const std::exception& e) {
-    Logger::instance().error(
-        QString("Failed to abandon audio focus: %1").arg(e.what()));
+    Logger::instance().error(QString("Failed to abandon audio focus: %1").arg(e.what()));
     return false;
   }
 }
 
 bool RealAndroidAutoService::setAudioEnabled(bool enabled) {
   m_audioEnabled = enabled;
-  Logger::instance().info(
-      QString("Audio %1").arg(enabled ? "enabled" : "disabled"));
+  Logger::instance().info(QString("Audio %1").arg(enabled ? "enabled" : "disabled"));
   return true;
 }
 
 void RealAndroidAutoService::setChannelConfig(const ChannelConfig& config) {
-  bool needsReconnect = isConnected() && 
-                        (m_channelConfig.videoEnabled != config.videoEnabled ||
-                         m_channelConfig.mediaAudioEnabled != config.mediaAudioEnabled ||
-                         m_channelConfig.systemAudioEnabled != config.systemAudioEnabled ||
-                         m_channelConfig.speechAudioEnabled != config.speechAudioEnabled ||
-                         m_channelConfig.inputEnabled != config.inputEnabled ||
-                         m_channelConfig.sensorEnabled != config.sensorEnabled ||
-                         m_channelConfig.bluetoothEnabled != config.bluetoothEnabled);
+  bool needsReconnect =
+      isConnected() && (m_channelConfig.videoEnabled != config.videoEnabled ||
+                        m_channelConfig.mediaAudioEnabled != config.mediaAudioEnabled ||
+                        m_channelConfig.systemAudioEnabled != config.systemAudioEnabled ||
+                        m_channelConfig.speechAudioEnabled != config.speechAudioEnabled ||
+                        m_channelConfig.inputEnabled != config.inputEnabled ||
+                        m_channelConfig.sensorEnabled != config.sensorEnabled ||
+                        m_channelConfig.bluetoothEnabled != config.bluetoothEnabled);
 
   m_channelConfig = config;
   Logger::instance().info("Channel configuration updated");
-  
+
   if (needsReconnect) {
     Logger::instance().info("Channel config changed while connected - reconnection required");
     emit errorOccurred("Channel configuration changed. Please reconnect.");
@@ -712,7 +690,7 @@ void RealAndroidAutoService::handleDeviceRemoved() {
 void RealAndroidAutoService::handleConnectionEstablished() {
   // Setup channels after device is connected
   setupChannels();
-  
+
   m_device.connected = true;
   transitionToState(ConnectionState::CONNECTED);
   emit connected(m_device);
@@ -725,8 +703,7 @@ void RealAndroidAutoService::handleConnectionLost() {
   }
 }
 
-void RealAndroidAutoService::onVideoFrame(const uint8_t* data, int size,
-                                          int width, int height) {
+void RealAndroidAutoService::onVideoFrame(const uint8_t* data, int size, int width, int height) {
   if (!isConnected()) {
     return;
   }
@@ -757,19 +734,18 @@ void RealAndroidAutoService::transitionToState(ConnectionState newState) {
   emit connectionStateChanged(newState);
 }
 
-void RealAndroidAutoService::onVideoChannelUpdate(const QByteArray& data, 
-                                                   int width, int height) {
+void RealAndroidAutoService::onVideoChannelUpdate(const QByteArray& data, int width, int height) {
   if (!m_channelConfig.videoEnabled) {
     return;
   }
-  
+
   // H.264 video data from Android device
   if (m_videoDecoder && m_videoDecoder->isReady()) {
     // Decode H.264 to RGBA using GStreamer
     aasdk::common::Data h264Data;
     h264Data.resize(data.size());
     std::copy(data.begin(), data.end(), h264Data.begin());
-    
+
     // Convert aasdk::common::Data to QByteArray
     QByteArray frameData(reinterpret_cast<const char*>(h264Data.data()), h264Data.size());
     if (!m_videoDecoder->decodeFrame(frameData)) {
@@ -778,11 +754,9 @@ void RealAndroidAutoService::onVideoChannelUpdate(const QByteArray& data,
     }
   } else {
     // Fallback: emit raw H.264 data (for external decoder or testing)
-    emit videoFrameReady(width, height, 
-                        reinterpret_cast<const uint8_t*>(data.data()), 
-                        data.size());
+    emit videoFrameReady(width, height, reinterpret_cast<const uint8_t*>(data.data()), data.size());
   }
-  
+
   updateStats();
 }
 
@@ -790,7 +764,7 @@ void RealAndroidAutoService::onMediaAudioChannelUpdate(const QByteArray& data) {
   if (!m_channelConfig.mediaAudioEnabled || !m_audioEnabled) {
     return;
   }
-  
+
   // PCM audio data from Android device (music playback)
   if (m_audioMixer) {
     m_audioMixer->mixAudioData(IAudioMixer::ChannelId::MEDIA, data);
@@ -806,7 +780,7 @@ void RealAndroidAutoService::onSystemAudioChannelUpdate(const QByteArray& data) 
   if (!m_channelConfig.systemAudioEnabled || !m_audioEnabled) {
     return;
   }
-  
+
   // PCM audio data from Android device (system sounds, notifications)
   if (m_audioMixer) {
     m_audioMixer->mixAudioData(IAudioMixer::ChannelId::SYSTEM, data);
@@ -822,7 +796,7 @@ void RealAndroidAutoService::onSpeechAudioChannelUpdate(const QByteArray& data) 
   if (!m_channelConfig.speechAudioEnabled || !m_audioEnabled) {
     return;
   }
-  
+
   // PCM audio data from Android device (navigation guidance, voice assistant)
   if (m_audioMixer) {
     m_audioMixer->mixAudioData(IAudioMixer::ChannelId::SPEECH, data);
@@ -838,7 +812,7 @@ void RealAndroidAutoService::onSensorRequest() {
   if (!m_channelConfig.sensorEnabled) {
     return;
   }
-  
+
   // Android device is requesting sensor data (GPS, speed, night mode, etc)
   // TODO: Implement sensor data collection and transmission
   Logger::instance().debug("Sensor data requested by Android device");
@@ -848,15 +822,13 @@ void RealAndroidAutoService::onBluetoothPairingRequest(const QString& deviceName
   if (!m_channelConfig.bluetoothEnabled) {
     return;
   }
-  
+
   // Android device is requesting Bluetooth pairing
   Logger::instance().info(QString("Bluetooth pairing requested: %1").arg(deviceName));
   // TODO: Implement Bluetooth pairing flow
 }
 
-void RealAndroidAutoService::onChannelError(const QString& channelName, 
-                                            const QString& error) {
-  Logger::instance().error(
-      QString("Channel error [%1]: %2").arg(channelName, error));
+void RealAndroidAutoService::onChannelError(const QString& channelName, const QString& error) {
+  Logger::instance().error(QString("Channel error [%1]: %2").arg(channelName, error));
   emit errorOccurred(QString("%1 channel error: %2").arg(channelName, error));
 }

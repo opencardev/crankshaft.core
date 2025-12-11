@@ -17,16 +17,16 @@
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../multimedia/AudioManager.h"
 #include <QDebug>
+
+#include "../multimedia/AudioManager.h"
 
 // Placeholder implementation of AudioManager
 // To be replaced with actual GStreamer implementation
 
 class AudioManagerImpl : public AudioManager {
  public:
-  explicit AudioManagerImpl(QObject* parent = nullptr)
-      : AudioManager(parent) {}
+  explicit AudioManagerImpl(QObject* parent = nullptr) : AudioManager(parent) {}
 
   bool initialise() override {
     qDebug() << "[Audio] Initialising AudioManager";
@@ -81,7 +81,9 @@ class AudioManagerImpl : public AudioManager {
     emit masterVolumeChanged(percent);
   }
 
-  int getMasterVolume() const override { return 70; }
+  int getMasterVolume() const override {
+    return 70;
+  }
 
   void setStreamVolume(const QString& stream_type, int percent) override {
     qDebug() << "[Audio] Setting" << stream_type << "volume to" << percent;
@@ -97,5 +99,7 @@ class AudioManagerImpl : public AudioManager {
     emit muteStateChanged(muted);
   }
 
-  bool isMuted() const override { return false; }
+  bool isMuted() const override {
+    return false;
+  }
 };

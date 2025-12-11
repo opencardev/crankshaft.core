@@ -19,11 +19,12 @@
 
 #pragma once
 
-#include "AudioDevice.h"
-#include <QString>
 #include <QObject>
+#include <QString>
 #include <QVector>
 #include <memory>
+
+#include "AudioDevice.h"
 
 /**
  * @brief Audio system manager
@@ -70,8 +71,7 @@ class AudioManager : public QObject {
   /**
    * @brief Get output device by name
    */
-  virtual AudioOutputDevicePtr getOutputDevice(
-      const QString& name) const = 0;
+  virtual AudioOutputDevicePtr getOutputDevice(const QString& name) const = 0;
 
   /**
    * @brief Get input device by name

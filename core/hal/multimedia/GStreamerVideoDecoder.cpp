@@ -18,11 +18,12 @@
  */
 
 #include "GStreamerVideoDecoder.h"
-#include "../../services/logging/Logger.h"
+
 #include <QMutexLocker>
 
-GStreamerVideoDecoder::GStreamerVideoDecoder(QObject* parent)
-    : IVideoDecoder(parent) {
+#include "../../services/logging/Logger.h"
+
+GStreamerVideoDecoder::GStreamerVideoDecoder(QObject* parent) : IVideoDecoder(parent) {
   // Initialize GStreamer
   gst_init(nullptr, nullptr);
   Logger::instance().info("GStreamerVideoDecoder created");
@@ -56,12 +57,11 @@ bool GStreamerVideoDecoder::initialize(const DecoderConfig& config) {
   }
 
   m_isInitialized = true;
-  Logger::instance().info(
-      QString("GStreamerVideoDecoder initialized: %1x%2@%3fps, decoder=%4")
-          .arg(config.width)
-          .arg(config.height)
-          .arg(config.fps)
-          .arg(getDecoderElement()));
+  Logger::instance().info(QString("GStreamerVideoDecoder initialized: %1x%2@%3fps, decoder=%4")
+                              .arg(config.width)
+                              .arg(config.height)
+                              .arg(config.fps)
+                              .arg(getDecoderElement()));
 
   return true;
 }
@@ -92,19 +92,14 @@ bool GStreamerVideoDecoder::createPipeline() {
   }
 
   // Configure appsrc
-  g_object_set(G_OBJECT(m_appSrc),
-               "stream-type", GST_APP_STREAM_TYPE_STREAM,
-               "format", GST_FORMAT_TIME,
-               "is-live", TRUE,
-               "max-bytes", static_cast<guint64>(10 * 1024 * 1024),  // 10MB buffer
+  g_object_set(G_OBJECT(m_appSrc), "stream-type", GST_APP_STREAM_TYPE_STREAM, "format",
+               GST_FORMAT_TIME, "is-live", TRUE, "max-bytes",
+               static_cast<guint64>(10 * 1024 * 1024),  // 10MB buffer
                nullptr);
 
   // Set H.264 caps on appsrc
-  GstCaps* caps = gst_caps_new_simple(
-      "video/x-h264",
-      "stream-format", G_TYPE_STRING, "byte-stream",
-      "alignment", G_TYPE_STRING, "au",
-      nullptr);
+  GstCaps* caps = gst_caps_new_simple("video/x-h264", "stream-format", G_TYPE_STRING, "byte-stream",
+                                      "alignment", G_TYPE_STRING, "au", nullptr);
   g_object_set(G_OBJECT(m_appSrc), "caps", caps, nullptr);
   gst_caps_unref(caps);
 
@@ -144,31 +139,18 @@ bool GStreamerVideoDecoder::createPipeline() {
   }
 
   // Configure appsink
-  GstCaps* sinkCaps = gst_caps_new_simple(
-      "video/x-raw",
-      "format", G_TYPE_STRING, "RGBA",
-      "width", G_TYPE_INT, m_config.width,
-      "height", G_TYPE_INT, m_config.height,
-      nullptr);
-  g_object_set(G_OBJECT(m_appSink),
-               "emit-signals", TRUE,
-               "sync", FALSE,
-               "max-buffers", 1,
-               "drop", TRUE,
-               "caps", sinkCaps,
-               nullptr);
+  GstCaps* sinkCaps =
+      gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "RGBA", "width", G_TYPE_INT,
+                          m_config.width, "height", G_TYPE_INT, m_config.height, nullptr);
+  g_object_set(G_OBJECT(m_appSink), "emit-signals", TRUE, "sync", FALSE, "max-buffers", 1, "drop",
+               TRUE, "caps", sinkCaps, nullptr);
   gst_caps_unref(sinkCaps);
 
   // Connect new-sample signal
   g_signal_connect(m_appSink, "new-sample", G_CALLBACK(onNewSample), this);
 
   // Add elements to pipeline
-  gst_bin_add_many(GST_BIN(m_pipeline),
-                   m_appSrc,
-                   m_h264Parse,
-                   m_decoder,
-                   m_videoConvert,
-                   m_appSink,
+  gst_bin_add_many(GST_BIN(m_pipeline), m_appSrc, m_h264Parse, m_decoder, m_videoConvert, m_appSink,
                    nullptr);
 
   // Link elements
@@ -337,16 +319,14 @@ GstFlowReturn GStreamerVideoDecoder::onNewSample(GstAppSink* appsink, gpointer u
   // Emit decoded frame signal
   QMutexLocker locker(&decoder->m_mutex);
   decoder->m_decodedFrames++;
-  
+
   // Emit signal with frame data
   emit decoder->frameDecoded(width, height, map.data, map.size);
 
   // Emit statistics every 30 frames
   if (decoder->m_decodedFrames % 30 == 0) {
-    emit decoder->statsUpdated(
-        decoder->m_decodedFrames,
-        decoder->m_droppedFrames,
-        0.0);  // TODO: Calculate avg decode time
+    emit decoder->statsUpdated(decoder->m_decodedFrames, decoder->m_droppedFrames,
+                               0.0);  // TODO: Calculate avg decode time
   }
 
   // Cleanup
@@ -368,8 +348,7 @@ gboolean GStreamerVideoDecoder::onBusMessage(GstBus* bus, GstMessage* message, g
       gchar* debug = nullptr;
       gst_message_parse_error(message, &err, &debug);
 
-      Logger::instance().error(
-          QString("GStreamer error: %1").arg(err->message));
+      Logger::instance().error(QString("GStreamer error: %1").arg(err->message));
       if (debug) {
         Logger::instance().debug(QString("Debug info: %1").arg(debug));
       }
@@ -386,8 +365,7 @@ gboolean GStreamerVideoDecoder::onBusMessage(GstBus* bus, GstMessage* message, g
       gchar* debug = nullptr;
       gst_message_parse_warning(message, &err, &debug);
 
-      Logger::instance().warning(
-          QString("GStreamer warning: %1").arg(err->message));
+      Logger::instance().warning(QString("GStreamer warning: %1").arg(err->message));
       if (debug) {
         Logger::instance().debug(QString("Debug info: %1").arg(debug));
       }
@@ -405,10 +383,9 @@ gboolean GStreamerVideoDecoder::onBusMessage(GstBus* bus, GstMessage* message, g
       if (GST_MESSAGE_SRC(message) == GST_OBJECT(decoder->m_pipeline)) {
         GstState oldState, newState, pending;
         gst_message_parse_state_changed(message, &oldState, &newState, &pending);
-        Logger::instance().debug(
-            QString("GStreamer state changed: %1 -> %2")
-                .arg(gst_element_state_get_name(oldState))
-                .arg(gst_element_state_get_name(newState)));
+        Logger::instance().debug(QString("GStreamer state changed: %1 -> %2")
+                                     .arg(gst_element_state_get_name(oldState))
+                                     .arg(gst_element_state_get_name(newState)));
       }
       break;
     }

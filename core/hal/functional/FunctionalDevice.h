@@ -19,87 +19,88 @@
 
 #pragma once
 
+#include <QMutex>
 #include <QObject>
 #include <QString>
 #include <QVariant>
-#include <QMutex>
+
 #include "../transport/Transport.h"
 
 /**
  * @brief Functional device types
- * 
+ *
  * Represents WHAT the device does, independent of HOW it communicates.
  * A GPS device provides location data regardless of whether it uses
  * UART, USB, Bluetooth, or any other transport.
  */
 enum class FunctionalDeviceType {
   /* Vehicle Communication */
-  VEHICLE_CAN,        // CAN bus for vehicle data
-  VEHICLE_LIN,        // LIN bus for vehicle data
-  
+  VEHICLE_CAN,  // CAN bus for vehicle data
+  VEHICLE_LIN,  // LIN bus for vehicle data
+
   /* Position/Navigation */
-  GPS,                // GPS/GNSS receiver
-  IMU,                // Inertial Measurement Unit
-  COMPASS,            // Magnetometer/compass
-  
+  GPS,      // GPS/GNSS receiver
+  IMU,      // Inertial Measurement Unit
+  COMPASS,  // Magnetometer/compass
+
   /* Imaging */
-  CAMERA,             // Camera/video capture
-  LIDAR,              // LIDAR sensor
-  RADAR,              // RADAR sensor
-  
+  CAMERA,  // Camera/video capture
+  LIDAR,   // LIDAR sensor
+  RADAR,   // RADAR sensor
+
   /* Environmental Sensors */
-  THERMOMETER,        // Temperature sensor
-  HUMIDITY,           // Humidity sensor
-  PRESSURE,           // Pressure/barometric sensor
-  
+  THERMOMETER,  // Temperature sensor
+  HUMIDITY,     // Humidity sensor
+  PRESSURE,     // Pressure/barometric sensor
+
   /* Motion Sensors */
-  ACCELEROMETER,      // Accelerometer
-  GYROSCOPE,          // Gyroscope
-  
+  ACCELEROMETER,  // Accelerometer
+  GYROSCOPE,      // Gyroscope
+
   /* Display/Output */
-  DISPLAY,            // Display/screen
-  LED,                // LED indicators
-  SPEAKER,            // Audio output
-  VIBRATOR,           // Haptic feedback
-  
+  DISPLAY,   // Display/screen
+  LED,       // LED indicators
+  SPEAKER,   // Audio output
+  VIBRATOR,  // Haptic feedback
+
   /* Control */
-  GPIO,               // General purpose I/O
-  PWM,                // PWM control (motors, servos)
-  
+  GPIO,  // General purpose I/O
+  PWM,   // PWM control (motors, servos)
+
   /* Power */
-  POWER_SUPPLY,       // Power supply monitoring
-  BATTERY,            // Battery management
-  
+  POWER_SUPPLY,  // Power supply monitoring
+  BATTERY,       // Battery management
+
   /* Connectivity */
-  BLUETOOTH,          // Bluetooth radio
-  WIFI,               // WiFi radio
-  CELLULAR            // Cellular modem
+  BLUETOOTH,  // Bluetooth radio
+  WIFI,       // WiFi radio
+  CELLULAR    // Cellular modem
 };
 
 /**
  * @brief Device state enumeration
  */
 enum class DeviceState {
-  OFFLINE,            // Not connected or not available
-  INITIALIZING,       // Initialization in progress
-  ONLINE,             // Connected and operational
-  ERROR               // Error state
+  OFFLINE,       // Not connected or not available
+  INITIALIZING,  // Initialization in progress
+  ONLINE,        // Connected and operational
+  ERROR          // Error state
 };
 
 /**
  * @brief Functional device base class
- * 
+ *
  * Abstract base class for functional devices. Each device provides
  * specific functionality (GPS location, CAN messages, camera frames)
  * and uses a Transport to actually communicate with hardware.
- * 
+ *
  * Architecture:
  *   FunctionalDevice (WHAT: GPS, CAN, Camera)
  *       ↓ uses
  *   Transport (HOW: UART, USB, SPI, Bluetooth)
  *       ↓
  *   Hardware
- * 
+ *
  * Example:
  *   GPSDevice gps(uartTransport);  // GPS over UART
  *   GPSDevice gps(bluetoothTransport);  // Same GPS device, different transport
@@ -150,7 +151,9 @@ class FunctionalDevice : public QObject {
   /**
    * @brief Get the transport used by this device
    */
-  Transport* getTransport() const { return m_transport; }
+  Transport* getTransport() const {
+    return m_transport;
+  }
 
   /**
    * @brief Set device configuration

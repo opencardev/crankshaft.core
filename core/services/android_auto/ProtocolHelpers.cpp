@@ -18,6 +18,7 @@
  */
 
 #include "ProtocolHelpers.h"
+
 #include <chrono>
 
 namespace crankshaft {
@@ -29,8 +30,8 @@ uint64_t getCurrentTimestampMicros() {
   return std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
 }
 
-aap_protobuf::service::inputsource::message::InputReport createTouchInputReport(float x, float y, TouchAction action,
-                                          int pointerId, uint64_t timestamp) {
+aap_protobuf::service::inputsource::message::InputReport createTouchInputReport(
+    float x, float y, TouchAction action, int pointerId, uint64_t timestamp) {
   // Create InputReport message
   aap_protobuf::service::inputsource::message::InputReport inputReport;
 
@@ -52,13 +53,15 @@ aap_protobuf::service::inputsource::message::InputReport createTouchInputReport(
   // Set touch action
   switch (action) {
     case TouchAction::ACTION_DOWN:
-      touchEvent->set_action(aap_protobuf::service::inputsource::message::PointerAction::ACTION_DOWN);
+      touchEvent->set_action(
+          aap_protobuf::service::inputsource::message::PointerAction::ACTION_DOWN);
       break;
     case TouchAction::ACTION_UP:
       touchEvent->set_action(aap_protobuf::service::inputsource::message::PointerAction::ACTION_UP);
       break;
     case TouchAction::ACTION_MOVED:
-      touchEvent->set_action(aap_protobuf::service::inputsource::message::PointerAction::ACTION_MOVED);
+      touchEvent->set_action(
+          aap_protobuf::service::inputsource::message::PointerAction::ACTION_MOVED);
       break;
   }
 
@@ -68,9 +71,8 @@ aap_protobuf::service::inputsource::message::InputReport createTouchInputReport(
   return inputReport;
 }
 
-aap_protobuf::service::inputsource::message::InputReport createKeyInputReport(int keyCode, KeyAction action,
-                                        uint64_t timestamp, bool longPress,
-                                        int metaState) {
+aap_protobuf::service::inputsource::message::InputReport createKeyInputReport(
+    int keyCode, KeyAction action, uint64_t timestamp, bool longPress, int metaState) {
   // Create InputReport message
   aap_protobuf::service::inputsource::message::InputReport inputReport;
 
@@ -93,19 +95,18 @@ aap_protobuf::service::inputsource::message::InputReport createKeyInputReport(in
   return inputReport;
 }
 
-aap_protobuf::service::control::message::AudioFocusNotification createAudioFocusNotification(AudioFocusState focusState) {
+aap_protobuf::service::control::message::AudioFocusNotification createAudioFocusNotification(
+    AudioFocusState focusState) {
   // Create AudioFocusNotification message
   aap_protobuf::service::control::message::AudioFocusNotification notification;
 
   // Set focus state
   switch (focusState) {
     case AudioFocusState::GAIN:
-      notification.set_focus_state(
-          aap_protobuf::service::control::message::AUDIO_FOCUS_STATE_GAIN);
+      notification.set_focus_state(aap_protobuf::service::control::message::AUDIO_FOCUS_STATE_GAIN);
       break;
     case AudioFocusState::LOSS:
-      notification.set_focus_state(
-          aap_protobuf::service::control::message::AUDIO_FOCUS_STATE_LOSS);
+      notification.set_focus_state(aap_protobuf::service::control::message::AUDIO_FOCUS_STATE_LOSS);
       break;
   }
 

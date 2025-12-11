@@ -25,7 +25,7 @@
 
 /**
  * @brief Abstract interface for video decoders
- * 
+ *
  * Provides a swappable interface for different video decoder implementations.
  * Implementations can use hardware acceleration (OMX, VAAPI, NVDEC) or
  * software decoding (FFmpeg, GStreamer).
@@ -34,20 +34,9 @@ class IVideoDecoder : public QObject {
   Q_OBJECT
 
  public:
-  enum class CodecType {
-    H264,
-    H265,
-    VP8,
-    VP9,
-    AV1
-  };
+  enum class CodecType { H264, H265, VP8, VP9, AV1 };
 
-  enum class PixelFormat {
-    RGBA,
-    RGB,
-    NV12,
-    YUV420P
-  };
+  enum class PixelFormat { RGBA, RGB, NV12, YUV420P };
 
   struct DecoderConfig {
     CodecType codec{CodecType::H264};

@@ -19,10 +19,10 @@
 
 #pragma once
 
-#include <QString>
+#include <QJsonObject>
 #include <QObject>
 #include <QSize>
-#include <QJsonObject>
+#include <QString>
 #include <memory>
 
 // Forward declarations
@@ -214,8 +214,7 @@ class AndroidAutoService : public QObject {
    * @param data Frame buffer (RGBA)
    * @param size Buffer size in bytes
    */
-  void videoFrameReady(int width, int height, const uint8_t* data,
-                       int size);
+  void videoFrameReady(int width, int height, const uint8_t* data, int size);
 
   /**
    * @brief Emitted when audio data is available

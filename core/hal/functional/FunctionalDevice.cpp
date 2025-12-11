@@ -20,5 +20,4 @@
 #include "FunctionalDevice.h"
 
 FunctionalDevice::FunctionalDevice(Transport* transport, QObject* parent)
-    : QObject(parent), m_transport(transport) {
-}
+    : QObject(parent), m_transport(transport) {}

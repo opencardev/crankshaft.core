@@ -19,5 +19,4 @@
 
 #include "Transport.h"
 
-Transport::Transport(QObject* parent) : QObject(parent) {
-}
+Transport::Transport(QObject* parent) : QObject(parent) {}

@@ -18,13 +18,14 @@
  */
 
 #include "AudioMixer.h"
-#include "../../services/logging/Logger.h"
+
 #include <QMutexLocker>
 #include <cmath>
 #include <cstring>
 
-AudioMixer::AudioMixer(QObject* parent)
-    : IAudioMixer(parent) {
+#include "../../services/logging/Logger.h"
+
+AudioMixer::AudioMixer(QObject* parent) : IAudioMixer(parent) {
   Logger::instance().info("AudioMixer created");
 }
 
@@ -41,11 +42,10 @@ bool AudioMixer::initialize(const AudioFormat& masterFormat) {
   m_masterFormat = masterFormat;
   m_isInitialized = true;
 
-  Logger::instance().info(
-      QString("AudioMixer initialized: %1Hz, %2ch, %3bit")
-          .arg(masterFormat.sampleRate)
-          .arg(masterFormat.channels)
-          .arg(masterFormat.bitsPerSample));
+  Logger::instance().info(QString("AudioMixer initialized: %1Hz, %2ch, %3bit")
+                              .arg(masterFormat.sampleRate)
+                              .arg(masterFormat.channels)
+                              .arg(masterFormat.bitsPerSample));
 
   return true;
 }
@@ -101,8 +101,7 @@ bool AudioMixer::removeChannel(ChannelId channelId) {
   }
 
   m_channels.remove(channelId);
-  Logger::instance().info(
-      QString("Removed audio channel: %1").arg(channelIdToString(channelId)));
+  Logger::instance().info(QString("Removed audio channel: %1").arg(channelIdToString(channelId)));
 
   return true;
 }
@@ -239,10 +238,9 @@ void AudioMixer::mixBuffers() {
       }
     }
 
-    std::sort(sortedChannels.begin(), sortedChannels.end(),
-              [this](ChannelId a, ChannelId b) {
-                return m_channels[a].config.priority > m_channels[b].config.priority;
-              });
+    std::sort(sortedChannels.begin(), sortedChannels.end(), [this](ChannelId a, ChannelId b) {
+      return m_channels[a].config.priority > m_channels[b].config.priority;
+    });
 
     // Mix each channel
     for (ChannelId channelId : sortedChannels) {
@@ -257,12 +255,12 @@ void AudioMixer::mixBuffers() {
 
       // Mix samples
       for (int i = 0; i < sampleCount * m_masterFormat.channels; ++i) {
-        float sample = static_cast<float>(mixBufferPtr[i]) + 
-                      (static_cast<float>(channelPtr[i]) * channelVolume);
-        
+        float sample = static_cast<float>(mixBufferPtr[i]) +
+                       (static_cast<float>(channelPtr[i]) * channelVolume);
+
         // Apply soft saturation
         sample = applySaturation(sample);
-        
+
         mixBufferPtr[i] = static_cast<int16_t>(sample);
       }
     }
@@ -272,7 +270,7 @@ void AudioMixer::mixBuffers() {
   for (auto it = m_channels.begin(); it != m_channels.end(); ++it) {
     if (it->active && it->buffer.size() >= mixBufferSize) {
       it->buffer.remove(0, mixBufferSize);
-      
+
       if (it->buffer.isEmpty()) {
         it->active = false;
       }
@@ -309,16 +307,15 @@ float AudioMixer::applySaturation(float sample) {
   return sample;
 }
 
-QByteArray AudioMixer::convertFormat(const QByteArray& input,
-                                    const AudioFormat& inputFormat,
-                                    const AudioFormat& outputFormat) {
+QByteArray AudioMixer::convertFormat(const QByteArray& input, const AudioFormat& inputFormat,
+                                     const AudioFormat& outputFormat) {
   // Simple format conversion (resampling + channel conversion)
   QByteArray result = input;
 
   // First, resample if sample rates differ
   if (inputFormat.sampleRate != outputFormat.sampleRate) {
-    result = resample(result, inputFormat.sampleRate, outputFormat.sampleRate,
-                     inputFormat.channels, inputFormat.bitsPerSample);
+    result = resample(result, inputFormat.sampleRate, outputFormat.sampleRate, inputFormat.channels,
+                      inputFormat.bitsPerSample);
   }
 
   // Then, convert channels if needed (mono<->stereo)
@@ -327,28 +324,28 @@ QByteArray AudioMixer::convertFormat(const QByteArray& input,
       // Mono to stereo: duplicate samples
       QByteArray stereo;
       stereo.reserve(result.size() * 2);
-      
+
       if (inputFormat.bitsPerSample == 16) {
         const int16_t* monoPtr = reinterpret_cast<const int16_t*>(result.constData());
         int sampleCount = result.size() / 2;
-        
+
         for (int i = 0; i < sampleCount; ++i) {
           int16_t sample = monoPtr[i];
           stereo.append(reinterpret_cast<const char*>(&sample), 2);
           stereo.append(reinterpret_cast<const char*>(&sample), 2);
         }
       }
-      
+
       result = stereo;
     } else if (inputFormat.channels == 2 && outputFormat.channels == 1) {
       // Stereo to mono: average samples
       QByteArray mono;
       mono.reserve(result.size() / 2);
-      
+
       if (inputFormat.bitsPerSample == 16) {
         const int16_t* stereoPtr = reinterpret_cast<const int16_t*>(result.constData());
         int sampleCount = result.size() / 4;  // 2 samples per frame, 2 bytes each
-        
+
         for (int i = 0; i < sampleCount; ++i) {
           int16_t left = stereoPtr[i * 2];
           int16_t right = stereoPtr[i * 2 + 1];
@@ -356,7 +353,7 @@ QByteArray AudioMixer::convertFormat(const QByteArray& input,
           mono.append(reinterpret_cast<const char*>(&avg), 2);
         }
       }
-      
+
       result = mono;
     }
   }
@@ -364,11 +361,8 @@ QByteArray AudioMixer::convertFormat(const QByteArray& input,
   return result;
 }
 
-QByteArray AudioMixer::resample(const QByteArray& input,
-                               int inputSampleRate,
-                               int outputSampleRate,
-                               int channels,
-                               int bitsPerSample) {
+QByteArray AudioMixer::resample(const QByteArray& input, int inputSampleRate, int outputSampleRate,
+                                int channels, int bitsPerSample) {
   // Simple linear interpolation resampling
   if (inputSampleRate == outputSampleRate) {
     return input;

@@ -15,9 +15,10 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 #include "MockTransport.h"
+
 #include "../../../services/logging/Logger.h"
 
 MockTransport::MockTransport(const QString& name, QObject* parent)
@@ -26,7 +27,6 @@ MockTransport::MockTransport(const QString& name, QObject* parent)
       m_isOpen(false),
       m_state(TransportState::DISCONNECTED),
       m_autoInjectCounter(0) {
-  
   m_autoInjectTimer = new QTimer(this);
   connect(m_autoInjectTimer, &QTimer::timeout, this, &MockTransport::onAutoInjectTimer);
 }
@@ -48,7 +48,7 @@ bool MockTransport::open() {
   m_state = TransportState::CONNECTED;
   emit stateChanged(m_state);
   emit connected();
-  
+
   Logger::instance().info(QString("MockTransport(%1): Connected").arg(m_name));
   return true;
 }
@@ -72,7 +72,8 @@ qint64 MockTransport::write(const QByteArray& data) {
   }
 
   m_writtenData.append(data);
-  Logger::instance().info(QString("MockTransport(%1): Wrote %2 bytes").arg(m_name).arg(data.size()));
+  Logger::instance().info(
+      QString("MockTransport(%1): Wrote %2 bytes").arg(m_name).arg(data.size()));
   return data.size();
 }
 
@@ -82,7 +83,7 @@ QByteArray MockTransport::read(qint64 maxSize) {
   }
 
   QByteArray data = m_receiveQueue.dequeue();
-  
+
   if (maxSize > 0 && data.size() > maxSize) {
     // Put remaining data back
     m_receiveQueue.prepend(data.mid(maxSize));
@@ -121,7 +122,8 @@ void MockTransport::injectData(const QByteArray& data) {
   }
 
   m_receiveQueue.enqueue(data);
-  Logger::instance().info(QString("MockTransport(%1): Injected %2 bytes").arg(m_name).arg(data.size()));
+  Logger::instance().info(
+      QString("MockTransport(%1): Injected %2 bytes").arg(m_name).arg(data.size()));
   emit dataReceived();
 }
 
@@ -155,12 +157,12 @@ void MockTransport::setAutoInject(bool enabled, int intervalMs) {
 void MockTransport::onAutoInjectTimer() {
   // Inject some test data
   // This would be customized based on what device is using the transport
-  
+
   m_autoInjectCounter++;
-  
+
   // Example: Inject NMEA sentence for GPS
   QString nmea = QString("$GPGGA,%1,5140.1234,N,00009.5678,W,1,08,0.9,100.0,M,47.0,M,,*47\r\n")
                      .arg(QTime::currentTime().toString("hhmmss.zzz"));
-  
+
   injectData(nmea.toLatin1());
 }
