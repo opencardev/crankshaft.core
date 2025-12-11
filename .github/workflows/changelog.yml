@@ -22,6 +22,13 @@ on:
     types: [closed]
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (leave empty for auto-generated)'
+        required: false
+        default: ''
+        type: string
   workflow_call:
     inputs:
       range:

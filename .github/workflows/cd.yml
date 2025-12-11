@@ -24,6 +24,21 @@ on:
       - main
     types:
       - completed
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: 'Build run ID from CI workflow (optional, uses latest CI success if empty)'
+        required: false
+        type: string
+      distribution:
+        description: 'Distribution to publish to'
+        required: false
+        default: 'trixie'
+        type: choice
+        options:
+          - trixie
+          - bookworm
+          - both
 
 jobs:
   publish-apt:

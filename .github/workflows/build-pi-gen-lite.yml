@@ -28,6 +28,48 @@ on:
         description: 'Debian Release'
         required: false
         default: 'trixie'
+      auto_release:
+        description: 'Auto release'
+        required: false
+        default: 'false'
+        type: string
+      create_release_draft:
+        description: 'Create release draft'
+        required: false
+        default: 'false'
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'
+        required: false
+        default: 'dev'
+        type: string
+      release:
+        description: 'Debian Release'
+        required: false
+        default: 'trixie'
+        type: choice
+        options:
+          - trixie
+          - bookworm
+          - both
+      auto_release:
+        description: 'Auto release'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      create_release_draft:
+        description: 'Create release draft'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
         type: string
       auto_release:
         description: 'Automatically create a GitHub release from this build'
