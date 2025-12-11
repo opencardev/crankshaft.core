@@ -44,7 +44,7 @@ jobs:
               "client_payload": {
                 "source_repo": "${{ github.repository }}",
                 "build_run_id": "${{ inputs.build_run_id }}",
-                "apt_import": true,
+                "apt_import": false,
                 "distribution": "${{ inputs.distribution }}"
               }
             }'
