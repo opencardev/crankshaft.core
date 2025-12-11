@@ -1,0 +1,29 @@
+Goal: split workflows into CI, CD, and Release per requirements.
+
+Scope overview
+- CI: code-quality on all push/PR; changelog on closed PR to main producing version; builds on PRs and pushes. All branches except main and develop build amd64 only, main and develop build amd64/arm64/armhf; produce DEB artifacts and metadata; SBOM generation.
+- CD: triggered on CI success for main; publish DEBs to APT; build pi-gen lite images (armhf, arm64) using published packages from APT, including sbom for images.
+- Release: triggered on CD success for main; release pi-gen images with checksums/SBOMs; main only.
+
+Planned workflow layout
+- ci.yml: entry for pushes/PRs (all branches). Jobs: code-quality; build (skip main and develop pushes; PRs and other branches allowed; develop and main amd64/arm64/armhf, others matrix amd64-only); sbom; uploads artifacts. Main builds may be offloaded to CD (decide below).
+- changelog.yml: trigger on pull_request closed with merged target main; produce version + changelog artifact (and expose as workflow_call for reuse). Optional manual dispatch.
+- build.yml (optionally reusable): focus solely on build job logic (docker buildx, DEB artifacts, build logs). Exposed as reusable workflow for ci.yml and cd.yml. Main/develop logic handled by caller.
+- cd.yml: trigger workflow_run on success of build.yml when ref is main. Steps: download CI artifacts; publish DEBs to APT (call trigger-apt-publish.yml or inline dispatch); run build-pi-gen-lite to create images using APT packages. Upload pi-gen artifacts.
+- release-from-pi-gen.yml: trigger workflow_run on success of cd.yml when ref is main. Download pi-gen artifacts, generate checksums/SBOMs, create GitHub release. Keep manual dispatch as fallback.
+- trigger-apt-publish.yml: keep dispatch logic; allow workflow_call so cd.yml can invoke; retain manual dispatch option.
+- build-pi-gen-lite.yml: adjust to workflow_call so cd.yml can invoke; ensure it consumes APT repo/deb inputs; keep manual dispatch if desired.
+
+Open decisions to finalise
+- Where to build main branch: Option A) CI builds main too; CD reuses artifacts. Option B) CI skips main; CD rebuilds for main using same job logic. Lean toward A for consistency and shorter CD.
+- Code-quality scope: which linters/tests to run (clang-format/tidy, cppcheck, unit tests, license headers). Ensure fast enough for all branches.
+- Artifact naming: ensure CI outputs DEBs (core/ui/src) and metadata version to feed CD. 
+
+Execution steps (once decisions set)
+1) Add ci.yml with code-quality, build, sbom; integrate reusable build job; enforce branch/matrix rules.
+2) Update changelog.yml triggers for merged PR to main; emit version artifact; expose workflow_call.
+3) Refactor build.yml to be reusable/non-main; ensure develop amd64-only logic correct.
+4) Add cd.yml triggered via workflow_run on ci.yml success on main; invoke trigger-apt-publish and build-pi-gen-lite via workflow_call; pass artifacts/version.
+5) Update build-pi-gen-lite.yml to workflow_call, consume APT distro/version; keep manual dispatch.
+6) Update trigger-apt-publish.yml to workflow_call + manual dispatch.
+7) Update release-from-pi-gen.yml triggers to workflow_run on cd.yml success (main), keep manual dispatch fallback.
