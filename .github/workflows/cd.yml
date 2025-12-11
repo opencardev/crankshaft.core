@@ -49,11 +49,28 @@ jobs:
         with:
           script: |
             console.log('Triggering APT publish');
-            const runId = (context.payload.workflow_run && context.payload.workflow_run.id) || (context.payload.inputs && context.payload.inputs.build_run_id) || '';
+            let runId = (context.payload.workflow_run && context.payload.workflow_run.id) || (context.payload.inputs && context.payload.inputs.build_run_id) || '';
+            // Fallback: lookup latest successful CI run on main when runId is empty
+            if (!runId) {
+              const workflows = await github.rest.actions.listRepoWorkflows({ owner: context.repo.owner, repo: context.repo.repo });
+              const ciWf = workflows.data.workflows.find(w => w.name === 'CI');
+              if (!ciWf) { throw new Error('CI workflow not found'); }
+              const runs = await github.rest.actions.listWorkflowRuns({ owner: context.repo.owner, repo: context.repo.repo, workflow_id: ciWf.id, branch: 'main', status: 'success', per_page: 1 });
+              if (runs.data.workflow_runs && runs.data.workflow_runs.length > 0) {
+                runId = String(runs.data.workflow_runs[0].id);
+                console.log(`Resolved latest successful CI runId: ${runId}`);
+              } else {
+                throw new Error('No successful CI runs found on main');
+              }
+            }
+            // Resolve workflow id for trigger-apt-publish by name
+            const list = await github.rest.actions.listRepoWorkflows({ owner: context.repo.owner, repo: context.repo.repo });
+            const aptWf = list.data.workflows.find(w => (w.name === 'Trigger APT Repository Update') || (w.path && w.path.endsWith('/trigger-apt-publish.yml')));
+            if (!aptWf) { throw new Error('trigger-apt-publish workflow not found'); }
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'trigger-apt-publish.yml',
+              workflow_id: aptWf.id,
               ref: 'main',
               inputs: {
                 build_run_id: String(runId),
@@ -73,10 +90,14 @@ jobs:
             const headBranch = wr.head_branch || 'main';
             const runNumber = wr.run_number || 0;
             const version = `${headBranch}-${runNumber}`;
+            // Resolve workflow id for build-pi-gen-lite by name
+            const list = await github.rest.actions.listRepoWorkflows({ owner: context.repo.owner, repo: context.repo.repo });
+            const piGenWf = list.data.workflows.find(w => (w.name === 'build-pi-gen-lite') || (w.path && w.path.endsWith('/build-pi-gen-lite.yml')));
+            if (!piGenWf) { throw new Error('build-pi-gen-lite workflow not found'); }
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'build-pi-gen-lite.yml',
+              workflow_id: piGenWf.id,
               ref: 'main',
               inputs: {
                 version,
