@@ -22,12 +22,18 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Read CPACK_DEBIAN_PACKAGE_RELEASE from environment variable if set
+if(DEFINED ENV{CPACK_DEBIAN_RELEASE})
+    set(CPACK_DEBIAN_PACKAGE_RELEASE "$ENV{CPACK_DEBIAN_RELEASE}")
+else()
+    set(CPACK_DEBIAN_PACKAGE_RELEASE "deb13")
+endif()
+
 # Enable QML language server configuration
 set(QT_QML_GENERATE_QMLLS_INI ON CACHE BOOL "Generate .qmllint.ini for QML language server" FORCE)
 
 # Add custom CMake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-include(DebPackageFilename)
 
 # Download Material Design Icons font and generate mappings
 # - Automatically downloads MDI font v7.4.47 (1.3 MB)
@@ -58,55 +64,63 @@ if(NOT TARGET_ARCH)
 	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i686")
 		set(TARGET_ARCH "i386")
 	else()
-		set(TARGET_ARCH "unknown")
+			set(TARGET_ARCH "unknown")
 	endif()
 	message(STATUS "Detected architecture: ${TARGET_ARCH}")
 endif()
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${TARGET_ARCH}")
 
-# CPack configuration for DEB packages
+# CPack generator configuration
 set(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+
+# Detect Debian release and set CPACK_DEBIAN_PACKAGE_RELEASE accordingly
+if(NOT DEFINED CPACK_DEBIAN_PACKAGE_RELEASE OR CPACK_DEBIAN_PACKAGE_RELEASE STREQUAL "deb13")
+	# Detect distribution if lsb_release available
+	find_program(LSB_RELEASE_CMD lsb_release)
+	if(LSB_RELEASE_CMD)
+		execute_process(COMMAND ${LSB_RELEASE_CMD} -cs OUTPUT_VARIABLE DISTRO_CODENAME OUTPUT_STRIP_TRAILING_WHITESPACE)
+		string(TOLOWER "${DISTRO_CODENAME}" DISTRO_CODENAME_LOWER)
+		if(DISTRO_CODENAME_LOWER STREQUAL "jammy")
+			set(CPACK_DEBIAN_PACKAGE_RELEASE "ubuntu22.04")
+		elseif(DISTRO_CODENAME_LOWER STREQUAL "noble")
+			set(CPACK_DEBIAN_PACKAGE_RELEASE "ubuntu24.04")
+		elseif(DISTRO_CODENAME_LOWER STREQUAL "bookworm")
+			set(CPACK_DEBIAN_PACKAGE_RELEASE "deb12")
+		elseif(DISTRO_CODENAME_LOWER STREQUAL "trixie")
+			set(CPACK_DEBIAN_PACKAGE_RELEASE "deb13")
+		elseif(DISTRO_CODENAME_LOWER STREQUAL "bullseye")
+			set(CPACK_DEBIAN_PACKAGE_RELEASE "deb11")
+		else()
+			set(CPACK_DEBIAN_PACKAGE_RELEASE "deb13")  # Default fallback
+		endif()
+	else()
+		set(CPACK_DEBIAN_PACKAGE_RELEASE "deb13")  # Default fallback if lsb_release unavailable
+	endif()
+	message(STATUS "Detected Debian release: ${CPACK_DEBIAN_PACKAGE_RELEASE}")
+endif()
 set(CPACK_PACKAGE_CONTACT "OpenCarDev Team <opencardevuk@gmail.com>")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "OpenCarDev Team <opencardevuk@gmail.com>")
-set(CPACK_DEBIAN_PACKAGE_SECTION "misc")
-set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
-set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/opencardev/crankshaft")
+set(CPACK_DEBIAN_COMPRESSION_TYPE "xz")
 
-# Configure DEB package filenames using DebPackageFilename module
-configure_deb_filename(
-	PACKAGE_NAME "crankshaft"
-	VERSION "${PROJECT_VERSION}"
-	ARCHITECTURE "${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}"
-    CORE_PACKAGE_NAME "crankshaft-core"
-    UI_PACKAGE_NAME "crankshaft-ui"
-)
-
-# Map generated filenames to component-specific variables
-if(DEFINED CPACK_DEBIAN_CORE_FILE_NAME)
-	set(CPACK_DEBIAN_CORE_FILE_NAME "${CPACK_DEBIAN_CORE_FILE_NAME}")
-endif()
-if(DEFINED CPACK_DEBIAN_UI_FILE_NAME)
-	set(CPACK_DEBIAN_UI_FILE_NAME "${CPACK_DEBIAN_UI_FILE_NAME}")
-endif()
-
-# Enable component-based packaging
+# Enable component-based packaging for separate core and ui DEBs
 set(CPACK_DEB_COMPONENT_INSTALL ON)
 set(CPACK_COMPONENTS_ALL core ui)
 
-# Core package configuration
+# Core package metadata
 set(CPACK_COMPONENT_CORE_DISPLAY_NAME "Crankshaft Core")
 set(CPACK_COMPONENT_CORE_DESCRIPTION "Crankshaft core backend service with event bus and WebSocket server")
 set(CPACK_DEBIAN_CORE_PACKAGE_NAME "crankshaft-core")
-set(CPACK_DEBIAN_CORE_PACKAGE_DEPENDS "libqt6core6 (>= 6.2), libqt6network6 (>= 6.2), libqt6websockets6 (>= 6.2)")
 set(CPACK_DEBIAN_CORE_PACKAGE_CONTROL_EXTRA "${CMAKE_SOURCE_DIR}/packaging/core/postinst;${CMAKE_SOURCE_DIR}/packaging/core/prerm")
+set(CPACK_DEBIAN_CORE_FILE_NAME DEB-DEFAULT)
 
-# UI package configuration
+# UI package metadata
 set(CPACK_COMPONENT_UI_DISPLAY_NAME "Crankshaft UI")
 set(CPACK_COMPONENT_UI_DESCRIPTION "Crankshaft QML-based user interface")
 set(CPACK_COMPONENT_UI_DEPENDS core)
 set(CPACK_DEBIAN_UI_PACKAGE_NAME "crankshaft-ui")
 set(CPACK_DEBIAN_UI_PACKAGE_DEPENDS "crankshaft-core (>= ${PROJECT_VERSION}), libqt6core6 (>= 6.2), libqt6gui6 (>= 6.2), libqt6qml6 (>= 6.2), libqt6quick6 (>= 6.2), libqt6websockets6 (>= 6.2), qml6-module-qtquick, qml6-module-qtquick-controls, qml6-module-qtquick-layouts")
 set(CPACK_DEBIAN_UI_PACKAGE_CONTROL_EXTRA "${CMAKE_SOURCE_DIR}/packaging/ui/postinst;${CMAKE_SOURCE_DIR}/packaging/ui/prerm")
+set(CPACK_DEBIAN_UI_FILE_NAME DEB-DEFAULT)
 
 include(CPack)
