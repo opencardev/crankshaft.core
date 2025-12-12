@@ -59,9 +59,9 @@ COPY . .
 RUN mkdir -p build logs && cd build && \
     cmake .. \
       -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_PROJECT_VERSION=${VERSION} \
       -DCMAKE_INSTALL_PREFIX=/usr \
-      -DBUILD_TESTS=OFF \
-      -DVERSION=${VERSION} 2>&1 | tee /build/logs/cmake-configure.log && \
+      -DBUILD_TESTS=OFF 2>&1 | tee /build/logs/cmake-configure.log && \
     cmake --build . -j$(nproc) 2>&1 | tee /build/logs/cmake-build.log && \
     cmake --install . --prefix /staging/usr 2>&1 | tee /build/logs/cmake-install.log
 

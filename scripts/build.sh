@@ -25,6 +25,7 @@ COMPONENT="all"
 BUILD_DIR="build"
 CREATE_PACKAGE=false
 INSTALL_DEPS=false
+VERSION=""
 
 # Dependency installation functions
 install_core_deps() {
@@ -95,6 +96,7 @@ Named parameters:
   --build-type TYPE      Build configuration (Debug|Release) [default: Debug]
   --component COMP       Component to build (all|core|ui|tests) [default: all]
   --package              Create DEB packages after building [default: false]
+  --version VERSION      Override project version (default: from CMakeLists.txt)
   --install-deps         Install dependencies for the specified component
   --help                 Display this help message
 
@@ -132,6 +134,14 @@ while [[ $# -gt 0 ]]; do
         --package)
             CREATE_PACKAGE=true
             shift
+            ;;
+        --version)
+            if [[ $# -lt 2 ]]; then
+                echo "Error: --version requires a value"
+                usage
+            fi
+            VERSION="$2"
+            shift 2
             ;;
         --install-deps)
             INSTALL_DEPS=true
@@ -206,7 +216,12 @@ mkdir -p "${BUILD_DIR}"
 
 # Configure
 echo "Configuring CMake..."
-cmake -S . -B "${BUILD_DIR}" -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
+if [ -n "$VERSION" ]; then
+    echo "Using custom version: $VERSION"
+    cmake -S . -B "${BUILD_DIR}" -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -DCMAKE_PROJECT_VERSION="${VERSION}"
+else
+    cmake -S . -B "${BUILD_DIR}" -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
+fi
 
 # Build
 echo "Building..."

@@ -16,7 +16,13 @@
 #  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
 
 cmake_minimum_required(VERSION 3.16)
-project(crankshaft-mvp VERSION 0.1.0 LANGUAGES CXX)
+
+# Allow version override via CMAKE_PROJECT_VERSION cache variable
+if(NOT DEFINED CMAKE_PROJECT_VERSION)
+    set(CMAKE_PROJECT_VERSION "0.1.0")
+endif()
+
+project(crankshaft-mvp VERSION ${CMAKE_PROJECT_VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -128,17 +134,17 @@ set(CPACK_SOURCE_GENERATOR "TGZ")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "crankshaft-mvp-${PROJECT_VERSION}")
 set(CPACK_SOURCE_IGNORE_FILES
     "/build/"
-    "/\\\\."
-    "/.git/"
-    "/.vscode/"
+    "/\\.git/"
+    "/\\.vscode/"
+    "/\\.github/"
     "CMakeCache.txt"
     "CMakeFiles/"
     "_CPack_Packages/"
-    "*.deb"
-    "*.swp"
-    "*.swo"
-    "*~"
-    ".DS_Store"
+    "\\.deb$"
+    "\\.swp$"
+    "\\.swo$"
+    "~$"
+    "\\.DS_Store$"
 )
 
 include(CPack)
