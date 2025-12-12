@@ -241,12 +241,18 @@ esac
 # Create packages if requested
 if [ "$CREATE_PACKAGE" = true ]; then
     echo ""
-    echo "Creating DEB packages..."
+    echo "Creating DEB packages (binary)..."
     cd "${BUILD_DIR}"
-    cpack -G DEB
+    cpack --config CPackConfig.cmake -G DEB -V
+    cd ..
+    
+    echo ""
+    echo "Creating source tarball package..."
+    cd "${BUILD_DIR}"
+    cpack --config CPackSourceConfig.cmake -G TGZ -V
     cd ..
     
     echo ""
     echo "Packages created in ${BUILD_DIR}:"
-    ls -lh "${BUILD_DIR}"/*.deb 2>/dev/null || echo "No packages found"
+    ls -lh "${BUILD_DIR}"/*.deb "${BUILD_DIR}"/*.tar.gz 2>/dev/null || echo "No packages found"
 fi

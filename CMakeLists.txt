@@ -123,4 +123,22 @@ set(CPACK_DEBIAN_UI_PACKAGE_DEPENDS "crankshaft-core (>= ${PROJECT_VERSION}), li
 set(CPACK_DEBIAN_UI_PACKAGE_CONTROL_EXTRA "${CMAKE_SOURCE_DIR}/packaging/ui/postinst;${CMAKE_SOURCE_DIR}/packaging/ui/prerm")
 set(CPACK_DEBIAN_UI_FILE_NAME DEB-DEFAULT)
 
+# Source package configuration (.tar.gz)
+set(CPACK_SOURCE_GENERATOR "TGZ")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "crankshaft-mvp-${PROJECT_VERSION}")
+set(CPACK_SOURCE_IGNORE_FILES
+    "/build/"
+    "/\\\\."
+    "/.git/"
+    "/.vscode/"
+    "CMakeCache.txt"
+    "CMakeFiles/"
+    "_CPack_Packages/"
+    "*.deb"
+    "*.swp"
+    "*.swo"
+    "*~"
+    ".DS_Store"
+)
+
 include(CPack)

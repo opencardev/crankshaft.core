@@ -67,32 +67,13 @@ RUN mkdir -p build logs && cd build && \
 
 # Build DEB packages via CPack (component install produces core/ui)
 RUN mkdir -p /output && cd build && \
-        cpack -G DEB -C Release \
-            -B /output \
-            -D CPACK_DEB_COMPONENT_INSTALL=ON \
-            -D CPACK_PACKAGE_VERSION=${VERSION} 2>&1 | tee /build/logs/cpack.log
+        cpack --config CPackConfig.cmake -G DEB -C Release \
+            -B /output 2>&1 | tee /build/logs/cpack-deb.log
 
-# Build source DEB containing full project sources
-RUN mkdir -p /srcpkg/DEBIAN /srcpkg/usr/share/crankshaft-source && \
-    tar czf /srcpkg/usr/share/crankshaft-source/crankshaft-${VERSION}-source.tar.gz \
-      --exclude='.git' \
-      --exclude='build' \
-      --exclude='*.deb' \
-      --exclude='srcpkg' \
-      --exclude='output' \
-      -C /build . && \
-    cat > /srcpkg/DEBIAN/control << 'EOF'
-Package: crankshaft-src
-Version: ${VERSION}
-Section: misc
-Priority: optional
-Architecture: all
-Maintainer: OpenCarDev Team <opencardevuk@gmail.com>
-Description: Source package for Crankshaft
- Full project source code for the Crankshaft infotainment system.
-EOF
-
-RUN dpkg-deb --build /srcpkg /output/crankshaft-src_${VERSION}_all.deb 2>&1 | tee /build/logs/dpkg-src.log
+# Build source tarball via CPack
+RUN mkdir -p /output && cd build && \
+        cpack --config CPackSourceConfig.cmake -G TGZ -C Release \
+            -B /output 2>&1 | tee /build/logs/cpack-source.log
 
 # Final stage - export artifacts
 FROM scratch AS exporter
