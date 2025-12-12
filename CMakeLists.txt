@@ -140,20 +140,20 @@ set(CPACK_DEBIAN_UI_FILE_NAME DEB-DEFAULT)
 
 # Source package configuration (.tar.gz)
 set(CPACK_SOURCE_GENERATOR "TGZ")
-set(CPACK_SOURCE_PACKAGE_FILE_NAME "crankshaft-mvp-${PROJECT_VERSION}")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "crankshaft-mvp-${FULL_VERSION}")
 set(CPACK_SOURCE_IGNORE_FILES
     "/build/"
-    "/\\.git/"
-    "/\\.vscode/"
-    "/\\.github/"
+	"/\\\\.git/"
+	"/\\\\.vscode/"
+	"/\\\\.github/"
     "CMakeCache.txt"
     "CMakeFiles/"
     "_CPack_Packages/"
-    "\\.deb$"
-    "\\.swp$"
-    "\\.swo$"
+	"\\\\.deb$"
+	"\\\\.swp$"
+	"\\\\.swo$"
     "~$"
-    "\\.DS_Store$"
+	"\\\\.DS_Store$"
 )
 
 include(CPack)
