@@ -19,7 +19,7 @@ name: release-from-pi-gen
 
 on:
   workflow_run:
-    workflows: ["CD"]
+    workflows: ["build-pi-gen-lite"]
     branches:
       - main
     types:
