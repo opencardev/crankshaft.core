@@ -33,8 +33,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Dispatch to packages repo
+        id: dispatch
         run: |
           echo "Triggering APT repository update for build run ${{ inputs.build_run_id }}"
+          
+          # Get current time for reference
+          DISPATCH_TIME=$(date -u +%s)
+          echo "dispatch_time=$DISPATCH_TIME" >> $GITHUB_OUTPUT
+          
           curl -X POST \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: token ${{ secrets.PACKAGES_REPO_TOKEN }}" \
@@ -49,5 +55,87 @@ jobs:
               }
             }'
 
-          echo "✅ APT repository update triggered successfully!"
-          echo "Check: https://github.com/opencardev/packages/actions"
+          echo "✅ APT repository update triggered!"
+
+      - name: Wait for APT publish workflow to complete
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PACKAGES_REPO_TOKEN }}
+          script: |
+            const owner = 'opencardev';
+            const repo = 'packages';
+            const dispatchTime = parseInt('${{ steps.dispatch.outputs.dispatch_time }}') * 1000;
+            const maxWaitTime = 45 * 60 * 1000; // 45 minutes
+            const pollInterval = 30 * 1000; // 30 seconds
+            const startTime = Date.now();
+            
+            console.log('Looking for triggered workflow...');
+            
+            while (Date.now() - startTime < maxWaitTime) {
+              try {
+                const { data: workflows } = await github.rest.actions.listRepoWorkflows({
+                  owner, repo
+                });
+                
+                // Find the apt-publish-aptly workflow
+                const aptWorkflow = workflows.workflows.find(w => w.name === 'opencardev APT Repository Upload (Aptly)');
+                if (!aptWorkflow) {
+                  console.log('APT workflow not found');
+                  await new Promise(resolve => setTimeout(resolve, pollInterval));
+                  continue;
+                }
+                
+                // Get recent runs triggered after our dispatch
+                const { data: runs } = await github.rest.actions.listWorkflowRuns({
+                  owner, repo,
+                  workflow_id: aptWorkflow.id,
+                  per_page: 5
+                });
+                
+                // Find the run that was triggered by our dispatch (created after dispatchTime)
+                const triggeredRun = runs.workflow_runs.find(run => 
+                  new Date(run.created_at).getTime() >= dispatchTime - 5000 // 5 second tolerance
+                );
+                
+                if (!triggeredRun) {
+                  console.log('Waiting for workflow to start...');
+                  await new Promise(resolve => setTimeout(resolve, pollInterval));
+                  continue;
+                }
+                
+                console.log(`Found workflow run: ${triggeredRun.id} (Status: ${triggeredRun.status})`);
+                
+                // Poll until completion
+                let currentRun = triggeredRun;
+                while (currentRun.status === 'queued' || currentRun.status === 'in_progress') {
+                  console.log(`Waiting for completion... (Status: ${currentRun.status})`);
+                  await new Promise(resolve => setTimeout(resolve, pollInterval));
+                  
+                  const { data: updatedRun } = await github.rest.actions.getWorkflowRun({
+                    owner, repo,
+                    run_id: triggeredRun.id
+                  });
+                  currentRun = updatedRun;
+                }
+                
+                // Check final status
+                console.log(`\nWorkflow completed with status: ${currentRun.status}`);
+                console.log(`Conclusion: ${currentRun.conclusion}`);
+                
+                if (currentRun.conclusion === 'success') {
+                  console.log('✅ APT repository update completed successfully!');
+                  console.log(`Run details: https://github.com/${owner}/${repo}/actions/runs/${triggeredRun.id}`);
+                  process.exit(0);
+                } else {
+                  console.error(`❌ APT repository update failed with conclusion: ${currentRun.conclusion}`);
+                  console.log(`Run details: https://github.com/${owner}/${repo}/actions/runs/${triggeredRun.id}`);
+                  process.exit(1);
+                }
+              } catch (error) {
+                console.log(`Error checking workflow status: ${error.message}`);
+                await new Promise(resolve => setTimeout(resolve, pollInterval));
+              }
+            }
+            
+            console.error('❌ Timeout waiting for APT workflow to complete (45 minutes exceeded)');
+            process.exit(1);
