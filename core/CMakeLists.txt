@@ -136,3 +136,15 @@ install(FILES ${CMAKE_SOURCE_DIR}/config/crankshaft.json
   DESTINATION /etc/crankshaft
   COMPONENT core
 )
+
+# Install USB action script
+install(PROGRAMS ${CMAKE_SOURCE_DIR}/packaging/core/scripts/usb_action.sh
+  DESTINATION /usr/lib/crankshaft
+  COMPONENT core
+)
+
+# Install udev rules
+install(FILES ${CMAKE_SOURCE_DIR}/packaging/core/udev/99-crankshaft.rules
+  DESTINATION /lib/udev/rules.d
+  COMPONENT core
+)

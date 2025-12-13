@@ -20,9 +20,17 @@ set -e
 
 case "$1" in
     configure)
+        # Add crankshaft user to required groups for display access
+        usermod -a -G video,input,render crankshaft 2>/dev/null || true
+        
+        # Reload systemd and enable service
+        systemctl daemon-reload
+        systemctl enable crankshaft-ui.service
+        
         echo "Crankshaft UI installed successfully"
-        echo "To start the UI: crankshaft-ui"
-        echo "Note: Ensure crankshaft-core is running first"
+        echo "Service enabled and will start on boot"
+        echo "To start now: sudo systemctl start crankshaft-ui"
+        echo "Note: crankshaft-core must be running first"
     ;;
 esac
 

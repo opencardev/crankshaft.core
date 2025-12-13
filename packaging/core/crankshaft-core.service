@@ -1,4 +1,3 @@
-#!/bin/bash
 # Project: Crankshaft
 # This file is part of Crankshaft project.
 # Copyright (C) 2025 OpenCarDev Team
@@ -16,19 +15,31 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
 
-set -e
+[Unit]
+Description=Crankshaft Core Service
+Documentation=https://github.com/opencardev/crankshaft.core
+After=network.target
+Wants=network.target
 
-case "$1" in
-    remove)
-        # Stop and disable systemd service
-        systemctl stop crankshaft-ui.service 2>/dev/null || true
-        systemctl disable crankshaft-ui.service 2>/dev/null || true
-        
-        # Kill any remaining processes
-        pkill -f crankshaft-ui || true
-        
-        echo "Crankshaft UI service stopped and disabled"
-    ;;
-esac
+[Service]
+Type=simple
+User=crankshaft
+Group=crankshaft
+ExecStart=/usr/bin/crankshaft-core
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
 
-exit 0
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/crankshaft /var/log/crankshaft
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target

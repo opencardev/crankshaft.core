@@ -25,13 +25,38 @@ case "$1" in
             useradd --system --no-create-home --shell /bin/false crankshaft
         fi
         
+        # Create plugdev group if it doesn't exist (for USB device access)
+        if ! getent group plugdev > /dev/null 2>&1; then
+            groupadd --system plugdev
+        fi
+        
+        # Add crankshaft user to plugdev group for USB access
+        usermod -a -G plugdev crankshaft 2>/dev/null || true
+        
         # Set proper ownership for config directory
         chown -R crankshaft:crankshaft /etc/crankshaft
         chmod 755 /etc/crankshaft
         chmod 644 /etc/crankshaft/crankshaft.json
         
+        # Create runtime directories
+        mkdir -p /var/lib/crankshaft /var/log/crankshaft
+        chown -R crankshaft:crankshaft /var/lib/crankshaft /var/log/crankshaft
+        
+        # Ensure USB action script is executable
+        chmod +x /usr/lib/crankshaft/usb_action.sh
+        
+        # Reload udev rules
+        udevadm control --reload-rules 2>/dev/null || true
+        udevadm trigger 2>/dev/null || true
+        
+        # Reload systemd and enable service
+        systemctl daemon-reload
+        systemctl enable crankshaft-core.service
+        
         echo "Crankshaft Core installed successfully"
-        echo "To start the service manually: crankshaft-core"
+        echo "Service enabled and will start on boot"
+        echo "USB device detection configured"
+        echo "To start now: sudo systemctl start crankshaft-core"
     ;;
 esac
 

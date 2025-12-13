@@ -20,9 +20,14 @@ set -e
 
 case "$1" in
     remove)
-        # Kill any running crankshaft-core processes
+        # Stop and disable systemd service
+        systemctl stop crankshaft-core.service 2>/dev/null || true
+        systemctl disable crankshaft-core.service 2>/dev/null || true
+        
+        # Kill any remaining processes
         pkill -f crankshaft-core || true
-        echo "Crankshaft Core stopped"
+        
+        echo "Crankshaft Core service stopped and disabled"
     ;;
 esac
 
