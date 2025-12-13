@@ -84,10 +84,77 @@ jobs:
               }
             });
 
-  build-pi-images:
+  test-apt-install:
     needs: publish-apt
     runs-on: ubuntu-latest
     if: needs.publish-apt.result == 'success'
+    strategy:
+      matrix:
+        arch: [amd64, arm64, armhf]
+        suite: [trixie]
+    steps:
+      - name: Set up QEMU for multi-arch
+        if: matrix.arch != 'amd64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/${{ matrix.arch }}
+
+      - name: Test package installation
+        run: |
+          # Wait for APT repository to be published
+          echo "Waiting 60 seconds for APT repository to be published..."
+          sleep 60
+          
+          # Determine platform for Docker
+          PLATFORM="linux/${{ matrix.arch }}"
+          if [ "${{ matrix.arch }}" = "armhf" ]; then
+            PLATFORM="linux/arm/v7"
+          fi
+          
+          echo "Testing installation on $PLATFORM with Debian ${{ matrix.suite }}"
+          
+          docker run --platform=$PLATFORM --rm debian:${{ matrix.suite }}-slim bash -c "
+            set -e
+            echo '=== Installing prerequisites ==='
+            apt-get update
+            apt-get install -y curl gnupg
+            
+            echo '=== Adding OpenCarDev repository ==='
+            curl -fsSL https://opencardev.github.io/packages/opencardev.gpg.key | gpg --dearmor -o /usr/share/keyrings/opencardev-archive-keyring.gpg
+            echo 'deb [arch=\$(dpkg --print-architecture) signed-by=/usr/share/keyrings/opencardev-archive-keyring.gpg] https://opencardev.github.io/packages ${{ matrix.suite }} nightly' > /etc/apt/sources.list.d/opencardev.list
+            
+            echo '=== Updating package lists ==='
+            apt-get update
+            
+            echo '=== Installing Crankshaft packages ==='
+            apt-get install -y libaasdk0 libaasdk-dev crankshaft-core crankshaft-ui
+            
+            echo '=== Verifying installations ==='
+            dpkg -l | grep -E 'libaasdk|crankshaft'
+            
+            echo '=== Checking installed files ==='
+            ls -la /usr/bin/crankshaft-* || true
+            ls -la /usr/lib/crankshaft/ || true
+            ls -la /lib/udev/rules.d/99-crankshaft.rules || true
+            ls -la /lib/systemd/system/crankshaft-*.service || true
+            
+            echo '✅ Package installation test passed on ${{ matrix.arch }}'
+          "
+
+      - name: Report test result
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ APT installation test passed for ${{ matrix.arch }} on ${{ matrix.suite }}"
+          else
+            echo "❌ APT installation test failed for ${{ matrix.arch }} on ${{ matrix.suite }}"
+            exit 1
+          fi
+
+  build-pi-images:
+    needs: test-apt-install
+    runs-on: ubuntu-latest
+    if: needs.test-apt-install.result == 'success'
     steps:
       - name: Trigger Pi-Gen Build
         uses: actions/github-script@v7
