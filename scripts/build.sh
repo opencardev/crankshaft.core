@@ -24,7 +24,7 @@ BUILD_TYPE="Debug"
 COMPONENT="all"
 BUILD_DIR="build"
 CREATE_PACKAGE=false
-INSTALL_DEPS=false
+INSTALL_DEPS=true
 VERSION=""
 
 # Dependency installation functions
