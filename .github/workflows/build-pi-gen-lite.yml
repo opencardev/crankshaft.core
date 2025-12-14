@@ -73,6 +73,8 @@ permissions:
 
 jobs:
   build-lite-images:
+    # Temporarily disabled to speed up CI turnaround (arm builds)
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 240  # 4 hours max build time
     strategy:

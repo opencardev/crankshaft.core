@@ -141,7 +141,7 @@ jobs:
     if: needs.publish-apt.result == 'success'
     strategy:
       matrix:
-        arch: [amd64, arm64, armhf]
+        arch: [amd64]
         suite: [trixie]
     steps:
       - name: Set up QEMU for multi-arch
