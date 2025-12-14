@@ -87,4 +87,4 @@ jobs:
     if: needs.check-skip.outputs.skip != 'true'
     uses: ./.github/workflows/build.yml
     with:
-      architectures: ${{ (github.ref_name == 'main' || github.ref_name == 'develop' || github.base_ref == 'main' || github.base_ref == 'develop') && 'amd64 arm64 armhf' || 'amd64' }}
+      architectures: 'amd64'
