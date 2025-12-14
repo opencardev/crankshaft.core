@@ -164,6 +164,10 @@ set(QT6_QML_PKG     "libqt6qml6")
 set(QT6_QUICK_PKG   "libqt6quick6")
 set(QT6_WS_PKG      "libqt6websockets6")
 
+# QML runtime module packages and platform plugins (common across suites)
+set(QML_RUNTIME_PKGS "qml6-module-qtquick, qml6-module-qtquick-controls, qml6-module-qtquick-layouts, qml6-module-qtquick-window")
+set(QT6_PLATFORM_PKG "qt6-base-platforms")
+
 # Core package metadata
 set(CPACK_COMPONENT_CORE_DISPLAY_NAME "Crankshaft Core")
 set(CPACK_COMPONENT_CORE_DESCRIPTION "Crankshaft core service with WebSocket server and event bus")
@@ -178,7 +182,7 @@ set(CPACK_COMPONENT_UI_DISPLAY_NAME "Crankshaft UI")
 set(CPACK_COMPONENT_UI_DESCRIPTION "Crankshaft QML-based user interface")
 set(CPACK_COMPONENT_UI_DEPENDS core)
 set(CPACK_DEBIAN_UI_PACKAGE_NAME "crankshaft-ui")
-set(CPACK_DEBIAN_UI_PACKAGE_DEPENDS "crankshaft-core (>= ${NUMERIC_VERSION}), ${QT6_CORE_PKG}, ${QT6_GUI_PKG}, ${QT6_QML_PKG}, ${QT6_QUICK_PKG}, ${QT6_WS_PKG}")
+set(CPACK_DEBIAN_UI_PACKAGE_DEPENDS "crankshaft-core (>= ${NUMERIC_VERSION}), ${QT6_CORE_PKG}, ${QT6_GUI_PKG}, ${QT6_QML_PKG}, ${QT6_QUICK_PKG}, ${QT6_WS_PKG}, ${QML_RUNTIME_PKGS}, ${QT6_PLATFORM_PKG}")
 set(CPACK_DEBIAN_UI_PACKAGE_CONTROL_EXTRA "${CMAKE_SOURCE_DIR}/packaging/ui/postinst;${CMAKE_SOURCE_DIR}/packaging/ui/prerm;${CMAKE_SOURCE_DIR}/packaging/ui/crankshaft-ui.service")
 set(CPACK_DEBIAN_UI_FILE_NAME DEB-DEFAULT)
 
