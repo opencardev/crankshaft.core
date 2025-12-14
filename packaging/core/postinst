@@ -49,9 +49,13 @@ case "$1" in
         udevadm control --reload-rules 2>/dev/null || true
         udevadm trigger 2>/dev/null || true
         
-        # Reload systemd and enable service
-        systemctl daemon-reload
-        systemctl enable crankshaft-core.service
+        # Reload systemd and enable service when running under systemd
+        if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+            systemctl daemon-reload
+            systemctl enable crankshaft-core.service
+        else
+            echo "Systemd not detected; skipping service enable." >&2
+        fi
         
         echo "Crankshaft Core installed successfully"
         echo "Service enabled and will start on boot"

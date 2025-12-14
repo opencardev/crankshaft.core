@@ -23,9 +23,13 @@ case "$1" in
         # Add crankshaft user to required groups for display access
         usermod -a -G video,input,render crankshaft 2>/dev/null || true
         
-        # Reload systemd and enable service
-        systemctl daemon-reload
-        systemctl enable crankshaft-ui.service
+        # Reload systemd and enable service when running under systemd
+        if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+            systemctl daemon-reload
+            systemctl enable crankshaft-ui.service
+        else
+            echo "Systemd not detected; skipping service enable." >&2
+        fi
         
         echo "Crankshaft UI installed successfully"
         echo "Service enabled and will start on boot"
