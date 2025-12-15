@@ -30,6 +30,11 @@ on:
         required: false
         default: 'amd64 arm64 armhf'
         type: string
+      amd64only:
+        description: 'Build amd64 only (skip ARM for fast debugging)'
+        required: false
+        default: false
+        type: boolean
   workflow_dispatch:
     inputs:
       version:
@@ -42,6 +47,11 @@ on:
         required: false
         default: 'amd64 arm64 armhf'
         type: string
+      amd64only:
+        description: 'Build amd64 only (skip ARM for fast debugging)'
+        required: false
+        default: false
+        type: boolean
 
 env:
   REGISTRY: ghcr.io
@@ -81,7 +91,12 @@ jobs:
         id: matrix
         run: |
           ARCH_INPUT="${{ inputs.architectures }}"
-          if [ -z "$ARCH_INPUT" ]; then
+          AMD64_ONLY="${{ inputs.amd64only }}"
+          
+          # Override architectures if amd64only is true
+          if [ "$AMD64_ONLY" = "true" ]; then
+            ARCHES="amd64"
+          elif [ -z "$ARCH_INPUT" ]; then
             ARCHES="amd64 arm64 armhf"
           else
             ARCHES="$ARCH_INPUT"

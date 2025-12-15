@@ -47,6 +47,14 @@ on:
       - 'tests/**'
       - 'packaging/**'
 
+  workflow_dispatch:
+    inputs:
+      amd64only:
+        description: 'Build amd64 only (skip ARM for fast debugging)'
+        required: false
+        default: false
+        type: boolean
+
 jobs:
   check-skip:
     runs-on: ubuntu-latest
@@ -87,4 +95,4 @@ jobs:
     if: needs.check-skip.outputs.skip != 'true'
     uses: ./.github/workflows/build.yml
     with:
-      architectures: ${{ (github.ref_name == 'main' || github.ref_name == 'develop' || github.base_ref == 'main' || github.base_ref == 'develop') && 'amd64 arm64 armhf' || 'amd64' }}
+      architectures: ${{ github.event.inputs.amd64only == 'true' && 'amd64' || ((github.ref_name == 'main' || github.ref_name == 'develop' || github.base_ref == 'main' || github.base_ref == 'develop') && 'amd64 arm64 armhf' || 'amd64') }}
