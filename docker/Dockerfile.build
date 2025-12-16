@@ -62,7 +62,7 @@ RUN mkdir -p build logs && cd build && \
     cmake .. \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_PROJECT_VERSION=${VERSION} \
-            -DDEBIAN_SUITE=${DEBIAN_SUITE} \
+      -DDEBIAN_SUITE=${DEBIAN_SUITE} \
       -DCMAKE_INSTALL_PREFIX=/usr \
       -DBUILD_TESTS=OFF 2>&1 | tee /build/logs/cmake-configure.log && \
     cmake --build . -j$(nproc) 2>&1 | tee /build/logs/cmake-build.log && \

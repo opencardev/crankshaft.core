@@ -127,10 +127,10 @@ set(CPACK_COMPONENT_RUNTIME_DISPLAY_NAME "AASDK Runtime Libraries")
 set(CPACK_COMPONENT_RUNTIME_DESCRIPTION "Android Auto SDK runtime libraries and SSL certificates")
 set(CPACK_DEBIAN_RUNTIME_PACKAGE_NAME "libaasdk0")
 set(CPACK_DEBIAN_RUNTIME_PACKAGE_SECTION "libs")
-# libssl3 was renamed to libssl3t64 in Debian trixie (time64 transition)
-# Prefer t64 on trixie, but allow fallback to non-t64 to ease CI
-if(DEBIAN_SUITE STREQUAL "trixie")
-	set(CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS "libssl3t64 | libssl3, libusb-1.0-0")
+# libssl3 was renamed to libssl3t64 in Debian deb13 (time64 transition)
+# Prefer t64 on deb13, but allow fallback to non-t64 to ease CI
+if(CPACK_DEBIAN_PACKAGE_RELEASE STREQUAL "deb13")
+	set(CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS "libssl3t64, libusb-1.0-0")
 else()
 	set(CPACK_DEBIAN_RUNTIME_PACKAGE_DEPENDS "libssl3, libusb-1.0-0")
 endif()
@@ -145,14 +145,11 @@ set(CPACK_DEBIAN_DEVELOPMENT_PACKAGE_SECTION "libdevel")
 set(CPACK_DEBIAN_DEVELOPMENT_PACKAGE_DEPENDS "libaasdk0 (>= ${NUMERIC_VERSION}), libssl-dev, libprotobuf-dev, libusb-1.0-0-dev")
 set(CPACK_DEBIAN_DEVELOPMENT_FILE_NAME DEB-DEFAULT)
 
-# Select Debian suite to allow correct Qt6 dependency variants
-set(DEBIAN_SUITE "trixie" CACHE STRING "Target Debian suite (trixie or bookworm)")
-
-# Resolve Qt6 dependency names per suite (t64 only exists on trixie)
-# Prefer t64 core/gui on trixie, allow non-t64 as alternative for robustness
-if(DEBIAN_SUITE STREQUAL "trixie")
-	set(QT6_CORE_PKG "libqt6core6t64 | libqt6core6")
-	set(QT6_GUI_PKG  "libqt6gui6t64 | libqt6gui6")
+# Resolve Qt6 dependency names per suite (t64 only exists on deb13)
+# Prefer t64 core/gui on deb13, allow non-t64 as alternative for robustness
+if(CPACK_DEBIAN_PACKAGE_RELEASE STREQUAL "deb13")
+	set(QT6_CORE_PKG "libqt6core6t64")
+	set(QT6_GUI_PKG  "libqt6gui6")
 else()
 	set(QT6_CORE_PKG "libqt6core6")
 	set(QT6_GUI_PKG  "libqt6gui6")
@@ -173,7 +170,7 @@ set(CPACK_COMPONENT_CORE_DISPLAY_NAME "Crankshaft Core")
 set(CPACK_COMPONENT_CORE_DESCRIPTION "Crankshaft core service with WebSocket server and event bus")
 set(CPACK_COMPONENT_CORE_DEPENDS runtime)
 set(CPACK_DEBIAN_CORE_PACKAGE_NAME "crankshaft-core")
-set(CPACK_DEBIAN_CORE_PACKAGE_DEPENDS "libaasdk0 (>= ${NUMERIC_VERSION}), ${QT6_CORE_PKG}, ${QT6_NETWORK_PKG}, ${QT6_WS_PKG}, ${QT6_DBUS_PKG}, libgstreamer1.0-0, libgstreamer-plugins-base1.0-0")
+set(CPACK_DEBIAN_CORE_PACKAGE_DEPENDS "libaasdk0 (>= ${NUMERIC_VERSION}), ${QT6_CORE_PKG}, ${QT6_NETWORK_PKG}, ${QT6_WS_PKG}, ${QT6_DBUS_PKG}, libgstreamer1.0-0, gstreamer1.0-plugins-good, gstreamer1.0-plugins-bad, gstreamer1.0-plugins-ugly, gstreamer1.0-libav, libdbus-1-3, libusb-1.0-0, gstreamer1.0-libav, gstreamer1.0-tools")
 set(CPACK_DEBIAN_CORE_PACKAGE_CONTROL_EXTRA "${CMAKE_SOURCE_DIR}/packaging/core/postinst;${CMAKE_SOURCE_DIR}/packaging/core/prerm;${CMAKE_SOURCE_DIR}/packaging/core/crankshaft-core.service")
 set(CPACK_DEBIAN_CORE_FILE_NAME DEB-DEFAULT)
 
