@@ -101,6 +101,8 @@ jobs:
     needs: build-packages
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.amd64only == 'true'
+    permissions:
+      actions: write
     steps:
       - name: Dispatch CD workflow with amd64only
         uses: actions/github-script@v7
