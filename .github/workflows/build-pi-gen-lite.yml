@@ -242,6 +242,7 @@ jobs:
           TIMEZONE_DEFAULT=Europe/London
           FIRST_USER_NAME=pi
           FIRST_USER_PASS=raspberry
+          DISABLE_FIRST_BOOT_USER_RENAME=1
           ENABLE_SSH=1
           PUBKEY_SSH_FIRST_USER=""
           PUBKEY_ONLY_SSH=0
