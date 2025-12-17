@@ -96,6 +96,8 @@ class RealAndroidAutoService : public AndroidAutoService {
   explicit RealAndroidAutoService(MediaPipeline* mediaPipeline, QObject* parent = nullptr);
   ~RealAndroidAutoService() override;
 
+  void configureTransport(const QMap<QString, QVariant>& settings) override;
+
   bool initialise() override;
   void deinitialise() override;
 
@@ -183,6 +185,12 @@ class RealAndroidAutoService : public AndroidAutoService {
   void onAudioData(const QByteArray& data);
   void onUSBHotplug(bool connected);
 
+  // Transport mode configuration
+  enum class TransportMode { Auto, USB, Wireless };
+  TransportMode getTransportMode() const;
+  bool setupUSBTransport();
+  bool setupTCPTransport(const QString& host, quint16 port);
+
   ConnectionState m_state{ConnectionState::DISCONNECTED};
   AndroidDevice m_device;
   QSize m_resolution{1024, 600};
@@ -198,6 +206,12 @@ class RealAndroidAutoService : public AndroidAutoService {
   MediaPipeline* m_mediaPipeline{nullptr};
   std::shared_ptr<boost::asio::io_service> m_ioService;
   std::unique_ptr<QThread> m_aasdkThread;
+
+  // Transport configuration
+  TransportMode m_transportMode{TransportMode::Auto};
+  QString m_wirelessHost;
+  quint16 m_wirelessPort{5277};
+  bool m_wirelessEnabled{false};
 
   // Strands for channel operations
   std::unique_ptr<boost::asio::io_service::strand> m_strand;

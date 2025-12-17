@@ -27,6 +27,7 @@
 
 #include "../../hal/multimedia/MediaPipeline.h"
 #include "../logging/Logger.h"
+#include "../profile/ProfileManager.h"
 #include "MockAndroidAutoService.h"
 #include "RealAndroidAutoService.h"
 
@@ -297,23 +298,36 @@ AndroidAutoService::AndroidAutoService(QObject* parent) : QObject(parent) {}
 AndroidAutoService::~AndroidAutoService() {}
 
 // Static factory function
-AndroidAutoService* AndroidAutoService::create(MediaPipeline* mediaPipeline, QObject* parent) {
-  // Check environment variable to determine which implementation to use
-  QByteArray useMock = qgetenv("CRANKSHAFT_USE_MOCK_AA");
-  bool mockEnabled = !useMock.isEmpty() && (useMock == "1" || useMock.toLower() == "true");
+AndroidAutoService* AndroidAutoService::create(MediaPipeline* mediaPipeline,
+                                                ProfileManager* profileManager, QObject* parent) {
+  // Check ProfileManager for AndroidAuto device configuration
+  bool useMock = true;  // Default to mock if profile not found
+
+  if (profileManager) {
+    HostProfile activeProfile = profileManager->getActiveHostProfile();
+    for (const auto& device : activeProfile.devices) {
+      if (device.name == "AndroidAuto" || device.type == "AndroidAuto") {
+        useMock = device.useMock;
+        Logger::instance().info(
+            QString("AndroidAuto device found in profile '%1': useMock=%2")
+                .arg(activeProfile.name)
+                .arg(useMock ? "true" : "false"));
+        break;
+      }
+    }
+  } else {
+    Logger::instance().warning(
+        "ProfileManager not provided to AndroidAutoService factory, defaulting to mock");
+  }
 
   AndroidAutoService* service = nullptr;
 
-  if (mockEnabled) {
-    Logger::instance().info("Creating Mock Android Auto service (CRANKSHAFT_USE_MOCK_AA=1)");
+  if (useMock) {
+    Logger::instance().info("Creating Mock Android Auto service (profile setting)");
     service = new MockAndroidAutoService(parent);
   } else {
-    Logger::instance().warning(
-        "Real Android Auto service not yet available - using Mock. "
-        "TODO: Fix AASDK header paths in RealAndroidAutoService");
-    service = new MockAndroidAutoService(parent);
-    // TODO: Uncomment when AASDK headers are fixed:
-    // service = new RealAndroidAutoService(mediaPipeline, parent);
+    Logger::instance().info("Creating Real Android Auto service (AASDK)");
+    service = new RealAndroidAutoService(mediaPipeline, parent);
   }
 
   return service;

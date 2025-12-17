@@ -48,6 +48,12 @@ MockAndroidAutoService::~MockAndroidAutoService() {
   deinitialise();
 }
 
+void MockAndroidAutoService::configureTransport(const QMap<QString, QVariant>& settings) {
+  Q_UNUSED(settings);
+  // Mock service doesn't use real transport
+  Logger::instance().debug("[MockAndroidAutoService] Transport configuration ignored (mock mode)");
+}
+
 bool MockAndroidAutoService::initialise() {
   if (m_state != ConnectionState::DISCONNECTED) {
     return false;

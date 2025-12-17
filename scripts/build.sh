@@ -24,7 +24,7 @@ BUILD_TYPE="Debug"
 COMPONENT="all"
 BUILD_DIR="build"
 CREATE_PACKAGE=false
-INSTALL_DEPS=true
+INSTALL_DEPS=false
 VERSION=""
 # Default Debian suite from host, fall back to trixie
 DEBIAN_SUITE=${VERSION_CODENAME:-trixie}
@@ -40,7 +40,6 @@ install_core_deps() {
         libdbus-1-dev \
         libgstreamer1.0-dev \
         libgstreamer-plugins-base1.0-dev \
-        libgstreamer-plugins-good1.0-dev \
         gstreamer1.0-plugins-base \
         gstreamer1.0-plugins-good \
         gstreamer1.0-plugins-bad \

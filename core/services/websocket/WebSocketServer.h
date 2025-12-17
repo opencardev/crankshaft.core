@@ -24,6 +24,9 @@
 #include <QWebSocket>
 #include <QWebSocketServer>
 
+// Forward declarations
+class ServiceManager;
+
 class WebSocketServer : public QObject {
   Q_OBJECT
 
@@ -34,6 +37,9 @@ class WebSocketServer : public QObject {
   void broadcastEvent(const QString& topic, const QVariantMap& payload);
   [[nodiscard]] bool isListening() const;
 
+  // ServiceManager integration
+  void setServiceManager(ServiceManager* serviceManager);
+
  private slots:
   void onNewConnection();
   void onTextMessageReceived(const QString& message);
@@ -42,9 +48,11 @@ class WebSocketServer : public QObject {
  private:
   void handleSubscribe(QWebSocket* client, const QString& topic);
   void handlePublish(const QString& topic, const QVariantMap& payload);
+  void handleServiceCommand(QWebSocket* client, const QString& command, const QVariantMap& params);
   [[nodiscard]] bool topicMatches(const QString& topic, const QString& pattern) const;
 
   QWebSocketServer* m_server;
   QList<QWebSocket*> m_clients;
   QMap<QWebSocket*, QStringList> m_subscriptions;
+  ServiceManager* m_serviceManager;
 };

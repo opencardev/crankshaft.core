@@ -42,6 +42,8 @@ class MockAndroidAutoService : public AndroidAutoService {
   explicit MockAndroidAutoService(QObject* parent = nullptr);
   ~MockAndroidAutoService() override;
 
+  void configureTransport(const QMap<QString, QVariant>& settings) override;
+
   bool initialise() override;
   void deinitialise() override;
 

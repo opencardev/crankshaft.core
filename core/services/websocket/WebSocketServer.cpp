@@ -25,10 +25,12 @@
 
 #include "../eventbus/EventBus.h"
 #include "../logging/Logger.h"
+#include "../service_manager/ServiceManager.h"
 
 WebSocketServer::WebSocketServer(quint16 port, QObject* parent)
     : QObject(parent),
-      m_server(new QWebSocketServer("CrankshaftCore", QWebSocketServer::NonSecureMode, this)) {
+      m_server(new QWebSocketServer("CrankshaftCore", QWebSocketServer::NonSecureMode, this)),
+      m_serviceManager(nullptr) {
   Logger::instance().info(QString("Initializing WebSocket server on port %1...").arg(port));
 
   if (m_server->listen(QHostAddress::Any, port)) {
@@ -48,6 +50,11 @@ WebSocketServer::~WebSocketServer() {
 
 bool WebSocketServer::isListening() const {
   return m_server->isListening();
+}
+
+void WebSocketServer::setServiceManager(ServiceManager* serviceManager) {
+  m_serviceManager = serviceManager;
+  Logger::instance().info("[WebSocketServer] ServiceManager registered");
 }
 
 void WebSocketServer::onNewConnection() {
@@ -82,6 +89,10 @@ void WebSocketServer::onTextMessageReceived(const QString& message) {
   } else if (type == "publish") {
     QVariantMap payload = obj.value("payload").toObject().toVariantMap();
     handlePublish(topic, payload);
+  } else if (type == "service_command") {
+    QString command = obj.value("command").toString();
+    QVariantMap params = obj.value("params").toObject().toVariantMap();
+    handleServiceCommand(client, command, params);
   }
 }
 
@@ -105,6 +116,79 @@ void WebSocketServer::handleSubscribe(QWebSocket* client, const QString& topic) 
 
 void WebSocketServer::handlePublish(const QString& topic, const QVariantMap& payload) {
   EventBus::instance().publish(topic, payload);
+}
+
+void WebSocketServer::handleServiceCommand(QWebSocket* client, const QString& command,
+                                            const QVariantMap& params) {
+  if (!m_serviceManager) {
+    Logger::instance().warning("[WebSocketServer] ServiceManager not available for command: " + command);
+    
+    QJsonObject response;
+    response["type"] = "service_response";
+    response["command"] = command;
+    response["success"] = false;
+    response["error"] = "ServiceManager not available";
+    client->sendTextMessage(QJsonDocument(response).toJson(QJsonDocument::Compact));
+    return;
+  }
+
+  Logger::instance().info(QString("[WebSocketServer] Handling service command: %1").arg(command));
+
+  QJsonObject response;
+  response["type"] = "service_response";
+  response["command"] = command;
+  bool success = false;
+  QString error;
+
+  if (command == "reload_services") {
+    m_serviceManager->reloadServices();
+    success = true;
+    Logger::instance().info("[WebSocketServer] Services reloaded via WebSocket command");
+  } else if (command == "start_service") {
+    QString serviceName = params.value("service").toString();
+    if (!serviceName.isEmpty()) {
+      success = m_serviceManager->startService(serviceName);
+      Logger::instance().info(
+          QString("[WebSocketServer] Start service '%1': %2").arg(serviceName).arg(success ? "success" : "failed"));
+    } else {
+      error = "Missing 'service' parameter";
+    }
+  } else if (command == "stop_service") {
+    QString serviceName = params.value("service").toString();
+    if (!serviceName.isEmpty()) {
+      success = m_serviceManager->stopService(serviceName);
+      Logger::instance().info(
+          QString("[WebSocketServer] Stop service '%1': %2").arg(serviceName).arg(success ? "success" : "failed"));
+    } else {
+      error = "Missing 'service' parameter";
+    }
+  } else if (command == "restart_service") {
+    QString serviceName = params.value("service").toString();
+    if (!serviceName.isEmpty()) {
+      success = m_serviceManager->restartService(serviceName);
+      Logger::instance().info(
+          QString("[WebSocketServer] Restart service '%1': %2").arg(serviceName).arg(success ? "success" : "failed"));
+    } else {
+      error = "Missing 'service' parameter";
+    }
+  } else if (command == "get_running_services") {
+    QStringList services = m_serviceManager->getRunningServices();
+    response["services"] = QJsonArray::fromStringList(services);
+    success = true;
+    Logger::instance().info(
+        QString("[WebSocketServer] Running services query: %1").arg(services.join(", ")));
+  } else {
+    error = "Unknown command: " + command;
+    Logger::instance().warning("[WebSocketServer] " + error);
+  }
+
+  response["success"] = success;
+  if (!error.isEmpty()) {
+    response["error"] = error;
+  }
+  response["timestamp"] = QDateTime::currentSecsSinceEpoch();
+
+  client->sendTextMessage(QJsonDocument(response).toJson(QJsonDocument::Compact));
 }
 
 void WebSocketServer::broadcastEvent(const QString& topic, const QVariantMap& payload) {
