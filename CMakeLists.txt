@@ -167,6 +167,7 @@ set(QT6_DBUS_PKG    "libqt6dbus6")
 set(QT6_QML_PKG     "libqt6qml6")
 set(QT6_QUICK_PKG   "libqt6quick6")
 set(QT6_WS_PKG      "libqt6websockets6")
+set(QT6_BT_PKG      "libqt6bluetooth6")
 
 # QML runtime module packages (common across suites)
 # Platform plugins are now built-in to libqt6gui6/libqt6core6
@@ -178,6 +179,7 @@ set(CPACK_COMPONENT_CORE_DESCRIPTION "Crankshaft core service with WebSocket ser
 set(CPACK_COMPONENT_CORE_DEPENDS runtime)
 set(CPACK_DEBIAN_CORE_PACKAGE_NAME "crankshaft-core")
 set(CPACK_DEBIAN_CORE_PACKAGE_DEPENDS "libaasdk0 (>= ${NUMERIC_VERSION}), ${QT6_CORE_PKG}, ${QT6_NETWORK_PKG}, ${QT6_WS_PKG}, ${QT6_DBUS_PKG}, libgstreamer1.0-0, gstreamer1.0-plugins-good, gstreamer1.0-plugins-bad, gstreamer1.0-plugins-ugly, gstreamer1.0-libav, libdbus-1-3, libusb-1.0-0, gstreamer1.0-libav, gstreamer1.0-tools")
+set(CPACK_DEBIAN_CORE_PACKAGE_DEPENDS "libaasdk0 (>= ${NUMERIC_VERSION}), ${QT6_CORE_PKG}, ${QT6_NETWORK_PKG}, ${QT6_WS_PKG}, ${QT6_DBUS_PKG}, ${QT6_BT_PKG}, libgstreamer1.0-0, gstreamer1.0-plugins-good, gstreamer1.0-plugins-bad, gstreamer1.0-plugins-ugly, gstreamer1.0-libav, libdbus-1-3, libusb-1.0-0, gstreamer1.0-libav, gstreamer1.0-tools")
 set(CPACK_DEBIAN_CORE_PACKAGE_CONTROL_EXTRA "${CMAKE_SOURCE_DIR}/packaging/core/postinst;${CMAKE_SOURCE_DIR}/packaging/core/prerm;${CMAKE_SOURCE_DIR}/packaging/core/crankshaft-core.service")
 set(CPACK_DEBIAN_CORE_FILE_NAME DEB-DEFAULT)
 

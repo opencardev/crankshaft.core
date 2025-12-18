@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(crankshaft-core)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Gui DBus)
+find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Gui DBus Bluetooth)
 
 # Find GStreamer for multimedia
 find_package(PkgConfig REQUIRED)
@@ -114,6 +114,7 @@ target_link_libraries(crankshaft-core PRIVATE
   Qt6::WebSockets
   Qt6::Gui
   Qt6::DBus
+  Qt6::Bluetooth
   ${GSTREAMER_LIBRARIES}
   ${GSTREAMER_APP_LIBRARIES}
   ${GSTREAMER_VIDEO_LIBRARIES}
