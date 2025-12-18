@@ -56,6 +56,7 @@ set(SOURCES
   services/config/ConfigService.cpp
   services/logging/Logger.cpp
   services/profile/ProfileManager.cpp
+  services/service_manager/ServiceManager.cpp
   services/android_auto/AndroidAutoService.cpp
   services/android_auto/MockAndroidAutoService.cpp
   services/android_auto/RealAndroidAutoService.cpp
@@ -146,5 +147,11 @@ install(PROGRAMS ${CMAKE_SOURCE_DIR}/packaging/core/scripts/usb_action.sh
 # Install udev rules
 install(FILES ${CMAKE_SOURCE_DIR}/packaging/core/udev/99-crankshaft.rules
   DESTINATION /lib/udev/rules.d
+  COMPONENT core
+)
+
+# Install systemd service unit
+install(FILES ${CMAKE_SOURCE_DIR}/packaging/core/crankshaft-core.service
+  DESTINATION /lib/systemd/system
   COMPONENT core
 )

@@ -1,0 +1,279 @@
+{
+  // Project: Crankshaft
+  // This file is part of Crankshaft project.
+  // Copyright (C) 2025 OpenCarDev Team
+  //
+  //  Crankshaft is free software: you can redistribute it and/or modify
+  //  it under the terms of the GNU General Public License as published by
+  //  the Free Software Foundation; either version 3 of the License, or
+  //  (at your option) any later version.
+  //
+  //  Crankshaft is distributed in the hope that it will be useful,
+  //  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  //  GNU General Public License for more details.
+  //
+  //  You should have received a copy of the GNU General Public License
+  //  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build (Debug)",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "./scripts/build.sh --build-type Debug"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Build (Release)",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "./scripts/build.sh --build-type Release"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Build (Core)",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "./scripts/build.sh --component core --build-type Debug"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Build (UI)",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "./scripts/build.sh --component ui --build-type Debug"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Build and Package (Release)",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "./scripts/build.sh --build-type Release --package"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Clean Build",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "rm -rf build"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "ctest --test-dir build --output-on-failure"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "test", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "dependsOn": ["Build (Debug)"]
+    },
+    {
+      "label": "Format C++ Code",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "bash",
+        "-lc",
+        "./scripts/format_cpp.sh fix"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Check Formatting (clang-format)",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "bash",
+        "-lc",
+        "./scripts/format_cpp.sh check"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Formatting (clang-format)",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "bash",
+        "-lc",
+        "./scripts/format.sh"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Lint C++ Code (clang-tidy)",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "./scripts/lint_cpp.sh clang-tidy"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": ["$gcc"],
+      "dependsOn": ["Build (Debug)"]
+    },
+    {
+      "label": "Check C++ Code (cppcheck)",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "./scripts/lint_cpp.sh cppcheck"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Check CMake Files",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "bash",
+        "-lc",
+        "cmake-lint CMakeLists.txt core/CMakeLists.txt ui/CMakeLists.txt"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Build Package (DEB)",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "./scripts/build.sh --build-type Release --package"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "dependsOn": []
+    },
+    {
+      "label": "Install",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "sudo cmake --install build"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "dependsOn": ["Build (Release)"]
+    },
+    {
+      "label": "Run Application (VNC Debug)",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "bash",
+        "-lc",
+        "QT_DEBUG_PLUGINS=1 QT_LOGGING_RULES='*=true' ./build/ui/crankshaft-ui -platform vnc:size=1024x600,port=5900"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "dependsOn": ["Build (Debug)"]
+    },
+    {
+      "label": "Run Application",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "QT_DEBUG_PLUGINS=0 ./build/ui/crankshaft-ui"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "dependsOn": ["Build (Debug)"]
+    },
+    {
+      "label": "Generate Documentation",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "bash",
+        "-lc",
+        "if [ -f Doxyfile ]; then doxygen Doxyfile; else echo 'No Doxyfile found'; fi"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Security Lint (Bandit)",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "bash",
+        "-lc",
+        "if command -v bandit >/dev/null 2>&1; then find . -name '*.py' -print0 | xargs -0 -I{} bandit -r {}; else echo 'Bandit not installed. Run: Install Dev Tools (WSL)'; fi"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Check License Headers",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "bash",
+        "-lc",
+        "./scripts/check_license_headers.sh"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Install Dev Tools (WSL)",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "./scripts/install_dev_tools.sh"],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Pre-commit Check",
+      "dependsOn": [
+        "Check Formatting (clang-format)",
+        "Check C++ Code (cppcheck)",
+        "Check CMake Files",
+        "Check License Headers",
+        "Run Tests"
+      ],
+      "dependsOrder": "sequence",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Docker: Build RPi (armhf, release)",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "./docker-build-rpi.sh armhf release"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Docker: Build RPi (arm64, release)",
+      "type": "shell",
+      "command": "wsl",
+      "args": ["bash", "-lc", "./docker-build-rpi.sh arm64 release"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Build Translations",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "bash",
+        "-lc",
+        "cmake --build build --target translations -j || ninja -C build translations"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "dependsOn": ["Build (Debug)"]
+    }
+  ]
+}

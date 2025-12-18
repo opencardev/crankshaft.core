@@ -111,3 +111,9 @@ if(MDI_FONT_FILE AND EXISTS "${MDI_FONT_FILE}")
     COMPONENT ui
   )
 endif()
+
+# Install systemd service unit
+install(FILES ${CMAKE_SOURCE_DIR}/packaging/ui/crankshaft-ui.service
+  DESTINATION /lib/systemd/system
+  COMPONENT ui
+)

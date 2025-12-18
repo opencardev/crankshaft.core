@@ -27,6 +27,7 @@
 
 // Forward declarations
 class MediaPipeline;
+class ProfileManager;
 
 /**
  * @brief Android Auto projection service
@@ -69,10 +70,18 @@ class AndroidAutoService : public QObject {
   /**
    * @brief Factory method to create Android Auto service
    * @param mediaPipeline Media pipeline for audio/video streaming
+   * @param profileManager Profile manager for checking mock device settings
    * @param parent Parent QObject
    * @return Initialized service instance or nullptr on failure
    */
-  static AndroidAutoService* create(MediaPipeline* mediaPipeline, QObject* parent = nullptr);
+  static AndroidAutoService* create(MediaPipeline* mediaPipeline, ProfileManager* profileManager,
+                                    QObject* parent = nullptr);
+
+  /**
+   * @brief Configure transport settings from device configuration
+   * @param settings Device settings map from ProfileManager
+   */
+  virtual void configureTransport(const QMap<QString, QVariant>& settings) = 0;
 
   /**
    * @brief Initialise the Android Auto service

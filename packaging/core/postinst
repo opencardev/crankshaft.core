@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Project: Crankshaft
 # This file is part of Crankshaft project.
 # Copyright (C) 2025 OpenCarDev Team
@@ -16,7 +16,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
 
-set -e
+set -eu
+export DEBIAN_FRONTEND=noninteractive
 
 case "$1" in
     configure)
@@ -51,8 +52,8 @@ case "$1" in
         
         # Reload systemd and enable service when running under systemd
         if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-            systemctl daemon-reload
-            systemctl enable crankshaft-core.service
+            timeout 10s systemctl daemon-reload >/dev/null 2>&1 || true
+            timeout 10s systemctl enable crankshaft-core.service >/dev/null 2>&1 || true
         else
             echo "Systemd not detected; skipping service enable." >&2
         fi

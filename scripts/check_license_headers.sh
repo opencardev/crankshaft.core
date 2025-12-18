@@ -1,4 +1,3 @@
-#!/bin/sh
 # Project: Crankshaft
 # This file is part of Crankshaft project.
 # Copyright (C) 2025 OpenCarDev Team
@@ -16,23 +15,21 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
 
-set -eu
-export DEBIAN_FRONTEND=noninteractive
+#!/usr/bin/env bash
+set -euo pipefail
 
-case "$1" in
-    remove|upgrade|deconfigure)
-        # Stop and disable systemd service (if systemd is present)
-        if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-            timeout 10s systemctl stop --no-block crankshaft-core.service >/dev/null 2>&1 || true
-            timeout 5s systemctl disable --no-reload crankshaft-core.service >/dev/null 2>&1 || true
-        fi
+SEARCH_DIRS=(core ui extensions)
+TMP_FILE="/tmp/missing_license.txt"
 
-        # Kill any remaining processes (best effort)
-        pkill -f '^/usr/bin/crankshaft-core' >/dev/null 2>&1 || true
-        pkill -f '[c]rankshaft-core' >/dev/null 2>&1 || true
+: > "$TMP_FILE"
 
-        echo "Crankshaft Core pre-removal cleanup done"
-    ;;
-esac
+find "${SEARCH_DIRS[@]}" -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' -o -name '*.cc' \) -print0 \
+  | xargs -0 -I {} sh -c "grep -q 'GNU General Public License' '{}' || echo '{}' >> '$TMP_FILE'"
 
-exit 0
+if [ -s "$TMP_FILE" ]; then
+  echo "Files missing license headers:" >&2
+  cat "$TMP_FILE" >&2
+  exit 1
+else
+  echo "All checked files contain the required license header."
+fi

@@ -84,6 +84,16 @@ void ProfileManager::initializeDefaultProfiles() {
   androidAutoDevice.settings["channels.input"] = true;
   androidAutoDevice.settings["channels.sensor"] = true;
   androidAutoDevice.settings["channels.bluetooth"] = false;  // Disabled by default
+
+  // Connection mode: "auto", "usb", "wireless"
+  // auto = try USB first, fallback to wireless if configured
+  // usb = USB only
+  // wireless = TCP/IP only (developer option for PC testing)
+  androidAutoDevice.settings["connectionMode"] = "auto";
+  androidAutoDevice.settings["wireless.enabled"] = false;
+  androidAutoDevice.settings["wireless.host"] = "";    // e.g., "192.168.1.100" or "phone.local"
+  androidAutoDevice.settings["wireless.port"] = 5277;  // Default Android Auto wireless port
+
   devHostProfile.devices.append(androidAutoDevice);
 
   DeviceConfig bluetoothDevice;

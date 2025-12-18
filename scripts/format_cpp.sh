@@ -1,4 +1,3 @@
-#!/bin/sh
 # Project: Crankshaft
 # This file is part of Crankshaft project.
 # Copyright (C) 2025 OpenCarDev Team
@@ -16,23 +15,24 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
 
-set -eu
-export DEBIAN_FRONTEND=noninteractive
+#!/usr/bin/env bash
+set -euo pipefail
 
-case "$1" in
-    remove|upgrade|deconfigure)
-        # Stop and disable systemd service (if systemd is present)
-        if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-            timeout 10s systemctl stop --no-block crankshaft-core.service >/dev/null 2>&1 || true
-            timeout 5s systemctl disable --no-reload crankshaft-core.service >/dev/null 2>&1 || true
-        fi
+MODE=${1:-check}
+SEARCH_DIRS=(core ui extensions)
 
-        # Kill any remaining processes (best effort)
-        pkill -f '^/usr/bin/crankshaft-core' >/dev/null 2>&1 || true
-        pkill -f '[c]rankshaft-core' >/dev/null 2>&1 || true
+# Build file list safely
+mapfile -t FILES < <(find "${SEARCH_DIRS[@]}" -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' -o -name '*.cc' \) 2>/dev/null)
 
-        echo "Crankshaft Core pre-removal cleanup done"
-    ;;
-esac
+if [ ${#FILES[@]} -eq 0 ]; then
+  echo "No C/C++ source files found under: ${SEARCH_DIRS[*]}" >&2
+  exit 0
+fi
 
-exit 0
+if [ "$MODE" = "fix" ]; then
+  printf '%s\0' "${FILES[@]}" | xargs -0 clang-format -i
+  echo "clang-format: applied formatting to ${#FILES[@]} files"
+else
+  printf '%s\0' "${FILES[@]}" | xargs -0 clang-format --dry-run --Werror
+  echo "clang-format: formatting OK for ${#FILES[@]} files"
+fi

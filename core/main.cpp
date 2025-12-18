@@ -25,6 +25,8 @@
 #include "services/config/ConfigService.h"
 #include "services/eventbus/EventBus.h"
 #include "services/logging/Logger.h"
+#include "services/profile/ProfileManager.h"
+#include "services/service_manager/ServiceManager.h"
 #include "services/websocket/WebSocketServer.h"
 
 int main(int argc, char* argv[]) {
@@ -69,6 +71,21 @@ int main(int argc, char* argv[]) {
   EventBus::instance();  // Initialise event bus
   Logger::instance().info("Event bus initialised");
 
+  // Initialise ProfileManager
+  Logger::instance().info("Initialising ProfileManager...");
+  QString profileConfigDir = ConfigService::instance()
+                                 .get("core.profile.configDir", "/etc/crankshaft/profiles")
+                                 .toString();
+  ProfileManager profileManager(profileConfigDir);
+
+  if (!profileManager.loadProfiles()) {
+    Logger::instance().warning("Failed to load profiles, using default profiles");
+  }
+
+  HostProfile activeProfile = profileManager.getActiveHostProfile();
+  Logger::instance().info(
+      QString("Active host profile: %1 (%2)").arg(activeProfile.name, activeProfile.id));
+
   // Create WebSocket server
   WebSocketServer server(port);
   if (!server.isListening()) {
@@ -80,6 +97,19 @@ int main(int argc, char* argv[]) {
   // Connect EventBus to WebSocket server (broadcasts all events)
   QObject::connect(&EventBus::instance(), &EventBus::messagePublished, &server,
                    &WebSocketServer::broadcastEvent);
+
+  // Create ServiceManager and start services
+  Logger::instance().info("Initialising ServiceManager...");
+  ServiceManager serviceManager(&profileManager, &app);
+
+  // Register ServiceManager with WebSocketServer for remote control
+  server.setServiceManager(&serviceManager);
+
+  Logger::instance().info("=== Starting Services Based on Profile Configuration ===");
+  if (!serviceManager.startAllServices()) {
+    Logger::instance().warning("No services started successfully");
+  }
+  Logger::instance().info("=== Service Initialisation Complete ===");
 
   Logger::instance().info("Crankshaft Core started successfully");
   Logger::instance().info("Core services ready");
