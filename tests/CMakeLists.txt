@@ -26,7 +26,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Catch2)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Test)
+find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Bluetooth Test)
 
 # Test for EventBus
 add_executable(test_eventbus 
@@ -74,6 +74,7 @@ target_link_libraries(test_websocket PRIVATE
   Qt6::Core
   Qt6::Network
   Qt6::WebSockets
+  Qt6::Bluetooth
   Qt6::Test
 )
 
