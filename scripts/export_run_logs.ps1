@@ -80,6 +80,7 @@ function Save-JobLog {
 function Download-RunArtifacts {
   param([string] $Gh, [string] $Run, [string] $Repository, [string] $Name, [string] $DestDir)
   Write-Output "Downloading artifact '$Name' for run $Run to '$DestDir'...";
+  if (Test-Path -LiteralPath $DestDir) { Remove-Item -LiteralPath $DestDir -Recurse -Force -ErrorAction SilentlyContinue; }
   New-OutputDirectory -Path $DestDir;
   & $Gh run download $Run --repo $Repository -n $Name -D $DestDir 2>&1 | Out-File -FilePath (Join-Path $DestDir "artifact-download-$Name.txt") -Encoding utf8;
 }
@@ -105,7 +106,7 @@ function Write-LogSummary {
     $summary.Add("--- Key lines from run log ---");
     foreach ($pat in $patterns) {
       $matches = Select-String -Path $RunLogPath -Pattern $pat -SimpleMatch -Context 2;
-      if ($matches) { $summary.AddRange(($matches | ForEach-Object { $_.ToString() })); }
+      if ($matches) { $summary.AddRange([string[]]($matches | ForEach-Object { $_.ToString() })); }
     }
     $summary.Add("");
   }
@@ -114,7 +115,7 @@ function Write-LogSummary {
     $summary.Add("--- Key lines from job log ---");
     foreach ($pat in $patterns) {
       $matches = Select-String -Path $JobLogPath -Pattern $pat -SimpleMatch -Context 2;
-      if ($matches) { $summary.AddRange(($matches | ForEach-Object { $_.ToString() })); }
+      if ($matches) { $summary.AddRange([string[]]($matches | ForEach-Object { $_.ToString() })); }
     }
     $summary.Add("");
   }
@@ -124,7 +125,7 @@ function Write-LogSummary {
     if ($preinstall) {
       $summary.Add("--- Tail of PreinstallOutput.log ---");
       $tail = Get-Content -LiteralPath $preinstall.FullName -Tail 200;
-      $summary.AddRange($tail);
+      $summary.AddRange([string[]]$tail);
     } else {
       $summary.Add("PreinstallOutput.log not found in downloaded artifacts.");
     }
