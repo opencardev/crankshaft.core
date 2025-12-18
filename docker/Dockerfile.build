@@ -30,6 +30,7 @@ ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
 # Install build dependencies
+# Cache bust: 2025-12-18 - Added qt6-connectivity-dev for Bluetooth support
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
