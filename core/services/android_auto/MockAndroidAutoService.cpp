@@ -18,6 +18,7 @@
  */
 
 #include "MockAndroidAutoService.h"
+#include "../logging/Logger.h"
 
 #include <QJsonObject>
 #include <QPainter>
@@ -55,6 +56,7 @@ void MockAndroidAutoService::configureTransport(const QMap<QString, QVariant>& s
 }
 
 bool MockAndroidAutoService::initialise() {
+  Logger::instance().info(QString("[AndroidAuto] Initialising Mock Android Auto service"));
   if (m_state != ConnectionState::DISCONNECTED) {
     return false;
   }
