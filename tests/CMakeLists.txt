@@ -56,7 +56,6 @@ add_executable(test_websocket
   test_websocket.cpp
   ../core/services/eventbus/EventBus.cpp
   ../core/services/logging/Logger.cpp
-  stubs/ServiceManager_stub.cpp
   ../core/services/websocket/WebSocketServer.cpp
 )
 
