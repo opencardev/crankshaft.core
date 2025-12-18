@@ -56,13 +56,20 @@ download_material_design_icons()
 # Find Qt6 packages
 find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Gui Qml Quick)
 
-# Enable testing
-enable_testing()
+# Build options
+option(BUILD_TESTS "Build unit/integration tests" ON)
+
+# Enable testing when requested
+if(BUILD_TESTS)
+	enable_testing()
+endif()
 
 # Add subdirectories
 add_subdirectory(core)
 add_subdirectory(ui)
-add_subdirectory(tests)
+if(BUILD_TESTS)
+	add_subdirectory(tests)
+endif()
 
 # Detect architecture for packaging (similar to aasdk)
 if(NOT TARGET_ARCH)
