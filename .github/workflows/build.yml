@@ -169,6 +169,14 @@ jobs:
           --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max \
           -f docker/Dockerfile.build \
           .
+        
+        # Verify build artifacts were created
+        if [ ! -f build-output/*.deb ]; then
+          echo "::error::No .deb packages found in build output"
+          echo "Build failed - checking logs:"
+          cat build-output/logs/*.log 2>/dev/null || echo "No logs found"
+          exit 1
+        fi
 
     - name: Move cache
       run: |

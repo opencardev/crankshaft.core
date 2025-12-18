@@ -1,0 +1,388 @@
+-- The CXX compiler identification is GNU 14.2.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Downloading Material Design Icons font v7.4.47...
+-- Trying: https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/fonts/materialdesignicons-webfont.ttf
+-- Material Design Icons font downloaded successfully (1307660 bytes)
+-- Found Python3: /usr/bin/python3 (found version "3.13.5") found components: Interpreter
+-- Material Design Icons mappings already up to date
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Performing Test HAVE_STDATOMIC
+-- Performing Test HAVE_STDATOMIC - Success
+-- Found WrapAtomic: TRUE
+-- Found OpenGL: /usr/lib/x86_64-linux-gnu/libOpenGL.so
+-- Found WrapOpenGL: TRUE
+-- Could NOT find XKB (missing: XKB_LIBRARY XKB_INCLUDE_DIR) (Required is at least version "0.5.0")
+-- Found WrapVulkanHeaders: /usr/include
+-- The C compiler identification is GNU 14.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Found PkgConfig: /usr/bin/pkg-config (found version "1.8.1")
+-- Checking for module 'gstreamer-1.0'
+--   Found gstreamer-1.0, version 1.26.2
+-- Checking for module 'gstreamer-app-1.0'
+--   Found gstreamer-app-1.0, version 1.26.2
+-- Checking for module 'gstreamer-video-1.0'
+--   Found gstreamer-video-1.0, version 1.26.2
+-- Checking for module 'gstreamer-audio-1.0'
+--   Found gstreamer-audio-1.0, version 1.26.2
+-- Checking for module 'dbus-1'
+--   Found dbus-1, version 1.16.2
+-- Checking for module 'libusb-1.0'
+--   Found libusb-1.0, version 1.0.28
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.5.4")
+-- Found Protobuf: /usr/lib/x86_64-linux-gnu/libprotobuf.so (found version "3.21.12")
+-- AASDK Library
+-- Cross Compiling?
+-- ...not cross compiling
+-- Detected architecture: amd64
+CMake Deprecation Warning at external/aasdk/cmake_modules/gitversion.cmake:2 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  external/aasdk/CMakeLists.txt:80 (include)
+
+
+-- Resolving GIT Version
+-- GIT_COMMIT_ID not set in ENV, will use git command if possible.
+-- GIT_BRANCH not set in ENV, will use git command if possible.
+-- GIT_DESCRIBE not set in ENV, will use git command if possible.
+-- GIT_DIRTY not set in ENV, will use git command if possible.
+-- GIT_COMMIT_TIMESTAMP not set in ENV, will use git command if possible.
+-- Found Git: /usr/bin/git (found version "2.47.3")
+-- GIT_COMMIT_ID from git command: 6f3ddfc
+-- GIT_BRANCH from git command: HEAD
+-- GIT_DESCRIBE from git command: 2025.11.14+git.6f3ddfc
+-- GIT_COMMIT_TIMESTAMP from git command: 1763158800
+-- Final GIT values: hash: 6f3ddfc; branch: HEAD; describe: 2025.11.14+git.6f3ddfc; changes: ; Commit epoch: 1763158800;
+-- Exported GIT_COMMIT_ID: 6f3ddfc
+-- Exported GIT_BRANCH: HEAD
+-- Exported GIT_DESCRIBE: 2025.11.14+git.6f3ddfc
+-- Exported GIT_COMMIT_TIMESTAMP: 1763158800
+-- Exported GIT_DIRTY: 0
+-- ------- Start DebPackageFilename------
+-- PACKAGE_NAME: 
+-- VERSION: 
+-- ARCHITECTURE: 
+-- -------End DebPackageFilename------
+-- Configuring CMAKE
+-- Modern logging enabled
+-- Disabling Boost DEBUG logs
+-- Building aap_protobuf as subdirectory
+-- AASDK ProtoBuf Library
+Configuring SHARED Library
+-- aap_protobuf Project Version: 2025.12.+
+CMake Warning (dev) at external/aasdk/CMakeLists.txt:205 (find_package):
+  Policy CMP0167 is not set: The FindBoost module is removed.  Run "cmake
+  --help-policy CMP0167" for policy details.  Use the cmake_policy command to
+  set the policy and suppress this warning.
+
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.83.0/BoostConfig.cmake (found version "1.83.0") found components: system log_setup log unit_test_framework
+-- Detected Boost version: 1.83.0
+-- Found libusb-1.0:
+--  - Includes: /usr/include/libusb-1.0
+--  - Libraries: /usr/lib/x86_64-linux-gnu/libusb-1.0.so
+Configuring SHARED Library
+-- Project Version: 2025.12.18+git.6f3ddfc
+-- Git Branch: HEAD
+-- Git Commit: 6f3ddfc
+-- Git Describe: 2025.11.14+git.6f3ddfc
+-- Git Timestamp: 1763158800
+-- Repository Status: CLEAN
+-- detect_deb_suite
+-- Linux Debian 13 trixie
+-- Detected Suite: trixie
+-- detect_deb_version
+-- CPACK_DEBIAN_PACKAGE_RELEASE: deb13
+-- DETECTED_VERSION: deb13
+-- detect_deb_release
+-- CPACK_DEBIAN_PACKAGE_RELEASE: deb13
+-- DETECTED_RELEASE: deb13
+-- DEB Package Filename Configuration:
+--   Suite: trixie
+--   Version: deb13
+--   Release: deb13
+--   Architecture: amd64
+--   Filename: libaasdk_2025.12.18+git.6f3ddfc_deb13_amd64.deb
+--   Runtime Filename: libaasdk_2025.12.18+git.6f3ddfc_deb13_amd64.deb
+--   Development Filename: libaasdk-dev_2025.12.18+git.6f3ddfc_deb13_amd64.deb
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquick2plugin' is a dependency of 'crankshaft-ui', but the
+  link target it defines (Qt6::qtquick2plugin) does not exist in the current
+  scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qmlplugin' is a dependency of 'crankshaft-ui', but the link
+  target it defines (Qt6::qmlplugin) does not exist in the current scope.
+  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'modelsplugin' is a dependency of 'crankshaft-ui', but the
+  link target it defines (Qt6::modelsplugin) does not exist in the current
+  scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'workerscriptplugin' is a dependency of 'crankshaft-ui', but
+  the link target it defines (Qt6::workerscriptplugin) does not exist in the
+  current scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquickcontrols2plugin' is a dependency of 'crankshaft-ui',
+  but the link target it defines (Qt6::qtquickcontrols2plugin) does not exist
+  in the current scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquickcontrols2fusionstyleplugin' is a dependency of
+  'crankshaft-ui', but the link target it defines
+  (Qt6::qtquickcontrols2fusionstyleplugin) does not exist in the current
+  scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquickcontrols2materialstyleplugin' is a dependency of
+  'crankshaft-ui', but the link target it defines
+  (Qt6::qtquickcontrols2materialstyleplugin) does not exist in the current
+  scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquickcontrols2imaginestyleplugin' is a dependency of
+  'crankshaft-ui', but the link target it defines
+  (Qt6::qtquickcontrols2imaginestyleplugin) does not exist in the current
+  scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquickcontrols2universalstyleplugin' is a dependency of
+  'crankshaft-ui', but the link target it defines
+  (Qt6::qtquickcontrols2universalstyleplugin) does not exist in the current
+  scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquickcontrols2basicstyleplugin' is a dependency of
+  'crankshaft-ui', but the link target it defines
+  (Qt6::qtquickcontrols2basicstyleplugin) does not exist in the current
+  scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquicktemplates2plugin' is a dependency of
+  'crankshaft-ui', but the link target it defines
+  (Qt6::qtquicktemplates2plugin) does not exist in the current scope.  The
+  plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquickcontrols2implplugin' is a dependency of
+  'crankshaft-ui', but the link target it defines
+  (Qt6::qtquickcontrols2implplugin) does not exist in the current scope.  The
+  plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquickcontrols2fusionstyleimplplugin' is a dependency of
+  'crankshaft-ui', but the link target it defines
+  (Qt6::qtquickcontrols2fusionstyleimplplugin) does not exist in the current
+  scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'quickwindowplugin' is a dependency of 'crankshaft-ui', but
+  the link target it defines (Qt6::quickwindow) does not exist in the current
+  scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquickcontrols2materialstyleimplplugin' is a dependency of
+  'crankshaft-ui', but the link target it defines
+  (Qt6::qtquickcontrols2materialstyleimplplugin) does not exist in the
+  current scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquickcontrols2imaginestyleimplplugin' is a dependency of
+  'crankshaft-ui', but the link target it defines
+  (Qt6::qtquickcontrols2imaginestyleimplplugin) does not exist in the current
+  scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquickcontrols2universalstyleimplplugin' is a dependency
+  of 'crankshaft-ui', but the link target it defines
+  (Qt6::qtquickcontrols2universalstyleimplplugin) does not exist in the
+  current scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qtquickcontrols2basicstyleimplplugin' is a dependency of
+  'crankshaft-ui', but the link target it defines
+  (Qt6::qtquickcontrols2basicstyleimplplugin) does not exist in the current
+  scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qmlshapesplugin' is a dependency of 'crankshaft-ui', but
+  the link target it defines (Qt6::qmlshapesplugin) does not exist in the
+  current scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+CMake Warning at /usr/lib/x86_64-linux-gnu/cmake/Qt6Qml/Qt6QmlMacros.cmake:4216 (message):
+  The qml plugin 'qquicklayoutsplugin' is a dependency of 'crankshaft-ui',
+  but the link target it defines (Qt6::qquicklayoutsplugin) does not exist in
+  the current scope.  The plugin will not be linked.
+Call Stack (most recent call first):
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (qt6_import_qml_plugins)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:745 (cmake_language)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:823 (_qt_internal_finalize_executable)
+  /usr/lib/x86_64-linux-gnu/cmake/Qt6Core/Qt6CoreMacros.cmake:861:EVAL:1 (qt6_finalize_target)
+  ui/CMakeLists.txt:DEFERRED
+
+
+-- Performing Test HAVE_FLAG__ffile_prefix_map__build_build__deps_catch2_src__
+-- Performing Test HAVE_FLAG__ffile_prefix_map__build_build__deps_catch2_src__ - Success
+-- Detected architecture: amd64
+-- Detected Debian release: deb13
+-- Configuring done (5.9s)
+-- Generating done (0.2s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    BUILD_TESTS
+    DEBIAN_SUITE
+
+
+-- Build files have been written to: /build/build
