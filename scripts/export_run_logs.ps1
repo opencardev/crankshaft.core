@@ -49,6 +49,28 @@ function Save-RunLog {
   & $Gh run view $Run --log --repo $Repository > $Dest 2>&1;
 }
 
+function Get-RunJobs {
+  param([string] $Gh, [string] $Run, [string] $Repository)
+  Write-Output "Enumerating jobs for run $Run...";
+  $json = & $Gh run view $Run --repo $Repository --json jobs 2>&1;
+  try {
+    $obj = $json | ConvertFrom-Json;
+    if ($null -eq $obj) { return @(); }
+    if ($obj.PSObject.Properties.Name -contains 'jobs') {
+      $jobsProp = $obj.jobs;
+      if ($jobsProp -is [array]) { return $jobsProp; }
+      if ($jobsProp -and ($jobsProp.PSObject.Properties.Name -contains 'nodes')) {
+        return $jobsProp.nodes;
+      }
+      return @($jobsProp);
+    }
+    return @();
+  } catch {
+    Write-Output "Failed to parse jobs JSON: $($json)";
+    return @();
+  }
+}
+
 function Save-JobLog {
   param([string] $Gh, [string] $Job, [string] $Repository, [string] $Dest)
   Write-Output "Saving job log for $Job to '$Dest'...";
@@ -117,7 +139,21 @@ try {
   New-OutputDirectory -Path $OutDir;
 
   $runLog = Join-Path $OutDir ("run-" + $RunId + ".log");
-  Save-RunLog -Gh $GhPath -Run $RunId -Repository $Repo -Dest $runLog;
+  try {
+    Save-RunLog -Gh $GhPath -Run $RunId -Repository $Repo -Dest $runLog;
+  } catch {
+    Write-Warning "Run-level log retrieval failed; falling back to job logs.";
+    $jobs = Get-RunJobs -Gh $GhPath -Run $RunId -Repository $Repo;
+    foreach ($j in $jobs) {
+      $jid = $null;
+      if ($j.PSObject.Properties.Name -contains 'databaseId') { $jid = $j.databaseId; }
+      elseif ($j.PSObject.Properties.Name -contains 'id') { $jid = $j.id; }
+      if ($null -ne $jid) {
+        $jl = Join-Path $OutDir ("job-" + $jid + ".log");
+        try { Save-JobLog -Gh $GhPath -Job $jid -Repository $Repo -Dest $jl; } catch { Write-Warning "Failed to save job log for $jid"; }
+      }
+    }
+  }
 
   $jobLog = $null;
   if ($JobId) {
