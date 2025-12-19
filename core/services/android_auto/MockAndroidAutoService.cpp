@@ -18,11 +18,12 @@
  */
 
 #include "MockAndroidAutoService.h"
-#include "../logging/Logger.h"
 
 #include <QJsonObject>
 #include <QPainter>
 #include <QRandomGenerator>
+
+#include "../logging/Logger.h"
 
 MockAndroidAutoService::MockAndroidAutoService(QObject* parent) : AndroidAutoService(parent) {
   // Initialize mock device info
