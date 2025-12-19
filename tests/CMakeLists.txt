@@ -78,6 +78,7 @@ target_link_libraries(test_websocket PRIVATE
   Qt6::Network
   Qt6::WebSockets
   Qt6::Bluetooth
+  Qt6::Gui
   Qt6::Test
 )
 
