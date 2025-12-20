@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Crankshaft Configuration",
+  "description": "Minimal schema for `crankshaft.json` configuration file. Extend as needed.",
+  "type": "object",
+  "properties": {
+    "profilesDir": { "type": "string", "description": "Directory where profile JSON files are stored" },
+    "logging": {
+      "type": "object",
+      "properties": {
+        "level": { "type": "string", "enum": ["debug","info","warning","error"] }
+      },
+      "additionalProperties": true
+    },
+    "ui": {
+      "type": "object",
+      "properties": {
+        "theme": { "type": "string", "enum": ["light","dark","auto"] }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

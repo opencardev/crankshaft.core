@@ -19,6 +19,22 @@ cmake_minimum_required(VERSION 3.16)
 
 project(crankshaft-core)
 
+include(FetchContent)
+
+# JSON library (nlohmann) and JSON Schema validator (pboettch)
+FetchContent_Declare(
+  nlohmann_json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG v3.11.2
+)
+FetchContent_Declare(
+  nlohmann_json_schema_validator
+  GIT_REPOSITORY https://github.com/pboettch/json-schema-validator.git
+  # use the repository default branch to avoid tagging mismatch in CI images
+  GIT_TAG main
+)
+FetchContent_MakeAvailable(nlohmann_json nlohmann_json_schema_validator)
+
 find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Gui DBus Bluetooth)
 
 # Find GStreamer for multimedia
@@ -103,6 +119,27 @@ target_include_directories(crankshaft-core PRIVATE
   ${CMAKE_SOURCE_DIR}/external/aasdk/include
 )
 
+# Prefer a vendored json-schema-validator include under external/
+if(EXISTS ${CMAKE_SOURCE_DIR}/external/json-schema-validator/include)
+  target_include_directories(crankshaft-core PRIVATE
+    ${CMAKE_SOURCE_DIR}/external/json-schema-validator/include
+  )
+  target_compile_definitions(crankshaft-core PRIVATE CRANKSHAFT_JSON_SCHEMA_VALIDATOR=1)
+elseif(DEFINED nlohmann_json_schema_validator_SOURCE_DIR)
+  # If FetchContent populated the json-schema-validator sources, add its include dir
+  target_include_directories(crankshaft-core PRIVATE
+    ${nlohmann_json_schema_validator_SOURCE_DIR}/include
+  )
+  # Signal to the code that the json-schema-validator headers are available
+  target_compile_definitions(crankshaft-core PRIVATE CRANKSHAFT_JSON_SCHEMA_VALIDATOR=1)
+else()
+  # Not available in this build environment (CI may block network). Use fallback
+  target_compile_definitions(crankshaft-core PRIVATE CRANKSHAFT_JSON_SCHEMA_VALIDATOR=0)
+endif()
+
+# Expose repo source dir to C++ so runtime can locate the schema files during development.
+target_compile_definitions(crankshaft-core PRIVATE CRANKSHAFT_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+
 set_target_properties(crankshaft-core PROPERTIES
   AUTOMOC ON
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/core
@@ -125,7 +162,10 @@ target_link_libraries(crankshaft-core PRIVATE
   OpenSSL::Crypto
   protobuf::libprotobuf
   aasdk
+  nlohmann_json::nlohmann_json
 )
+  # Note: json-schema-validator is header-only and its include directories
+  # are made available via FetchContent; no link target is required here.
 
 # Install core executable
 install(TARGETS crankshaft-core

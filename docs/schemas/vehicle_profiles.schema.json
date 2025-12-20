@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Vehicle Profiles",
+  "description": "Schema for `vehicle_profiles.json` used by ProfileManager. This file is an array of vehicle profile objects.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string", "format": "uuid" },
+      "name": { "type": "string" },
+      "description": { "type": "string" },
+      "isActive": { "type": "boolean" },
+      "createdAt": { "type": "string", "format": "date-time" },
+      "modifiedAt": { "type": "string", "format": "date-time" },
+      "make": { "type": "string" },
+      "model": { "type": "string" },
+      "year": { "type": "string" },
+      "vin": { "type": "string" },
+      "licensePlate": { "type": "string" },
+      "vehicleType": { "type": "string" },
+      "supportedModes": { "type": "array", "items": { "type": "string" } },
+      "hasAWD": { "type": "boolean" },
+      "wheelCount": { "type": "integer", "minimum": 0 },
+      "properties": { "type": "object", "additionalProperties": true },
+      "mockDefaults": { "type": "object", "additionalProperties": true }
+    },
+    "required": [ "name" ],
+    "additionalProperties": true
+  }
+}

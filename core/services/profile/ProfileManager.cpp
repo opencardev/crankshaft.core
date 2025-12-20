@@ -24,7 +24,21 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QStandardPaths>
 #include <QUuid>
+#include <fstream>
+
+// JSON libraries (nlohmann) and optional pboettch json-schema-validator
+#include <nlohmann/json.hpp>
+
+using nlohmann::json;
+
+// json-schema validator is optional in CI; the build system defines
+// CRANKSHAFT_JSON_SCHEMA_VALIDATOR as 1 when the validator headers are available
+#if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
+#include <nlohmann/json-schema.hpp>
+namespace json_schema = nlohmann::json_schema;
+#endif
 
 #include "../logging/Logger.h"
 
@@ -137,6 +151,180 @@ void ProfileManager::initializeDefaultProfiles() {
   m_activeVehicleProfileId = carProfile.id;
 
   Logger::instance().info("ProfileManager: Default profiles initialised successfully");
+}
+
+// --- Serialization helpers for profiles ---
+
+QString HostProfile::toJson() const {
+  QJsonObject obj;
+  obj["id"] = id;
+  obj["name"] = name;
+  obj["description"] = description;
+  obj["isActive"] = isActive;
+  if (createdAt.isValid()) obj["createdAt"] = createdAt.toString(Qt::ISODate);
+  if (modifiedAt.isValid()) obj["modifiedAt"] = modifiedAt.toString(Qt::ISODate);
+  obj["cpuModel"] = cpuModel;
+  obj["ramMB"] = static_cast<qint64>(ramMB);
+  obj["osVersion"] = osVersion;
+
+  // properties
+  QVariantMap props;
+  for (auto it = properties.constBegin(); it != properties.constEnd(); ++it) {
+    props.insert(it.key(), it.value());
+  }
+  obj["properties"] = QJsonObject::fromVariantMap(props);
+
+  // devices
+  QJsonArray devArray;
+  for (const auto& d : devices) {
+    QJsonObject dobj;
+    dobj["name"] = d.name;
+    dobj["type"] = d.type;
+    dobj["enabled"] = d.enabled;
+    dobj["useMock"] = d.useMock;
+    dobj["description"] = d.description;
+
+    QVariantMap settingsMap;
+    for (auto sit = d.settings.constBegin(); sit != d.settings.constEnd(); ++sit) {
+      settingsMap.insert(sit.key(), sit.value());
+    }
+    dobj["settings"] = QJsonObject::fromVariantMap(settingsMap);
+
+    devArray.append(dobj);
+  }
+  obj["devices"] = devArray;
+
+  return QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact));
+}
+
+HostProfile HostProfile::fromJson(const QString& json) {
+  HostProfile hp;
+  QJsonParseError err;
+  QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &err);
+  if (err.error != QJsonParseError::NoError || !doc.isObject()) {
+    return hp;
+  }
+
+  QJsonObject obj = doc.object();
+  hp.id = obj.value("id").toString();
+  hp.name = obj.value("name").toString();
+  hp.description = obj.value("description").toString();
+  hp.isActive = obj.value("isActive").toBool(false);
+  hp.createdAt = QDateTime::fromString(obj.value("createdAt").toString(), Qt::ISODate);
+  hp.modifiedAt = QDateTime::fromString(obj.value("modifiedAt").toString(), Qt::ISODate);
+  hp.cpuModel = obj.value("cpuModel").toString();
+  hp.ramMB = static_cast<quint32>(obj.value("ramMB").toInt());
+  hp.osVersion = obj.value("osVersion").toString();
+
+  // properties
+  QJsonObject propObj = obj.value("properties").toObject();
+  QVariantMap propMap = propObj.toVariantMap();
+  for (auto it = propMap.constBegin(); it != propMap.constEnd(); ++it) {
+    hp.properties.insert(it.key(), it.value());
+  }
+
+  // devices
+  QJsonArray devArray = obj.value("devices").toArray();
+  for (const auto& v : devArray) {
+    if (!v.isObject()) continue;
+    QJsonObject dobj = v.toObject();
+    DeviceConfig d;
+    d.name = dobj.value("name").toString();
+    d.type = dobj.value("type").toString();
+    d.enabled = dobj.value("enabled").toBool(true);
+    d.useMock = dobj.value("useMock").toBool(true);
+    d.description = dobj.value("description").toString();
+
+    QJsonObject s = dobj.value("settings").toObject();
+    QVariantMap sm = s.toVariantMap();
+    for (auto sit = sm.constBegin(); sit != sm.constEnd(); ++sit) {
+      d.settings.insert(sit.key(), sit.value());
+    }
+
+    hp.devices.append(d);
+  }
+
+  // ensure id
+  if (hp.id.isEmpty()) {
+    hp.id = QUuid::createUuid().toString();
+  }
+
+  return hp;
+}
+
+QString VehicleProfile::toJson() const {
+  QJsonObject obj;
+  obj["id"] = id;
+  obj["name"] = name;
+  obj["description"] = description;
+  obj["isActive"] = isActive;
+  if (createdAt.isValid()) obj["createdAt"] = createdAt.toString(Qt::ISODate);
+  if (modifiedAt.isValid()) obj["modifiedAt"] = modifiedAt.toString(Qt::ISODate);
+  obj["make"] = make;
+  obj["model"] = model;
+  obj["year"] = year;
+  obj["vin"] = vin;
+  obj["licensePlate"] = licensePlate;
+  obj["vehicleType"] = vehicleType;
+
+  QJsonArray modes;
+  for (const auto& m : supportedModes) modes.append(m);
+  obj["supportedModes"] = modes;
+  obj["hasAWD"] = hasAWD;
+  obj["wheelCount"] = static_cast<qint64>(wheelCount);
+
+  QVariantMap props;
+  for (auto it = properties.constBegin(); it != properties.constEnd(); ++it)
+    props.insert(it.key(), it.value());
+  obj["properties"] = QJsonObject::fromVariantMap(props);
+
+  QVariantMap mocks;
+  for (auto it = mockDefaults.constBegin(); it != mockDefaults.constEnd(); ++it)
+    mocks.insert(it.key(), it.value());
+  obj["mockDefaults"] = QJsonObject::fromVariantMap(mocks);
+
+  return QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact));
+}
+
+VehicleProfile VehicleProfile::fromJson(const QString& json) {
+  VehicleProfile vp;
+  QJsonParseError err;
+  QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8(), &err);
+  if (err.error != QJsonParseError::NoError || !doc.isObject()) return vp;
+
+  QJsonObject obj = doc.object();
+  vp.id = obj.value("id").toString();
+  vp.name = obj.value("name").toString();
+  vp.description = obj.value("description").toString();
+  vp.isActive = obj.value("isActive").toBool(false);
+  vp.createdAt = QDateTime::fromString(obj.value("createdAt").toString(), Qt::ISODate);
+  vp.modifiedAt = QDateTime::fromString(obj.value("modifiedAt").toString(), Qt::ISODate);
+  vp.make = obj.value("make").toString();
+  vp.model = obj.value("model").toString();
+  vp.year = obj.value("year").toString();
+  vp.vin = obj.value("vin").toString();
+  vp.licensePlate = obj.value("licensePlate").toString();
+  vp.vehicleType = obj.value("vehicleType").toString();
+
+  QJsonArray modes = obj.value("supportedModes").toArray();
+  for (const auto& m : modes)
+    if (m.isString()) vp.supportedModes.append(m.toString());
+
+  vp.hasAWD = obj.value("hasAWD").toBool(false);
+  vp.wheelCount = static_cast<quint32>(obj.value("wheelCount").toInt(0));
+
+  QJsonObject propObj = obj.value("properties").toObject();
+  QVariantMap pmap = propObj.toVariantMap();
+  for (auto it = pmap.constBegin(); it != pmap.constEnd(); ++it)
+    vp.properties.insert(it.key(), it.value());
+
+  QJsonObject mockObj = obj.value("mockDefaults").toObject();
+  QVariantMap mmap = mockObj.toVariantMap();
+  for (auto it = mmap.constBegin(); it != mmap.constEnd(); ++it)
+    vp.mockDefaults.insert(it.key(), it.value());
+
+  if (vp.id.isEmpty()) vp.id = QUuid::createUuid().toString();
+  return vp;
 }
 
 bool ProfileManager::createHostProfile(const HostProfile& profile) {
@@ -414,10 +602,98 @@ bool ProfileManager::loadProfiles() {
   QFile hostFile(hostProfilesPath);
   if (hostFile.exists() && hostFile.open(QIODevice::ReadOnly)) {
     QJsonDocument doc = QJsonDocument::fromJson(hostFile.readAll());
+    // Try validating the whole document against the host_profiles schema first.
+    bool wholeDocValid = false;
     if (doc.isArray()) {
-      for (const auto& value : doc.array()) {
-        if (value.isObject()) {
-          // TODO: Implement fromJson for HostProfile
+      try {
+        // locate schema file relative to source dir
+        QString schemaPath =
+            QString(CRANKSHAFT_SOURCE_DIR) + "/docs/schemas/host_profiles.schema.json";
+        std::ifstream f(schemaPath.toStdString());
+#if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
+        if (f.good()) {
+          json schemaJson;
+          f >> schemaJson;
+          json instance = json::parse(doc.toJson(QJsonDocument::Compact).toStdString());
+          json_schema::json_validator validator;
+          validator.set_root_schema(schemaJson);
+          validator.validate(instance);
+          wholeDocValid = true;
+        } else {
+          Logger::instance().debug(
+              QString("ProfileManager: Schema file not found: %1").arg(schemaPath));
+        }
+#else
+        Q_UNUSED(f);
+        Logger::instance().debug(
+            QString("ProfileManager: json-schema-validator not available; skipping "
+                    "whole-host_profiles.json validation"));
+#endif
+      } catch (const std::exception& ex) {
+        Logger::instance().warning(
+            QString("ProfileManager: Whole-host_profiles.json schema validation failed: %1")
+                .arg(QString::fromLatin1(ex.what())));
+      }
+
+      // If whole doc valid, accept items directly; otherwise validate each item individually
+      // (fallback)
+      if (wholeDocValid) {
+        for (const auto& value : doc.array()) {
+          if (value.isObject()) {
+            QString itemJson =
+                QString::fromUtf8(QJsonDocument(value.toObject()).toJson(QJsonDocument::Compact));
+            HostProfile p = HostProfile::fromJson(itemJson);
+            m_hostProfiles[p.id] = p;
+            if (p.isActive) m_activeHostProfileId = p.id;
+          }
+        }
+      } else {
+        for (const auto& value : doc.array()) {
+          if (!value.isObject()) continue;
+          QJsonObject obj = value.toObject();
+
+          // per-item validation by wrapping into a single-element array and validating against
+          // schema
+          bool itemValid = false;
+          try {
+            QString schemaPath =
+                QString(CRANKSHAFT_SOURCE_DIR) + "/docs/schemas/host_profiles.schema.json";
+            std::ifstream f(schemaPath.toStdString());
+#if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
+            if (f.good()) {
+              json schemaJson;
+              f >> schemaJson;
+              QJsonArray arr;
+              arr.append(obj);
+              json instance =
+                  json::parse(QJsonDocument(arr).toJson(QJsonDocument::Compact).toStdString());
+              json_schema::json_validator validator;
+              validator.set_root_schema(schemaJson);
+              validator.validate(instance);
+              itemValid = true;
+            }
+#else
+            Q_UNUSED(f);
+#endif
+          } catch (const std::exception& ex) {
+            Q_UNUSED(ex);
+          }
+
+          if (!itemValid) {
+            // fallback lightweight checks
+            if (!obj.contains("name") || !obj.value("name").isString() ||
+                !obj.contains("devices") || !obj.value("devices").isArray()) {
+              Logger::instance().warning(
+                  QString("ProfileManager: Skipping invalid host profile entry in %1")
+                      .arg(hostProfilesPath));
+              continue;
+            }
+          }
+
+          QString itemJson = QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact));
+          HostProfile p = HostProfile::fromJson(itemJson);
+          m_hostProfiles[p.id] = p;
+          if (p.isActive) m_activeHostProfileId = p.id;
         }
       }
     }
@@ -428,10 +704,90 @@ bool ProfileManager::loadProfiles() {
   QFile vehicleFile(vehicleProfilesPath);
   if (vehicleFile.exists() && vehicleFile.open(QIODevice::ReadOnly)) {
     QJsonDocument doc = QJsonDocument::fromJson(vehicleFile.readAll());
+    bool wholeDocValid = false;
     if (doc.isArray()) {
-      for (const auto& value : doc.array()) {
-        if (value.isObject()) {
-          // TODO: Implement fromJson for VehicleProfile
+      try {
+        QString schemaPath =
+            QString(CRANKSHAFT_SOURCE_DIR) + "/docs/schemas/vehicle_profiles.schema.json";
+        std::ifstream f(schemaPath.toStdString());
+#if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
+        if (f.good()) {
+          json schemaJson;
+          f >> schemaJson;
+          json instance = json::parse(doc.toJson(QJsonDocument::Compact).toStdString());
+          json_schema::json_validator validator;
+          validator.set_root_schema(schemaJson);
+          validator.validate(instance);
+          wholeDocValid = true;
+        } else {
+          Logger::instance().debug(
+              QString("ProfileManager: Schema file not found: %1").arg(schemaPath));
+        }
+#else
+        Q_UNUSED(f);
+        Logger::instance().debug(
+            QString("ProfileManager: json-schema-validator not available; skipping "
+                    "whole-vehicle_profiles.json validation"));
+#endif
+      } catch (const std::exception& ex) {
+        Logger::instance().warning(
+            QString("ProfileManager: Whole-vehicle_profiles.json schema validation failed: %1")
+                .arg(QString::fromLatin1(ex.what())));
+      }
+
+      if (wholeDocValid) {
+        for (const auto& value : doc.array()) {
+          if (value.isObject()) {
+            QString itemJson =
+                QString::fromUtf8(QJsonDocument(value.toObject()).toJson(QJsonDocument::Compact));
+            VehicleProfile v = VehicleProfile::fromJson(itemJson);
+            m_vehicleProfiles[v.id] = v;
+            if (v.isActive) m_activeVehicleProfileId = v.id;
+          }
+        }
+      } else {
+        for (const auto& value : doc.array()) {
+          if (!value.isObject()) continue;
+          QJsonObject obj = value.toObject();
+
+          bool itemValid = false;
+          try {
+            QString schemaPath =
+                QString(CRANKSHAFT_SOURCE_DIR) + "/docs/schemas/vehicle_profiles.schema.json";
+            std::ifstream f(schemaPath.toStdString());
+#if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
+            if (f.good()) {
+              json schemaJson;
+              f >> schemaJson;
+              QJsonArray arr;
+              arr.append(obj);
+              json instance =
+                  json::parse(QJsonDocument(arr).toJson(QJsonDocument::Compact).toStdString());
+              json_schema::json_validator validator;
+              validator.set_root_schema(schemaJson);
+              validator.validate(instance);
+              itemValid = true;
+            }
+#else
+            Q_UNUSED(f);
+#endif
+          } catch (const std::exception& ex) {
+            Q_UNUSED(ex);
+          }
+
+          if (!itemValid) {
+            if (!obj.contains("name") || !obj.value("name").isString()) {
+              Logger::instance().warning(
+                  QString("ProfileManager: Skipping invalid vehicle profile entry in %1")
+                      .arg(vehicleProfilesPath));
+              continue;
+            }
+          }
+
+          QString itemJson = QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact));
+          VehicleProfile v = VehicleProfile::fromJson(itemJson);
+          m_vehicleProfiles[v.id] = v;
+          if (v.isActive) m_activeVehicleProfileId = v.id;
         }
       }
     }
@@ -448,7 +804,9 @@ bool ProfileManager::saveProfiles() {
   // Save host profiles
   QJsonArray hostArray;
   for (const auto& profile : m_hostProfiles) {
-    // TODO: Implement toJson for HostProfile
+    QString item = profile.toJson();
+    QJsonDocument doc = QJsonDocument::fromJson(item.toUtf8());
+    if (doc.isObject()) hostArray.append(doc.object());
   }
   QFile hostFile(hostProfilesPath);
   if (hostFile.open(QIODevice::WriteOnly)) {
@@ -459,7 +817,9 @@ bool ProfileManager::saveProfiles() {
   // Save vehicle profiles
   QJsonArray vehicleArray;
   for (const auto& profile : m_vehicleProfiles) {
-    // TODO: Implement toJson for VehicleProfile
+    QString item = profile.toJson();
+    QJsonDocument doc = QJsonDocument::fromJson(item.toUtf8());
+    if (doc.isObject()) vehicleArray.append(doc.object());
   }
   QFile vehicleFile(vehicleProfilesPath);
   if (vehicleFile.open(QIODevice::WriteOnly)) {

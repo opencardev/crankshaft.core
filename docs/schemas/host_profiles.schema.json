@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Host Profiles",
+  "description": "Schema for `host_profiles.json` used by ProfileManager. This file is an array of host profile objects.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string", "format": "uuid" },
+      "name": { "type": "string" },
+      "description": { "type": "string" },
+      "isActive": { "type": "boolean" },
+      "createdAt": { "type": "string", "format": "date-time" },
+      "modifiedAt": { "type": "string", "format": "date-time" },
+      "cpuModel": { "type": "string" },
+      "ramMB": { "type": "integer", "minimum": 0 },
+      "osVersion": { "type": "string" },
+      "properties": { "type": "object", "additionalProperties": true },
+      "devices": { "type": "array", "items": { "$ref": "#/definitions/device" } }
+    },
+    "required": [ "name", "devices" ],
+    "additionalProperties": true
+  },
+  "definitions": {
+    "device": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "useMock": { "type": "boolean" },
+        "description": { "type": "string" },
+        "settings": { "type": "object", "additionalProperties": true }
+      },
+      "required": [ "name", "type" ],
+      "additionalProperties": true
+    }
+  }
+}
