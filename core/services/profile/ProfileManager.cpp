@@ -28,12 +28,17 @@
 #include <QUuid>
 #include <fstream>
 
-// JSON Schema validation (nlohmann + pboettch json-schema-validator)
-#include <nlohmann/json-schema.hpp>
+// JSON libraries (nlohmann) and optional pboettch json-schema-validator
 #include <nlohmann/json.hpp>
 
 using nlohmann::json;
+
+// json-schema validator is optional in CI; the build system defines
+// CRANKSHAFT_JSON_SCHEMA_VALIDATOR as 1 when the validator headers are available
+#if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
+#include <nlohmann/json-schema.hpp>
 namespace json_schema = nlohmann::json_schema;
+#endif
 
 #include "../logging/Logger.h"
 
@@ -605,6 +610,7 @@ bool ProfileManager::loadProfiles() {
         QString schemaPath =
             QString(CRANKSHAFT_SOURCE_DIR) + "/docs/schemas/host_profiles.schema.json";
         std::ifstream f(schemaPath.toStdString());
+#if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
         if (f.good()) {
           json schemaJson;
           f >> schemaJson;
@@ -617,6 +623,11 @@ bool ProfileManager::loadProfiles() {
           Logger::instance().debug(
               QString("ProfileManager: Schema file not found: %1").arg(schemaPath));
         }
+#else
+        Q_UNUSED(f);
+        Logger::instance().debug(
+            QString("ProfileManager: json-schema-validator not available; skipping whole-host_profiles.json validation"));
+#endif
       } catch (const std::exception& ex) {
         Logger::instance().warning(
             QString("ProfileManager: Whole-host_profiles.json schema validation failed: %1")
@@ -647,6 +658,7 @@ bool ProfileManager::loadProfiles() {
             QString schemaPath =
                 QString(CRANKSHAFT_SOURCE_DIR) + "/docs/schemas/host_profiles.schema.json";
             std::ifstream f(schemaPath.toStdString());
+#if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
             if (f.good()) {
               json schemaJson;
               f >> schemaJson;
@@ -659,6 +671,9 @@ bool ProfileManager::loadProfiles() {
               validator.validate(instance);
               itemValid = true;
             }
+#else
+            Q_UNUSED(f);
+#endif
           } catch (const std::exception& ex) {
             Q_UNUSED(ex);
           }
@@ -694,6 +709,7 @@ bool ProfileManager::loadProfiles() {
         QString schemaPath =
             QString(CRANKSHAFT_SOURCE_DIR) + "/docs/schemas/vehicle_profiles.schema.json";
         std::ifstream f(schemaPath.toStdString());
+#if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
         if (f.good()) {
           json schemaJson;
           f >> schemaJson;
@@ -706,6 +722,11 @@ bool ProfileManager::loadProfiles() {
           Logger::instance().debug(
               QString("ProfileManager: Schema file not found: %1").arg(schemaPath));
         }
+#else
+        Q_UNUSED(f);
+        Logger::instance().debug(
+            QString("ProfileManager: json-schema-validator not available; skipping whole-vehicle_profiles.json validation"));
+#endif
       } catch (const std::exception& ex) {
         Logger::instance().warning(
             QString("ProfileManager: Whole-vehicle_profiles.json schema validation failed: %1")
@@ -732,6 +753,7 @@ bool ProfileManager::loadProfiles() {
             QString schemaPath =
                 QString(CRANKSHAFT_SOURCE_DIR) + "/docs/schemas/vehicle_profiles.schema.json";
             std::ifstream f(schemaPath.toStdString());
+#if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
             if (f.good()) {
               json schemaJson;
               f >> schemaJson;
@@ -744,6 +766,9 @@ bool ProfileManager::loadProfiles() {
               validator.validate(instance);
               itemValid = true;
             }
+#else
+            Q_UNUSED(f);
+#endif
           } catch (const std::exception& ex) {
             Q_UNUSED(ex);
           }
