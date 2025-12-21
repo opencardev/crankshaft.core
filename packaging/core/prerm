@@ -16,15 +16,15 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
 
-set -eu
+set -e
 export DEBIAN_FRONTEND=noninteractive
 
 case "$1" in
-    remove|upgrade|deconfigure)
+    remove|deconfigure)
         # Stop and disable systemd service (if systemd is present)
         if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-            timeout 10s systemctl stop --no-block crankshaft-core.service >/dev/null 2>&1 || true
-            timeout 5s systemctl disable --no-reload crankshaft-core.service >/dev/null 2>&1 || true
+            systemctl stop crankshaft-core.service >/dev/null 2>&1 || true
+            systemctl disable crankshaft-core.service >/dev/null 2>&1 || true
         fi
 
         # Kill any remaining processes (best effort)
@@ -32,6 +32,25 @@ case "$1" in
         pkill -f '[c]rankshaft-core' >/dev/null 2>&1 || true
 
         echo "Crankshaft Core pre-removal cleanup done"
+    ;;
+    upgrade)
+        # During upgrade, only stop the service gracefully
+        if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+            systemctl stop crankshaft-core.service >/dev/null 2>&1 || true
+        fi
+        
+        # Wait for process to exit (with timeout)
+        for i in 1 2 3 4 5; do
+            if ! pgrep -f '[c]rankshaft-core' >/dev/null 2>&1; then
+                break
+            fi
+            sleep 1
+        done
+        
+        # Force kill if still running
+        pkill -9 -f '[c]rankshaft-core' >/dev/null 2>&1 || true
+        
+        echo "Crankshaft Core stopped for upgrade"
     ;;
 esac
 

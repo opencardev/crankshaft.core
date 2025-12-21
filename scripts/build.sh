@@ -36,7 +36,11 @@ install_core_deps() {
     sudo apt-get install -y \
         build-essential \
         cmake \
+        git \
         pkg-config \
+        lsb-release \
+        python3 \
+        python3-requests \
         libdbus-1-dev \
         libgstreamer1.0-dev \
         libgstreamer-plugins-base1.0-dev \
@@ -45,7 +49,13 @@ install_core_deps() {
         gstreamer1.0-plugins-bad \
         gstreamer1.0-plugins-ugly \
         gstreamer1.0-libav \
-        gstreamer1.0-tools
+        gstreamer1.0-tools \
+        qt6-connectivity-dev \
+        qt6-qpa-plugins \
+        libasound2-dev \
+        libpulse-dev \
+        file \
+        dpkg-dev
     echo "Core dependencies installed successfully"
 }
 
@@ -70,7 +80,9 @@ install_ui_deps() {
     sudo apt-get install -y \
         qt6-base-dev \
         qt6-declarative-dev \
+        qt6-tools-dev \
         qt6-websockets-dev \
+        qt6-qpa-plugins \
         qml6-module-qtquick \
         qml6-module-qtquick-controls \
         qml6-module-qtquick-layouts \
