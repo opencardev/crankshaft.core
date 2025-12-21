@@ -10,6 +10,133 @@ This project follows a changelog generated via CI to keep track of notable chang
 - Create dedicated changelog workflow and documentation entry
 - Update maintainer contact to opencardevuk@gmail.com
 
+## [2025.12.21+git.61f26ae] - 2025-12-21
+- 61f26ae Fix: Android Auto USB connection - wire USBHub device handle and poll io_service (#10)
+- f139ccf Docs: update CHANGELOG.md for 2025.12.20+git.72246c8
+- 72246c8 Feature: ProfileManager - schemas, validation, docs and build fixes (#9)
+- 722b241 Docs: update CHANGELOG.md for 2025.12.19+git.5b9a14e
+- 5b9a14e Fix: add qt6-connectivity-dev to Docker for Qt6 Bluetooth support (#8)
+- 7421f07 Fix: remove ServiceManager stub causing vtable linkage errors (#7)
+- dee56d6 Docs: update CHANGELOG.md for 2025.12.18+git.8ac2251
+- 8ac2251 fix psh
+- f3f0d25 Fix: decouple WebSocketServer test from ServiceManager deps
+
+- Replace linking of ServiceManager.cpp with test stub to avoid Qt Bluetooth dependency
+- Add tests/stubs/ServiceManager_stub.cpp implementing minimal ServiceManager methods
+- Keeps unit tests focused and buildable in CI (no Qt Bluetooth)
+- 41e3c3c Added export log
+- 6f36daa Docs: update CHANGELOG.md for 2025.12.18+git.1572d82
+- 1572d82 Fix: add ServiceManager.cpp to test_websocket linking
+- 5441759 removed temp logs
+- 5731125 Fix: add missing QJsonArray include and build validation
+- 88518f3 [skip ci] - changelog
+- 3b5253e Add: Initial Android Auto support with wireless connectivity and service orchestration (#3)
+- f19efe0 update user rename to disable
+- 3990832 [skip ci]
+- 98f8048 Added fix for utf-8 added pipeline fix
+- da90348 added depends manually
+- a84bcba Fix: remove non-existent qt6-base-platforms dependency from crankshaft-ui package; platform plugins are built-in to libqt6gui6/libqt6core6
+- 72eec04 Fix: add actions:write permission to dispatch-cd-fastpath job
+- bec2126 Chore: CI dispatches CD with amd64only=true on manual fast-path runs
+- 65dc5cc Fix: CD test job sets up checkout + Buildx and uses explicit Dockerfile path; respect amd64only on manual dispatch
+- 6c5b808 add amd64 only
+- c600c21 fixed depends, split out apt test to file.
+- d0fce4b fix(packaging): add alternative deps for trixie (t64 | non-t64) to improve ARM install resilience
+- 55c0808 fix(packaging): use libssl3t64 for trixie, libqt6core6t64/libqt6gui6t64 for all archs in trixie
+- 8c7c057 ci/cd: re-enable arm64/armhf builds across all workflows
+- 4b61925 ci: build amd64 only (temporary)
+- 7ed2188 ci/cd: disable arm64/armhf in CD + PiGen; guard systemctl in postinst for container installs
+- d22df6e updated ci filter
+- fe5624e Added systemd guards
+- e81fc82 chore: add Debian suite defaults for builds
+- 46ca088 added check for publish completed successfully
+- a0f2a67 fixed typo
+- d29e09f added apt test before pi-gen
+- bd8794d added service, udev and usb action
+- d14366b fixed depends
+- 2f658c8 updated depends
+- ad1aa67 repoint apt
+- 253a780 update workflow to wait for apt
+- ce8d395 enabled deps default
+- bac1d9a delete backup files
+- 52d349c switched to aasdk main
+- 6544fd6 added aasdk runtime
+- f936e76 Added publish src package
+- 2052556 fix logic to only trigger on successes
+- 1700ea1 fixed regex
+- 0f5bf81 update version handling
+- da3b253 Add condition to onyl trigger cd on success
+- 840e375 updated version handling
+- 3993508 fixed triggers
+- c418325 refactor to use Cpack to build src package
+- 37f2ce8 Removed triggers
+- 9250003 refactored deb creation
+- 91053f9 fix lookup
+- 6732f03 updated dockerfile with lsb
+- b4f736d updated dockerfile with lsb
+- e2c35f1 updated dockerfile with lsb
+- 094b9f2 Add  debfilegen
+- 831126f [skip ci]
+- 3e80ba9 [skip ci]
+- b0fda02 [skip ci]
+- 6909590 Feature: CD auto-resolves latest successful CI run when build_run_id omitted; use workflow IDs for dispatch
+- fe85124 [skip ci]
+- d29d18f Fix: CD dispatch error (ENOENT) by removing fs.readFileSync; use context payload for workflow_run/workflow_dispatch
+- 56c186b [skip ci]
+- 96714d1 Feature: Skip CI based on commit message
+- 944c7ea Feature: Add path filters to CI workflow for faster builds
+- cd09996 Feature: Add workflow_dispatch to CD, build-pi-gen-lite and changelog workflows for manual testing
+- ece0e5c Fix: CD workflow startup failure - use workflow_dispatch instead of workflow_call
+- 5566951 disable broken
+- d815ca3 Fix source tar to archive from build dir and exclude output dirs
+- 3485217 Fix source deb tar to exclude build artifacts and output directory
+- 8b5d588  CRLF to LF
+- 1899a03 clang format
+- 807d0a0 Add code quality lint script and workflow documentation
+- 99f1a7d Fix source deb RUN continuation in Dockerfile
+- cced3fa added workflow docs
+- af5440d Refactor workflows into CI/CD/Release chain
+- 9c249b0 Add source deb packaging alongside core and UI
+- fd0db0f Use CPack component DEBs for core and UI packages
+- 3fab441 comment out untilmain merge
+- a50d9ef Added imaging workflows and gitattributes
+- ee42111 fixing workflow logic
+- ebca9ac Add changelog generation after successful PR builds
+- c172374 Limit feature branch builds to amd64 and run changelog before build on main
+- 148b960 Add build log capture and artifact upload for all architectures
+- fece81c fixed docker fromas casing
+- b6afc77 Fix: correct jq syntax for SBOM generation and remove non-existent artifact uploads
+- 6fd1223 Fix: make SBOM timestamp JSON-safe
+- b97d4f4 Fix: create output directory before building DEB package
+- 35cf955 Fix: correct cmake install command for Debian packaging
+- 419501f Fix: use relative paths for QML files and ensure MDI output directory exists
+- 7b5d5c2 rename components tolower
+- a6d4201 rename components
+- 87dc074 Fix: use absolute paths for QML files in CMakeLists.txt
+- fffbad8 Fix: add GStreamer and Python deps to Dockerfile
+- d444683 Docs: add changelog workflow and about link
+- d9003e7 Chore: update maintainer email
+- 95a3fdf Feat: add acknowledgements and SBOM CI workflows
+- 39a8f61 Feat: Use Material Design Icons for settings category icons
+- a79a3bb Refactor: Consolidate Android Auto settings into SettingsModel
+- c5305c9 Fix: Android Auto Settings UI layout and color issues
+- b8d3228 Fix: QML import path for Android Auto settings page
+- fd52a66 Fix: Settings UI — resolve header overlap and navigation issues
+- 06c0d0e Fix: HALs — implement MediaPipeline; add WiFi/Bluetooth HAL headers; enable QtDBus in CMake
+- 394cf24 Fix: Use SettingsModel singleton correctly in QML
+- 41eb7f7 Standardize UI event handling - Remove lifecycle event publishing and unnecessary navigation events
+- 92392ef Fix: Remove invalid onItemPushed signal handler - Use Component.onCompleted instead
+- fbe36dc Fix: Navigation issues in AndroidAutoScreen and SettingsScreen - Enable proper back button functionality
+- c4c453f feat: HAL implementation with multimedia, wireless, and Android Auto support
+- d021448 Implemented HAL
+- 0aca9a9 UI tweaks
+- 855d853 MDI Icons
+- b609637 Added packaging to deb
+- db40ae1 fix de
+- 87fe4f4 fixed translatons
+- 1db6e95 modern
+- 644f331 Initial MVP
+
 ## [2025.12.20+git.72246c8] - 2025-12-20
 - 72246c8 Feature: ProfileManager - schemas, validation, docs and build fixes (#9)
 - 722b241 Docs: update CHANGELOG.md for 2025.12.19+git.5b9a14e
