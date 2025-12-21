@@ -16,35 +16,37 @@
 #  You should have received a copy of the GNU General Public License
 #  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
 
-set -eu
+set -e
 export DEBIAN_FRONTEND=noninteractive
 
 case "$1" in
     configure)
         # Create crankshaft user if it doesn't exist
         if ! id -u crankshaft > /dev/null 2>&1; then
-            useradd --system --no-create-home --shell /bin/false crankshaft
+            useradd --system --no-create-home --shell /bin/false crankshaft || true
         fi
         
         # Create plugdev group if it doesn't exist (for USB device access)
         if ! getent group plugdev > /dev/null 2>&1; then
-            groupadd --system plugdev
+            groupadd --system plugdev || true
         fi
         
         # Add crankshaft user to plugdev group for USB access
         usermod -a -G plugdev crankshaft 2>/dev/null || true
         
         # Set proper ownership for config directory
-        chown -R crankshaft:crankshaft /etc/crankshaft
-        chmod 755 /etc/crankshaft
-        chmod 644 /etc/crankshaft/crankshaft.json
+        if [ -d /etc/crankshaft ]; then
+            chown -R crankshaft:crankshaft /etc/crankshaft || true
+            chmod 755 /etc/crankshaft || true
+            [ -f /etc/crankshaft/crankshaft.json ] && chmod 644 /etc/crankshaft/crankshaft.json || true
+        fi
         
         # Create runtime directories
-        mkdir -p /var/lib/crankshaft /var/log/crankshaft
-        chown -R crankshaft:crankshaft /var/lib/crankshaft /var/log/crankshaft
+        mkdir -p /var/lib/crankshaft /var/log/crankshaft || true
+        chown -R crankshaft:crankshaft /var/lib/crankshaft /var/log/crankshaft || true
         
         # Ensure USB action script is executable
-        chmod +x /usr/lib/crankshaft/usb_action.sh
+        [ -f /usr/lib/crankshaft/usb_action.sh ] && chmod +x /usr/lib/crankshaft/usb_action.sh || true
         
         # Reload udev rules
         udevadm control --reload-rules 2>/dev/null || true
@@ -52,8 +54,8 @@ case "$1" in
         
         # Reload systemd and enable service when running under systemd
         if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-            timeout 10s systemctl daemon-reload >/dev/null 2>&1 || true
-            timeout 10s systemctl enable crankshaft-core.service >/dev/null 2>&1 || true
+            systemctl daemon-reload >/dev/null 2>&1 || true
+            systemctl enable crankshaft-core.service >/dev/null 2>&1 || true
         else
             echo "Systemd not detected; skipping service enable." >&2
         fi
