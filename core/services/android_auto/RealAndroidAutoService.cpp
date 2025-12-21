@@ -21,6 +21,7 @@
 
 #include <QImage>
 #include <QJsonObject>
+#include <QTimer>
 
 #include "../../hal/multimedia/AudioMixer.h"
 #include "../../hal/multimedia/GStreamerVideoDecoder.h"
@@ -164,6 +165,19 @@ void RealAndroidAutoService::setupAASDK() {
 
   // Start AASDK thread
   m_aasdkThread->start();
+
+  // Integrate io_service with Qt event loop via periodic polling
+  if (m_ioServiceTimer == nullptr) {
+    m_ioServiceTimer = new QTimer(this);
+    m_ioServiceTimer->setObjectName("AASDKIoServicePoller");
+    connect(m_ioServiceTimer, &QTimer::timeout, this, [this]() {
+      if (m_ioService) {
+        // Process pending asynchronous operations without blocking
+        m_ioService->poll();
+      }
+    });
+    m_ioServiceTimer->start(10);
+  }
 
   Logger::instance().info("AASDK components initialised");
 }
@@ -588,6 +602,13 @@ void RealAndroidAutoService::cleanupAASDK() {
   // Clean up channels first
   cleanupChannels();
 
+  // Stop io_service poller
+  if (m_ioServiceTimer) {
+    m_ioServiceTimer->stop();
+    m_ioServiceTimer->deleteLater();
+    m_ioServiceTimer = nullptr;
+  }
+
   // Stop USB hub
   if (m_usbHub) {
     m_usbHub->cancel();
@@ -696,9 +717,24 @@ bool RealAndroidAutoService::startSearching() {
   // Start USB hub to detect devices
   auto promise = aasdk::usb::IUSBHub::Promise::defer(*m_ioService);
   promise->then(
-      [this](auto device) {
-        Logger::instance().info("Device connected");
-        // Device connection will be handled in device hotplug callback
+      [this](aasdk::usb::DeviceHandle deviceHandle) {
+        Logger::instance().info("Device connected, creating AOAP transport");
+
+        try {
+          // Create AOAP device from handle
+          m_aoapDevice =
+              aasdk::usb::AOAPDevice::create(*m_usbWrapper, *m_ioService, std::move(deviceHandle));
+
+          // Build transport/messenger and channels
+          transitionToState(ConnectionState::CONNECTING);
+          setupChannels();
+
+          // Mark connection established
+          handleConnectionEstablished();
+        } catch (const std::exception& e) {
+          Logger::instance().error(QString("Failed to initialise AOAP device: %1").arg(e.what()));
+          transitionToState(ConnectionState::DISCONNECTED);
+        }
       },
       [this](const aasdk::error::Error& error) {
         Logger::instance().error(

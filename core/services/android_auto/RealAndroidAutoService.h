@@ -20,6 +20,7 @@
 #pragma once
 
 #include <QThread>
+class QTimer;
 #include <boost/asio.hpp>
 #include <memory>
 
@@ -207,6 +208,7 @@ class RealAndroidAutoService : public AndroidAutoService {
   MediaPipeline* m_mediaPipeline{nullptr};
   std::shared_ptr<boost::asio::io_service> m_ioService;
   std::unique_ptr<QThread> m_aasdkThread;
+  QTimer* m_ioServiceTimer{nullptr};
 
   // Transport configuration
   TransportMode m_transportMode{TransportMode::Auto};
