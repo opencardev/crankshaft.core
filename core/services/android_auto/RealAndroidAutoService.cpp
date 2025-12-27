@@ -171,9 +171,13 @@ void RealAndroidAutoService::setupAASDK() {
     m_ioServiceTimer = new QTimer(this);
     m_ioServiceTimer->setObjectName("AASDKIoServicePoller");
     connect(m_ioServiceTimer, &QTimer::timeout, this, [this]() {
+      // Process Boost.Asio tasks
       if (m_ioService) {
-        // Process pending asynchronous operations without blocking
         m_ioService->poll();
+      }
+      // Drive libusb event loop so hotplug and control transfers progress
+      if (m_usbWrapper) {
+        m_usbWrapper->handleEvents();
       }
     });
     m_ioServiceTimer->start(10);
