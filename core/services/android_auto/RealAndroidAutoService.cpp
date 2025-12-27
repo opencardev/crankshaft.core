@@ -1099,6 +1099,13 @@ void RealAndroidAutoService::checkForConnectedDevices() {
             return;
           }
 
+          // Respect maximum attempt limit to avoid tight retry loops
+          if (m_aoapAttempts >= m_aoapMaxAttempts) {
+            Logger::instance().warning(QString("[RealAndroidAutoService] Skipping AOAP attempt: reached max attempts (%1)")
+                                         .arg(m_aoapMaxAttempts));
+            return;
+          }
+
           // Try to open device and initiate AOAP negotiation
           aasdk::usb::DeviceHandle handle;
           int openResult = m_usbWrapper->open(dev, handle);
@@ -1116,7 +1123,11 @@ void RealAndroidAutoService::checkForConnectedDevices() {
               
               auto onSuccess = [this](aasdk::usb::DeviceHandle devHandle) {
                 m_aoapInProgress = false;
-                Logger::instance().info("[RealAndroidAutoService] AOAP query chain completed");
+                m_aoapAttempts = 0; // reset attempts on success
+                if (m_aoapRetryResetTimer) {
+                  m_aoapRetryResetTimer->stop();
+                }
+                Logger::instance().info("[RealAndroidAutoService] AOAP query chain completed (success)");
                 // Device may or may not have switched; restart timer to check
                 if (m_deviceDetectionTimer && m_state == ConnectionState::SEARCHING) {
                   QTimer::singleShot(2000, this, [this]() {
@@ -1129,9 +1140,26 @@ void RealAndroidAutoService::checkForConnectedDevices() {
               
               auto onError = [this](const aasdk::error::Error& error) {
                 m_aoapInProgress = false;
+                m_aoapAttempts++;
                 Logger::instance().warning(
-                    QString("[RealAndroidAutoService] AOAP chain error: %1")
+                    QString("[RealAndroidAutoService] AOAP chain error (attempt %1): %2")
+                        .arg(m_aoapAttempts)
                         .arg(QString::fromStdString(error.what())));
+                if (m_aoapAttempts >= m_aoapMaxAttempts) {
+                  Logger::instance().warning(QString("[RealAndroidAutoService] Reached %1 AOAP attempts, pausing retries for %2 ms")
+                                               .arg(m_aoapMaxAttempts)
+                                               .arg(m_aoapResetMs));
+                  // Start/reset the retry reset timer
+                  if (!m_aoapRetryResetTimer) {
+                    m_aoapRetryResetTimer = new QTimer(this);
+                    m_aoapRetryResetTimer->setSingleShot(true);
+                    connect(m_aoapRetryResetTimer, &QTimer::timeout, this, [this]() {
+                      Logger::instance().info("[RealAndroidAutoService] AOAP attempt window reset; allowing retries again");
+                      m_aoapAttempts = 0;
+                    });
+                  }
+                  m_aoapRetryResetTimer->start(m_aoapResetMs);
+                }
                 // Restart detection timer to retry
                 if (m_deviceDetectionTimer && m_state == ConnectionState::SEARCHING) {
                   QTimer::singleShot(2000, this, [this]() {
@@ -1150,9 +1178,9 @@ void RealAndroidAutoService::checkForConnectedDevices() {
                 Logger::instance().info("[RealAndroidAutoService] AOAP chain started successfully");
                 
                 // Set a timeout to check if device re-enumerated in AOAP mode
-                // The chain should complete within ~3 seconds if successful
+                // The chain may take longer on some devices; give it more time
                 if (m_deviceDetectionTimer) {
-                  QTimer::singleShot(4000, this, [this]() {
+                  QTimer::singleShot(8000, this, [this]() {
                     if (m_aoapInProgress) {
                       Logger::instance().info("[RealAndroidAutoService] AOAP timeout - checking if device re-enumerated...");
                       // This will trigger another device check which will look for AOAP mode
@@ -1175,6 +1203,9 @@ void RealAndroidAutoService::checkForConnectedDevices() {
               if (m_deviceDetectionTimer) {
                 m_deviceDetectionTimer->stop();
               }
+              // Increment attempt counter and guard against too many attempts
+              m_aoapAttempts++;
+              Logger::instance().debug(QString("[RealAndroidAutoService] AOAP attempt %1 started").arg(m_aoapAttempts));
             } else {
               Logger::instance().warning("[RealAndroidAutoService] Query chain factory or strand not available");
               m_aoapInProgress = false;

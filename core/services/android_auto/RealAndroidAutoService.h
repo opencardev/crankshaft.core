@@ -223,6 +223,10 @@ class RealAndroidAutoService : public AndroidAutoService {
 
   // AOAP negotiation state
   bool m_aoapInProgress{false};
+  int m_aoapAttempts{0};
+  QTimer* m_aoapRetryResetTimer{nullptr};
+  static constexpr int m_aoapMaxAttempts = 3;
+  static constexpr int m_aoapResetMs = 5 * 60 * 1000;  // 5 minutes
 
   // Pointers to AASDK objects (owned by io_service)
   std::shared_ptr<aasdk::usb::IUSBWrapper> m_usbWrapper;
