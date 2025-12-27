@@ -77,6 +77,10 @@ add_executable(test_websocket
   ../core/services/android_auto/MockAndroidAutoService.cpp
   ../core/services/android_auto/RealAndroidAutoService.cpp
   ../core/services/android_auto/ProtocolHelpers.cpp
+  ../core/hal/multimedia/GStreamerVideoDecoder.cpp
+  ../core/hal/multimedia/IVideoDecoder.cpp
+  ../core/hal/multimedia/IAudioMixer.cpp
+  ../core/hal/multimedia/AudioMixer.cpp
 )
 
 set_target_properties(test_websocket PROPERTIES
