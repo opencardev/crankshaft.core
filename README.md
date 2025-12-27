@@ -85,6 +85,7 @@ cd build && cpack -G DEB
 - [WebSocket API](docs/API.md)
 - [Development Guide](docs/DEVELOPMENT.md)
 - [Changelog](docs/CHANGELOG.md)
+- AASDK Modern Logger (verbose USB/AOAP debugging): `external/aasdk/MODERN_LOGGER.md`
 
 ## License
 

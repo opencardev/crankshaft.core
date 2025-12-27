@@ -20,6 +20,10 @@
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QCoreApplication>
+#include <QByteArray>
+#include <QString>
+
+#include <aasdk/Common/ModernLogger.hpp>
 
 #include "services/android_auto/AndroidAutoService.h"
 #include "services/config/ConfigService.h"
@@ -62,7 +66,30 @@ int main(int argc, char* argv[]) {
                                   "config", "../config/crankshaft.json");
   parser.addOption(configOption);
 
+  QCommandLineOption verboseUsbOption(QStringList() << "v" << "verbose-usb",
+                                      "Enable verbose AASDK USB logging (or use env AASDK_VERBOSE_USB=1)");
+  parser.addOption(verboseUsbOption);
+
   parser.process(app);
+
+  // Enable AASDK verbose USB logging if requested via env var or CLI option
+  bool verboseUsb = false;
+  const QByteArray ev = qgetenv("AASDK_VERBOSE_USB");
+  if (!ev.isEmpty()) {
+    QByteArray lower = ev.toLower();
+    verboseUsb = (lower == "1" || lower == "true" || lower == "yes");
+  }
+  if (!verboseUsb && parser.isSet(verboseUsbOption)) {
+    verboseUsb = true;
+  }
+
+  if (verboseUsb) {
+    try {
+      aasdk::common::ModernLogger::getInstance().setVerboseUsb(true);
+    } catch (...) {
+      // best effort - do not fail startup if logger not available
+    }
+  }
 
   // Initialise logger
   Logger::instance().setLevel(Logger::Level::Info);
