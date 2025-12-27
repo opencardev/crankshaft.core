@@ -1107,11 +1107,12 @@ void RealAndroidAutoService::checkForConnectedDevices() {
           if (openResult == 0 && handle) {
             Logger::instance().info("[RealAndroidAutoService] Opened device for AOAP negotiation");
             
-            if (m_queryChainFactory && m_strand) {
+            if (m_queryChainFactory && m_ioService) {
               m_aoapInProgress = true;
               Logger::instance().info("[RealAndroidAutoService] Creating AccessoryModeQueryChain...");
               auto chain = m_queryChainFactory->create();
-              auto aoapPromise = aasdk::usb::IAccessoryModeQueryChain::Promise::defer(*m_strand);
+              // Use io_service directly, not strand, for the promise
+              auto aoapPromise = aasdk::usb::IAccessoryModeQueryChain::Promise::defer(*m_ioService);
               
               auto onSuccess = [this](aasdk::usb::DeviceHandle devHandle) {
                 m_aoapInProgress = false;
@@ -1147,6 +1148,21 @@ void RealAndroidAutoService::checkForConnectedDevices() {
               try {
                 chain->start(std::move(handle), std::move(aoapPromise));
                 Logger::instance().info("[RealAndroidAutoService] AOAP chain started successfully");
+                
+                // Set a timeout to check if device re-enumerated in AOAP mode
+                // The chain should complete within ~3 seconds if successful
+                if (m_deviceDetectionTimer) {
+                  QTimer::singleShot(4000, this, [this]() {
+                    if (m_aoapInProgress) {
+                      Logger::instance().info("[RealAndroidAutoService] AOAP timeout - checking if device re-enumerated...");
+                      // This will trigger another device check which will look for AOAP mode
+                      if (m_state == ConnectionState::SEARCHING) {
+                        m_aoapInProgress = false;  // Reset flag to allow retry
+                        m_deviceDetectionTimer->start();
+                      }
+                    }
+                  });
+                }
               } catch (const std::exception& e) {
                 Logger::instance().error(QString("[RealAndroidAutoService] Exception starting AOAP chain: %1").arg(e.what()));
                 m_aoapInProgress = false;
