@@ -93,6 +93,9 @@ target_include_directories(test_websocket PRIVATE
   ${LIBUSB_INCLUDE_DIRS}
   # Fallback include path for aap_protobuf generated headers when aasdk is built
   ${CMAKE_BINARY_DIR}/aasdk/protobuf
+  # aasdk public headers (source and generated build include)
+  ${CMAKE_SOURCE_DIR}/external/aasdk/include
+  ${CMAKE_BINARY_DIR}/aasdk/include
 )
 
 target_link_libraries(test_websocket PRIVATE
