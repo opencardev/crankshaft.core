@@ -750,13 +750,37 @@ bool RealAndroidAutoService::startSearching() {
 
   Logger::instance().info("Started searching for Android Auto devices");
 
-  // One-shot debug enumeration shortly after starting search
+  // Periodic USB visibility + AOAP kick attempts while searching
   if (m_debugEnumTimer == nullptr) {
     m_debugEnumTimer = new QTimer(this);
-    m_debugEnumTimer->setSingleShot(true);
-    connect(m_debugEnumTimer, &QTimer::timeout, this, [this]() { enumerateUSBDevices(); });
+    m_debugEnumTimer->setSingleShot(false);
+    connect(m_debugEnumTimer, &QTimer::timeout, this, [this]() {
+      enumerateUSBDevices();
+      // Also attempt AOAP via known Google MTP VID/PID if present
+      if (!m_aoapKickInProgress && m_usbWrapper && m_queryChainFactory) {
+        // Try common Google MTP PID 0x4EE1
+        auto handle = m_usbWrapper->openDeviceWithVidPid(0x18D1, 0x4EE1);
+        if (handle) {
+          m_aoapKickInProgress = true;
+          Logger::instance().info("[RealAndroidAutoService] AOAP kick: found 18d1:4ee1; starting query chain");
+          auto chain = m_queryChainFactory->create();
+          auto promise = aasdk::usb::IAccessoryModeQueryChain::Promise::defer(*m_strand);
+          promise->then(
+              [this](aasdk::usb::DeviceHandle) {
+                Logger::instance().info("[RealAndroidAutoService] AOAP kick: query chain completed");
+                QTimer::singleShot(2000, this, [this]() { m_aoapKickInProgress = false; });
+              },
+              [this](const aasdk::error::Error& e) {
+                Logger::instance().warning(QString("[RealAndroidAutoService] AOAP kick failed: %1")
+                                               .arg(QString::fromStdString(e.what())));
+                QTimer::singleShot(2000, this, [this]() { m_aoapKickInProgress = false; });
+              });
+          chain->start(std::move(handle), std::move(promise));
+        }
+      }
+    });
   }
-  m_debugEnumTimer->start(1200);
+  m_debugEnumTimer->start(1500);
   return true;
 }
 
