@@ -28,6 +28,7 @@
 #include "services/profile/ProfileManager.h"
 #include "services/service_manager/ServiceManager.h"
 #include "services/websocket/WebSocketServer.h"
+#include "../cmake/build_info.h"
 
 int main(int argc, char* argv[]) {
   QCoreApplication app(argc, argv);
@@ -53,6 +54,11 @@ int main(int argc, char* argv[]) {
   // Initialise logger
   Logger::instance().setLevel(Logger::Level::Info);
   Logger::instance().info("Starting Crankshaft Core...");
+
+  // Log build details
+  Logger::instance().info(QString("Build timestamp: %1, commit: %2")
+                             .arg(QString::fromUtf8(CRANKSHAFT_BUILD_TIMESTAMP))
+                             .arg(QString::fromUtf8(CRANKSHAFT_GIT_COMMIT)));
 
   // Load configuration
   QString configPath = parser.value(configOption);

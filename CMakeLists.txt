@@ -38,6 +38,20 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # can reference `CRANKSHAFT_SOURCE_DIR` regardless of the target's scope.
 add_compile_definitions(CRANKSHAFT_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
+# Generate build info header (timestamp + git commit) and make available to targets
+execute_process(COMMAND date +"%Y-%m-%d %H:%M:%S" OUTPUT_VARIABLE BUILD_TIMESTAMP OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND git rev-parse --short HEAD
+				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+				RESULT_VARIABLE GIT_RESULT
+				OUTPUT_VARIABLE GIT_COMMIT
+				OUTPUT_STRIP_TRAILING_WHITESPACE
+				ERROR_QUIET)
+if(NOT GIT_COMMIT)
+	set(GIT_COMMIT "unknown")
+endif()
+configure_file(${CMAKE_SOURCE_DIR}/cmake/build_info.h.in ${CMAKE_BINARY_DIR}/build_info.h @ONLY)
+include_directories(${CMAKE_BINARY_DIR})
+
 # Read CPACK_DEBIAN_PACKAGE_RELEASE from environment variable if set
 if(DEFINED ENV{CPACK_DEBIAN_RELEASE})
     set(CPACK_DEBIAN_PACKAGE_RELEASE "$ENV{CPACK_DEBIAN_RELEASE}")
