@@ -172,6 +172,7 @@ class RealAndroidAutoService : public AndroidAutoService {
   void handleConnectionLost();
   void updateStats();
   void transitionToState(ConnectionState newState);
+  void startUSBHubDetection();
 
   // Channel event handlers
   void onVideoChannelUpdate(const QByteArray& data, int width, int height);

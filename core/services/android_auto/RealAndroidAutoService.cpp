@@ -754,6 +754,27 @@ bool RealAndroidAutoService::startSearching() {
   transitionToState(ConnectionState::SEARCHING);
   logInfo("[RealAndroidAutoService] Starting USB device search");
 
+  // Give USB subsystem time to enumerate devices before starting detection
+  // This is especially important on startup when devices may already be connected
+  QTimer::singleShot(500, this, [this]() {
+    if (m_state != ConnectionState::SEARCHING) {
+      return;  // State changed, abort
+    }
+    
+    logInfo("[RealAndroidAutoService] Starting USB hub detection after initial delay");
+    startUSBHubDetection();
+  });
+
+  return true;
+}
+
+void RealAndroidAutoService::startUSBHubDetection() {
+  if (!m_ioService || !m_usbHub) {
+    logError("[RealAndroidAutoService] Cannot start USB hub: missing dependencies");
+    transitionToState(ConnectionState::DISCONNECTED);
+    return;
+  }
+
   // Start USB hub to detect devices
   auto promise = aasdk::usb::IUSBHub::Promise::defer(*m_ioService);
   promise->then(
@@ -787,12 +808,29 @@ bool RealAndroidAutoService::startSearching() {
     m_deviceDetectionTimer = new QTimer(this);
     m_deviceDetectionTimer->setObjectName("AADeviceDetectionTimer");
     connect(m_deviceDetectionTimer, &QTimer::timeout, this, &RealAndroidAutoService::checkForConnectedDevices);
-    m_deviceDetectionTimer->start(1000);  // Check every second
-    logInfo("Started periodic device detection timer (fallback for hotplug)");
+    
+    // Check more frequently initially (every 500ms for first 10 seconds), then slow down
+    m_deviceDetectionTimer->start(500);
+    logInfo("[RealAndroidAutoService] Started periodic device detection timer (checking every 500ms initially)");
+    
+    // After 10 seconds, reduce frequency to every 2 seconds
+    QTimer::singleShot(10000, this, [this]() {
+      if (m_deviceDetectionTimer && m_state == ConnectionState::SEARCHING) {
+        m_deviceDetectionTimer->setInterval(2000);
+        logInfo("[RealAndroidAutoService] Reduced device detection frequency to every 2 seconds");
+      }
+    });
   }
+  
+  // Trigger an immediate device check (don't wait for first timer tick)
+  QTimer::singleShot(100, this, [this]() {
+    if (m_state == ConnectionState::SEARCHING) {
+      logInfo("[RealAndroidAutoService] Running initial device scan...");
+      checkForConnectedDevices();
+    }
+  });
 
   logInfo("Started searching for Android Auto devices");
-  return true;
 }
 
 void RealAndroidAutoService::stopSearching() {
@@ -1102,24 +1140,40 @@ void RealAndroidAutoService::checkForConnectedDevices() {
     return;
   }
 
+  static int checkCount = 0;
+  checkCount++;
+  
   try {
     aasdk::usb::DeviceListHandle listHandle;
     auto count = m_usbWrapper->getDeviceList(listHandle);
     
     if (count < 0 || !listHandle) {
-      Logger::instance().debug("[RealAndroidAutoService] USB device list error");
+      if (checkCount <= 5 || checkCount % 10 == 0) {  // Log first 5 times, then every 10th
+        Logger::instance().debug(QString("[RealAndroidAutoService] USB device list error (check #%1)")
+                                     .arg(checkCount));
+      }
       return;
     }
+    
+    bool foundGoogleDevice = false;
+    bool foundAoapDevice = false;
+    int googleDeviceCount = 0;
 
     for (auto* dev : *listHandle) {
       libusb_device_descriptor desc{};
       if (m_usbWrapper->getDeviceDescriptor(dev, desc) == 0) {
         // Look for Google devices (vendor ID 0x18D1)
         if (desc.idVendor == 0x18D1) {
-          logInfo(QString("[RealAndroidAutoService] Found Google device: vid=0x%1 pid=0x%2")
-                      .arg(QString::asprintf("%04x", desc.idVendor))
-                      .arg(QString::asprintf("%04x", desc.idProduct))
-                      .toStdString());
+          googleDeviceCount++;
+          foundGoogleDevice = true;
+          
+          if (checkCount <= 5 || checkCount % 5 == 0) {  // Log more frequently initially
+            logInfo(QString("[RealAndroidAutoService] Check #%1: Found Google device: vid=0x%2 pid=0x%3")
+                        .arg(checkCount)
+                        .arg(QString::asprintf("%04x", desc.idVendor))
+                        .arg(QString::asprintf("%04x", desc.idProduct))
+                        .toStdString());
+          }
 
           // If it's already in AOAP mode, let USBHub handle it
           if (desc.idProduct == 0x2D00 || desc.idProduct == 0x2D01) {
@@ -1250,6 +1304,23 @@ void RealAndroidAutoService::checkForConnectedDevices() {
             Logger::instance().warning(QString("[RealAndroidAutoService] Failed to open device for AOAP (result=%1)").arg(openResult));
           }
         }
+      }
+    }
+    
+    // Log summary at end of check (periodically)
+    if (checkCount <= 3 || checkCount % 10 == 0) {
+      if (foundGoogleDevice) {
+        logInfo(QString("[RealAndroidAutoService] Check #%1 summary: Found %2 Google device(s), AOAP in progress: %3, attempts: %4/%5")
+                    .arg(checkCount)
+                    .arg(googleDeviceCount)
+                    .arg(m_aoapInProgress ? "yes" : "no")
+                    .arg(m_aoapAttempts)
+                    .arg(m_aoapMaxAttempts)
+                    .toStdString());
+      } else {
+        logInfo(QString("[RealAndroidAutoService] Check #%1: No Google devices detected")
+                    .arg(checkCount)
+                    .toStdString());
       }
     }
   } catch (const std::exception& e) {
