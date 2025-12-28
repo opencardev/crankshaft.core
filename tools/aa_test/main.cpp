@@ -31,8 +31,11 @@
 #include <aasdk/USB/AccessoryModeQueryFactory.hpp>
 #include <aasdk/USB/AccessoryModeQueryChainFactory.hpp>
 #include <aasdk/Common/ModernLogger.hpp>
+#include <aasdk/IO/Promise.hpp>
 
 namespace asio = boost::asio;
+using DeviceHandle = std::shared_ptr<libusb_device_handle>;
+using PromiseType = aasdk::io::Promise<DeviceHandle>;
 
 class AATest {
 public:
@@ -145,8 +148,8 @@ private:
     void attemptAOAP(libusb_device* device) {
         std::cout << "[AATest] Attempting AOAP negotiation..." << std::endl;
 
-        libusb_device_handle* handle = nullptr;
-        int result = libusb_open(device, &handle);
+        libusb_device_handle* rawHandle = nullptr;
+        int result = libusb_open(device, &rawHandle);
         if (result != 0) {
             std::cerr << "[AATest] Failed to open device: " << libusb_error_name(result) << std::endl;
             return;
@@ -155,20 +158,36 @@ private:
         std::cout << "[AATest] Device opened successfully" << std::endl;
 
         try {
+            // Wrap the raw handle in a shared_ptr with a custom deleter
+            DeviceHandle handle(rawHandle, [](libusb_device_handle* h) {
+                if (h) libusb_close(h);
+            });
+
             // Create AOAP query chain
             auto queryChain = queryChainFactory_->create();
             
             std::cout << "[AATest] Starting AOAP query chain..." << std::endl;
 
+            // Create a promise for the chain result
+            auto promise = std::make_shared<PromiseType>();
+
             // Start the chain - this will execute GET_PROTOCOL, SEND_STRING (x6), START
             queryChain->start(
                 handle,
-                [](std::error_code errorCode) {
-                    if (errorCode) {
-                        std::cerr << "[AATest] AOAP chain failed: " << errorCode.message() << std::endl;
-                    } else {
-                        std::cout << "[AATest] AOAP chain completed successfully!" << std::endl;
-                        std::cout << "[AATest] Device should now re-enumerate as accessory (18d1:2d00 or 18d1:2d01)" << std::endl;
+                promise
+            );
+
+            // Set up a callback to handle completion
+            promise->then(
+                [this](const DeviceHandle& resultHandle) {
+                    std::cout << "[AATest] AOAP chain completed successfully!" << std::endl;
+                    std::cout << "[AATest] Device should now re-enumerate as accessory (18d1:2d00 or 18d1:2d01)" << std::endl;
+                },
+                [](const std::exception_ptr& error) {
+                    try {
+                        std::rethrow_exception(error);
+                    } catch (const std::exception& e) {
+                        std::cerr << "[AATest] AOAP chain failed: " << e.what() << std::endl;
                     }
                 }
             );
@@ -176,9 +195,6 @@ private:
             std::cout << "[AATest] AOAP chain started, waiting for completion..." << std::endl;
         } catch (const std::exception& e) {
             std::cerr << "[AATest] Exception during AOAP: " << e.what() << std::endl;
-            if (handle) {
-                libusb_close(handle);
-            }
         }
     }
 
