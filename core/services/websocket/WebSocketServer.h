@@ -27,7 +27,7 @@
 // Forward declarations
 class ServiceManager;
 
-#include "core/services/android_auto/AndroidAutoService.h"
+#include "../android_auto/AndroidAutoService.h"
 
 class WebSocketServer : public QObject {
   Q_OBJECT
