@@ -23,6 +23,8 @@
 #include <chrono>
 #include <cstring>
 #include <cstdlib>
+#include <iomanip>
+#include <sstream>
 
 #include <libusb.h>
 #include <boost/asio.hpp>
@@ -37,6 +39,25 @@
 namespace asio = boost::asio;
 using DeviceHandle = std::shared_ptr<libusb_device_handle>;
 using PromiseType = aasdk::io::Promise<DeviceHandle>;
+
+static std::string getTimestamp() {
+    auto now = std::chrono::system_clock::now();
+    auto time = std::chrono::system_clock::to_time_t(now);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    
+    std::ostringstream oss;
+    oss << std::put_time(std::localtime(&time), "%Y-%m-%dT%H:%M:%S")
+        << '.' << std::setfill('0') << std::setw(3) << ms.count();
+    return oss.str();
+}
+
+static void logInfo(const std::string& msg) {
+    std::cout << "[" << getTimestamp() << "] INFO: " << msg << std::endl;
+}
+
+static void logError(const std::string& msg) {
+    std::cerr << "[" << getTimestamp() << "] ERROR: " << msg << std::endl;
+}
 
 class AATest {
 public:
@@ -69,29 +90,40 @@ public:
     }
 
     void run() {
-        std::cout << "[AATest] Starting Android Auto AOAP negotiation test tool..." << std::endl;
+        logInfo("Starting Android Auto AOAP negotiation test tool...");
         
         // Start io_service in background thread
         ioThread_ = std::thread([this]() {
-            ioService_.run();
+            try {
+                ioService_.run();
+            } catch (const std::exception& e) {
+                logError(std::string("io_service error: ") + e.what());
+            }
         });
 
-        // Keep running and handle libusb events
+        // Initial enumeration
+        enumerateAndConnect();
+
+        // Keep running and handle libusb events with periodic enumeration
         int pollCount = 0;
-        while (true) {
+        int maxIterations = 300;  // Run for ~30 seconds (300 * 100ms)
+        
+        while (pollCount < maxIterations) {
             try {
                 usbWrapper_->handleEvents();
                 
-                // Enumerate devices periodically (every 10 poll cycles)
-                if (++pollCount >= 10) {
+                // Enumerate devices periodically (every 5 poll cycles = 500ms)
+                if (++pollCount % 5 == 0) {
                     enumerateAndConnect();
-                    pollCount = 0;
                 }
             } catch (const std::exception& e) {
-                std::cerr << "[AATest] USB event error: " << e.what() << std::endl;
+                logError(std::string("USB event error: ") + e.what());
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
+        
+        logInfo("Timeout reached, exiting...");
+        stop();
     }
 
     void stop() {
@@ -104,13 +136,13 @@ public:
 
 private:
     void enumerateAndConnect() {
-        std::cout << "[AATest] Enumerating USB devices..." << std::endl;
+        logInfo("Enumerating USB devices...");
         
         libusb_device** devices;
         ssize_t count = libusb_get_device_list(usbContext_, &devices);
         
         if (count < 0) {
-            std::cerr << "[AATest] Failed to get device list" << std::endl;
+            logError("Failed to get device list");
             return;
         }
 
@@ -120,12 +152,14 @@ private:
             if (libusb_get_device_descriptor(devices[i], &desc) == 0) {
                 // Google vendor ID
                 if (desc.idVendor == 0x18d1) {
-                    std::cout << "[AATest] Found Google device: vid=0x" << std::hex << desc.idVendor 
-                              << " pid=0x" << desc.idProduct << std::dec << std::endl;
+                    std::ostringstream oss;
+                    oss << std::hex << "Found Google device: vid=0x" << desc.idVendor 
+                        << " pid=0x" << desc.idProduct;
+                    logInfo(oss.str());
                     
                     // Skip if already in accessory mode
                     if (desc.idProduct == 0x2d00 || desc.idProduct == 0x2d01) {
-                        std::cout << "[AATest] Device already in accessory mode" << std::endl;
+                        logInfo("Device already in accessory mode");
                         found = true;
                         continue;
                     }
@@ -142,21 +176,21 @@ private:
         libusb_free_device_list(devices, 1);
 
         if (!found) {
-            std::cout << "[AATest] No Google devices found. Plug in your Android device." << std::endl;
+            logInfo("No Google devices found. Plug in your Android device.");
         }
     }
 
     void attemptAOAP(libusb_device* device) {
-        std::cout << "[AATest] Attempting AOAP negotiation..." << std::endl;
+        logInfo("Attempting AOAP negotiation...");
 
         libusb_device_handle* rawHandle = nullptr;
         int result = libusb_open(device, &rawHandle);
         if (result != 0) {
-            std::cerr << "[AATest] Failed to open device: " << libusb_error_name(result) << std::endl;
+            logError(std::string("Failed to open device: ") + libusb_error_name(result));
             return;
         }
 
-        std::cout << "[AATest] Device opened successfully" << std::endl;
+        logInfo("Device opened successfully");
 
         try {
             // Wrap the raw handle in a shared_ptr with a custom deleter
@@ -167,7 +201,7 @@ private:
             // Create AOAP query chain
             auto queryChain = queryChainFactory_->create();
             
-            std::cout << "[AATest] Starting AOAP query chain..." << std::endl;
+            logInfo("Starting AOAP query chain...");
 
             // Create a promise for the chain result (needs io_service)
             auto promise = std::make_shared<PromiseType>(ioService_);
@@ -181,17 +215,17 @@ private:
             // Set up callbacks to handle completion
             promise->then(
                 [this](const DeviceHandle& resultHandle) {
-                    std::cout << "[AATest] AOAP chain completed successfully!" << std::endl;
-                    std::cout << "[AATest] Device should now re-enumerate as accessory (18d1:2d00 or 18d1:2d01)" << std::endl;
+                    logInfo("AOAP chain completed successfully!");
+                    logInfo("Device should now re-enumerate as accessory (18d1:2d00 or 18d1:2d01)");
                 },
                 [](const aasdk::error::Error& error) {
-                    std::cerr << "[AATest] AOAP chain failed" << std::endl;
+                    logError("AOAP chain failed");
                 }
             );
 
-            std::cout << "[AATest] AOAP chain started, waiting for completion..." << std::endl;
+            logInfo("AOAP chain started, waiting for completion...");
         } catch (const std::exception& e) {
-            std::cerr << "[AATest] Exception during AOAP: " << e.what() << std::endl;
+            logError(std::string("Exception during AOAP: ") + e.what());
         }
     }
 
@@ -212,6 +246,9 @@ void printUsage(const char* progName) {
               << "\n"
               << "Environment variables:\n"
               << "  AASDK_VERBOSE_USB=1  Enable verbose USB/AOAP logging\n"
+              << "\n"
+              << "The tool will run for ~30 seconds, attempting AOAP negotiation with any\n"
+              << "plugged-in Android devices. Ctrl+C to exit early.\n"
               << std::endl;
 }
 
@@ -239,19 +276,19 @@ int main(int argc, char* argv[]) {
     if (verboseUsb) {
         try {
             aasdk::common::ModernLogger::getInstance().setVerboseUsb(true);
-            std::cout << "[AATest] Verbose USB/AOAP logging enabled" << std::endl;
+            logInfo("Verbose USB/AOAP logging enabled");
         } catch (const std::exception& e) {
-            std::cerr << "[AATest] Warning: Could not enable verbose USB logging: " << e.what() << std::endl;
+            logError(std::string("Could not enable verbose USB logging: ") + e.what());
         }
     } else {
-        std::cout << "[AATest] Verbose USB logging disabled. Use --verbose-usb or AASDK_VERBOSE_USB=1 to enable." << std::endl;
+        logInfo("Verbose USB logging disabled. Use --verbose-usb or AASDK_VERBOSE_USB=1 to enable.");
     }
 
     try {
         AATest test;
         test.run();
     } catch (const std::exception& e) {
-        std::cerr << "[AATest] Fatal error: " << e.what() << std::endl;
+        logError(std::string("Fatal error: ") + e.what());
         return 1;
     }
 
