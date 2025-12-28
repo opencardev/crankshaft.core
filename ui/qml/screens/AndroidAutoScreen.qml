@@ -35,9 +35,32 @@ Rectangle {
     property color statusColor: '#F44336'
     property bool isConnected: false
     
+    // Test timer to verify property binding works
+    Timer {
+        interval: 5000
+        running: true
+        repeat: true
+        onTriggered: {
+            console.log("[AndroidAutoScreen] STATUS TEST - statusText:", androidAutoScreen.statusText, "statusColor:", androidAutoScreen.statusColor)
+        }
+    }
+    
     Component.onCompleted: {
+        console.log("[AndroidAutoScreen] Component initialized")
+        console.log("[AndroidAutoScreen] wsClient connected?", wsClient.connected)
         console.log("[AndroidAutoScreen] Subscribing to android-auto/status/#")
         wsClient.subscribe("android-auto/status/#")
+    }
+    
+    // Also try subscribing when connection is established
+    Connections {
+        target: wsClient
+        function onConnectedChanged() {
+            if (wsClient.connected) {
+                console.log("[AndroidAutoScreen] WebSocket connected! Re-subscribing...")
+                wsClient.subscribe("android-auto/status/#")
+            }
+        }
     }
     
     Connections {
