@@ -32,6 +32,7 @@
 #include <aasdk/USB/AccessoryModeQueryChainFactory.hpp>
 #include <aasdk/Common/ModernLogger.hpp>
 #include <aasdk/IO/Promise.hpp>
+#include <aasdk/Error/Error.hpp>
 
 namespace asio = boost::asio;
 using DeviceHandle = std::shared_ptr<libusb_device_handle>;
@@ -168,8 +169,8 @@ private:
             
             std::cout << "[AATest] Starting AOAP query chain..." << std::endl;
 
-            // Create a promise for the chain result
-            auto promise = std::make_shared<PromiseType>();
+            // Create a promise for the chain result (needs io_service)
+            auto promise = std::make_shared<PromiseType>(ioService_);
 
             // Start the chain - this will execute GET_PROTOCOL, SEND_STRING (x6), START
             queryChain->start(
@@ -177,18 +178,14 @@ private:
                 promise
             );
 
-            // Set up a callback to handle completion
+            // Set up callbacks to handle completion
             promise->then(
                 [this](const DeviceHandle& resultHandle) {
                     std::cout << "[AATest] AOAP chain completed successfully!" << std::endl;
                     std::cout << "[AATest] Device should now re-enumerate as accessory (18d1:2d00 or 18d1:2d01)" << std::endl;
                 },
-                [](const std::exception_ptr& error) {
-                    try {
-                        std::rethrow_exception(error);
-                    } catch (const std::exception& e) {
-                        std::cerr << "[AATest] AOAP chain failed: " << e.what() << std::endl;
-                    }
+                [](const aasdk::error::Error& error) {
+                    std::cerr << "[AATest] AOAP chain failed: " << error.message() << std::endl;
                 }
             );
 
