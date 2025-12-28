@@ -27,6 +27,8 @@ Page {
     id: root
     
     property var stack: null
+    property var settingsComponent: null
+    property var androidAutoComponent: null
     property string currentTime: Qt.formatTime(new Date(), "hh:mm")
     
     Timer {
@@ -65,8 +67,8 @@ Page {
                 implicitWidth: 76
                 implicitHeight: 76
                 onClicked: {
-                    if (stack) {
-                        stack.push(settingsScreen, { stack: stack })
+                    if (stack && settingsComponent) {
+                        stack.push(settingsComponent, { stack: stack })
                     }
                 }
             }
@@ -175,8 +177,8 @@ Page {
                     Layout.minimumHeight: 120
                     
                     onClicked: {
-                        if (stack) {
-                            stack.push(androidautoScreen, { stack: stack })
+                        if (stack && androidAutoComponent) {
+                            stack.push(androidAutoComponent, { stack: stack })
                         }
                     }
                 }
