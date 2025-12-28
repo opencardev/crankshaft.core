@@ -258,7 +258,9 @@ void WebSocketServer::setupAndroidAutoConnections() {
 
   // Connect Android Auto service signals to WebSocket broadcast methods
   connect(aaService, &AndroidAutoService::connectionStateChanged,
-          this, &WebSocketServer::onAndroidAutoStateChanged);
+          this, [this](AndroidAutoService::ConnectionState state) {
+            onAndroidAutoStateChanged(static_cast<int>(state));
+          });
   connect(aaService, &AndroidAutoService::connected,
           this, [this](const AndroidAutoService::AndroidDevice& device) {
             QVariantMap deviceMap;
