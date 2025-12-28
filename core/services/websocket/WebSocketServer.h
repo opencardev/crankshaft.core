@@ -26,7 +26,8 @@
 
 // Forward declarations
 class ServiceManager;
-class AndroidAutoService;
+
+#include "core/services/android_auto/AndroidAutoService.h"
 
 class WebSocketServer : public QObject {
   Q_OBJECT
@@ -47,7 +48,7 @@ class WebSocketServer : public QObject {
   void onClientDisconnected();
   
   // Android Auto service events
-  void onAndroidAutoStateChanged(AndroidAutoService::ConnectionState state);
+  void onAndroidAutoStateChanged(int state);
   void onAndroidAutoConnected(const QVariantMap& device);
   void onAndroidAutoDisconnected();
   void onAndroidAutoError(const QString& error);
