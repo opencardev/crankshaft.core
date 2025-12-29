@@ -42,8 +42,12 @@ bool WebSocketClient::isConnected() const {
 }
 
 void WebSocketClient::subscribe(const QString& topic) {
+  qDebug() << "[WebSocketClient] subscribe() called with topic:" << topic;
+  qDebug() << "[WebSocketClient] Connected?" << (isConnected() ? "YES" : "NO");
+
   if (!m_subscriptions.contains(topic)) {
     m_subscriptions.append(topic);
+    qDebug() << "[WebSocketClient] Added to local subscriptions";
   }
 
   if (isConnected()) {
@@ -52,8 +56,12 @@ void WebSocketClient::subscribe(const QString& topic) {
     obj["topic"] = topic;
 
     QJsonDocument doc(obj);
-    m_socket->sendTextMessage(doc.toJson(QJsonDocument::Compact));
-    qDebug() << "Subscribed to topic:" << topic;
+    QString message = doc.toJson(QJsonDocument::Compact);
+    qDebug() << "[WebSocketClient] Sending subscribe message:" << message;
+    m_socket->sendTextMessage(message);
+    qDebug() << "[WebSocketClient] Subscribe message sent";
+  } else {
+    qWarning() << "[WebSocketClient] NOT CONNECTED - subscription will be sent on reconnect";
   }
 }
 
@@ -88,11 +96,13 @@ void WebSocketClient::publish(const QString& topic, const QVariantMap& payload) 
 }
 
 void WebSocketClient::onConnected() {
-  qDebug() << "WebSocket connected";
+  qDebug() << "[WebSocketClient] WebSocket connected!";
   emit connectedChanged();
 
   // Re-subscribe to all topics
+  qDebug() << "[WebSocketClient] Re-subscribing to" << m_subscriptions.size() << "topics";
   for (const auto& topic : std::as_const(m_subscriptions)) {
+    qDebug() << "[WebSocketClient] Re-subscribing to:" << topic;
     subscribe(topic);
   }
 }
@@ -107,18 +117,22 @@ void WebSocketClient::onDisconnected() {
 }
 
 void WebSocketClient::onTextMessageReceived(const QString& message) {
+  qDebug() << "[WebSocketClient] Message received:" << message;
   QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
   if (!doc.isObject()) {
-    qWarning() << "Invalid JSON message received";
+    qWarning() << "[WebSocketClient] Invalid JSON message received";
     return;
   }
 
   QJsonObject obj = doc.object();
   QString type = obj.value("type").toString();
+  qDebug() << "[WebSocketClient] Message type:" << type;
 
   if (type == "event") {
     QString topic = obj.value("topic").toString();
     QVariantMap payload = obj.value("payload").toObject().toVariantMap();
+    qDebug() << "[WebSocketClient] Event received - Topic:" << topic;
+    qDebug() << "[WebSocketClient] Payload:" << payload;
     emit eventReceived(topic, payload);
   }
 }

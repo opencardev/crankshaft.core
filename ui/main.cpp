@@ -26,6 +26,7 @@
 
 #include "Theme.h"
 #include "WebSocketClient.h"
+#include "build_info.h"
 
 int main(int argc, char* argv[]) {
   QGuiApplication app(argc, argv);
@@ -77,6 +78,19 @@ int main(int argc, char* argv[]) {
   engine.rootContext()->setContextProperty("Theme", theme);
   engine.rootContext()->setContextProperty("wsClient", wsClient);
   engine.rootContext()->setContextProperty("currentLanguage", currentLanguage);
+
+  // Expose build info to QML
+  engine.rootContext()->setContextProperty("buildTimestamp",
+                                           QString::fromUtf8(CRANKSHAFT_BUILD_TIMESTAMP));
+  engine.rootContext()->setContextProperty("buildCommitShort",
+                                           QString::fromUtf8(CRANKSHAFT_GIT_COMMIT_SHORT));
+  engine.rootContext()->setContextProperty("buildCommitLong",
+                                           QString::fromUtf8(CRANKSHAFT_GIT_COMMIT_LONG));
+  engine.rootContext()->setContextProperty("buildBranch", QString::fromUtf8(CRANKSHAFT_GIT_BRANCH));
+
+  qInfo() << "UI Build:" << QString::fromUtf8(CRANKSHAFT_BUILD_TIMESTAMP)
+          << "commit(short):" << QString::fromUtf8(CRANKSHAFT_GIT_COMMIT_SHORT)
+          << "branch:" << QString::fromUtf8(CRANKSHAFT_GIT_BRANCH);
 
   // Handle language change events
   QObject::connect(wsClient, &WebSocketClient::eventReceived,

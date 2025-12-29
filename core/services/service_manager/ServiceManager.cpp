@@ -294,6 +294,15 @@ bool ServiceManager::startAndroidAutoService(const DeviceConfig& device) {
             .arg(device.settings["channels.input"].toBool() ? "enabled" : "disabled"));
   }
 
+  // Begin device discovery/connection based on transport settings
+  if (!m_androidAutoService->startSearching()) {
+    Logger::instance().warning(
+        "[ServiceManager]      AndroidAuto: startSearching() returned false");
+  } else {
+    Logger::instance().info(
+        "[ServiceManager]      AndroidAuto: searching for devices (USB/Wireless)");
+  }
+
   return true;
 }
 

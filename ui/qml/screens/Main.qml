@@ -53,7 +53,11 @@ ApplicationWindow {
         
         initialItem: Component {
             HomeScreen {
-                Component.onCompleted: stack = stackView
+                Component.onCompleted: {
+                    stack = stackView
+                    settingsComponent = settingsScreen
+                    androidAutoComponent = androidautoScreen
+                }
             }
         }
     }

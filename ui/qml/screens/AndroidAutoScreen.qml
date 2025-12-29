@@ -30,6 +30,78 @@ Rectangle {
     property alias videoSurface: videoSurface
     property alias connectionStatus: connectionStatus
     property var stack: null
+    
+    property string statusText: qsTr('Android Auto - Disconnected')
+    property color statusColor: '#F44336'
+    property bool isConnected: false
+    
+    // Test timer to verify property binding works
+    Timer {
+        interval: 5000
+        running: true
+        repeat: true
+        onTriggered: {
+            console.log("[AndroidAutoScreen] STATUS TEST - statusText:", androidAutoScreen.statusText, "statusColor:", androidAutoScreen.statusColor)
+        }
+    }
+    
+    Component.onCompleted: {
+        console.log("[AndroidAutoScreen] Component initialized")
+        console.log("[AndroidAutoScreen] wsClient connected?", wsClient.connected)
+        console.log("[AndroidAutoScreen] Subscribing to android-auto/status/#")
+        wsClient.subscribe("android-auto/status/#")
+    }
+    
+    // Also try subscribing when connection is established
+    Connections {
+        target: wsClient
+        function onConnectedChanged() {
+            if (wsClient.connected) {
+                console.log("[AndroidAutoScreen] WebSocket connected! Re-subscribing...")
+                wsClient.subscribe("android-auto/status/#")
+            }
+        }
+    }
+    
+    Connections {
+        target: wsClient
+        
+        function onEventReceived(topic, payload) {
+            console.log("[AndroidAutoScreen] Received event on topic:", topic, "payload:", payload)
+            if (topic === "android-auto/status/state-changed") {
+                let stateName = payload.stateName || "UNKNOWN"
+                console.log("[AndroidAutoScreen] State changed to:", stateName)
+                androidAutoScreen.statusText = "Android Auto - " + stateName
+                
+                if (stateName === "CONNECTED") {
+                    androidAutoScreen.statusColor = '#4CAF50'  // Green
+                    androidAutoScreen.isConnected = true
+                } else if (stateName === "DISCONNECTED") {
+                    androidAutoScreen.statusColor = '#F44336'  // Red
+                    androidAutoScreen.isConnected = false
+                } else {
+                    androidAutoScreen.statusColor = '#FF9800'  // Orange for other states
+                    androidAutoScreen.isConnected = false
+                }
+            } else if (topic === "android-auto/status/connected") {
+                let device = payload.device
+                console.log("[AndroidAutoScreen] Connected, device:", device)
+                androidAutoScreen.statusText = "Android Auto - CONNECTED (" + device.model + ")"
+                androidAutoScreen.statusColor = '#4CAF50'  // Green
+                androidAutoScreen.isConnected = true
+            } else if (topic === "android-auto/status/disconnected") {
+                console.log("[AndroidAutoScreen] Disconnected")
+                androidAutoScreen.statusText = "Android Auto - Disconnected"
+                androidAutoScreen.statusColor = '#F44336'  // Red
+                androidAutoScreen.isConnected = false
+            } else if (topic === "android-auto/status/error") {
+                console.log("[AndroidAutoScreen] Error:", payload.error)
+                androidAutoScreen.statusText = "Android Auto - Error: " + payload.error
+                androidAutoScreen.statusColor = '#F44336'  // Red
+                androidAutoScreen.isConnected = false
+            }
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -53,7 +125,11 @@ Rectangle {
                     Layout.preferredWidth: 12
                     Layout.preferredHeight: 12
                     radius: 6
-                    color: '#F44336'
+                    color: androidAutoScreen.statusColor
+                    
+                    Behavior on color {
+                        ColorAnimation { duration: 300 }
+                    }
                 }
 
                 Text {
@@ -61,7 +137,7 @@ Rectangle {
                     color: '#FFFFFF'
                     font.pixelSize: 14
                     font.family: 'Roboto'
-                    text: qsTr('Android Auto - Disconnected')
+                    text: androidAutoScreen.statusText
                 }
 
                 Item { Layout.fillWidth: true }

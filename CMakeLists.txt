@@ -33,6 +33,54 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Expose the repository source directory as a compile-time macro for all targets
+# so code that needs to locate development-only resources (schemas, docs)
+# can reference `CRANKSHAFT_SOURCE_DIR` regardless of the target's scope.
+add_compile_definitions(CRANKSHAFT_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+
+# Generate build info header (timestamp + git commit) and make available to targets
+execute_process(COMMAND date +"%Y-%m-%d %H:%M:%S" OUTPUT_VARIABLE BUILD_TIMESTAMP OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+# Git commit short (8), long (full) and branch name
+execute_process(COMMAND git rev-parse --short=8 HEAD
+				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+				RESULT_VARIABLE GIT_SHORT_RESULT
+				OUTPUT_VARIABLE GIT_COMMIT_SHORT
+				OUTPUT_STRIP_TRAILING_WHITESPACE
+				ERROR_QUIET)
+execute_process(COMMAND git rev-parse HEAD
+				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+				RESULT_VARIABLE GIT_LONG_RESULT
+				OUTPUT_VARIABLE GIT_COMMIT_LONG
+				OUTPUT_STRIP_TRAILING_WHITESPACE
+				ERROR_QUIET)
+execute_process(COMMAND git rev-parse --abbrev-ref HEAD
+				WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+				RESULT_VARIABLE GIT_BRANCH_RESULT
+				OUTPUT_VARIABLE GIT_BRANCH
+				OUTPUT_STRIP_TRAILING_WHITESPACE
+				ERROR_QUIET)
+
+if(NOT GIT_COMMIT_SHORT)
+	set(GIT_COMMIT_SHORT "unknown")
+endif()
+if(NOT GIT_COMMIT_LONG)
+	set(GIT_COMMIT_LONG "unknown")
+endif()
+if(NOT GIT_BRANCH)
+	set(GIT_BRANCH "unknown")
+endif()
+
+# Ensure variables do not contain surrounding quotes which would lead to
+# double-quoted string literals in the generated header.
+string(REGEX REPLACE "^\"(.*)\"$" "\\1" BUILD_TIMESTAMP "${BUILD_TIMESTAMP}")
+string(REGEX REPLACE "^\"(.*)\"$" "\\1" GIT_COMMIT_SHORT "${GIT_COMMIT_SHORT}")
+string(REGEX REPLACE "^\"(.*)\"$" "\\1" GIT_COMMIT_LONG "${GIT_COMMIT_LONG}")
+string(REGEX REPLACE "^\"(.*)\"$" "\\1" GIT_BRANCH "${GIT_BRANCH}")
+
+configure_file(${CMAKE_SOURCE_DIR}/cmake/build_info.h.in ${CMAKE_BINARY_DIR}/build_info.h @ONLY)
+include_directories(${CMAKE_BINARY_DIR})
+
 # Read CPACK_DEBIAN_PACKAGE_RELEASE from environment variable if set
 if(DEFINED ENV{CPACK_DEBIAN_RELEASE})
     set(CPACK_DEBIAN_PACKAGE_RELEASE "$ENV{CPACK_DEBIAN_RELEASE}")

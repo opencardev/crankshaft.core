@@ -19,6 +19,7 @@
 
 #include "ProfileManager.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QJsonArray>
@@ -598,6 +599,22 @@ bool ProfileManager::loadProfiles() {
   QString hostProfilesPath = QDir(m_configDir).filePath("host_profiles.json");
   QString vehicleProfilesPath = QDir(m_configDir).filePath("vehicle_profiles.json");
 
+  // Helper to resolve schema path. Prefer source-dir (when available),
+  // then installed locations relative to the application, then app data.
+  auto resolveSchema = [&](const QString& name) -> QString {
+#ifdef CRANKSHAFT_SOURCE_DIR
+    QString candidate = QString(CRANKSHAFT_SOURCE_DIR) + "/docs/schemas/" + name;
+    if (QFile::exists(candidate)) return candidate;
+#endif
+    QString appShare = QDir(QCoreApplication::applicationDirPath())
+                           .filePath("../share/crankshaft/docs/schemas/" + name);
+    if (QFile::exists(appShare)) return appShare;
+    QString data = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QString dataCandidate = QDir(data).filePath("docs/schemas/" + name);
+    if (QFile::exists(dataCandidate)) return dataCandidate;
+    return QString();
+  };
+
   // Load host profiles
   QFile hostFile(hostProfilesPath);
   if (hostFile.exists() && hostFile.open(QIODevice::ReadOnly)) {
@@ -606,9 +623,8 @@ bool ProfileManager::loadProfiles() {
     bool wholeDocValid = false;
     if (doc.isArray()) {
       try {
-        // locate schema file relative to source dir
-        QString schemaPath =
-            QString(CRANKSHAFT_SOURCE_DIR) + "/docs/schemas/host_profiles.schema.json";
+        // locate schema file (resolve via source dir or runtime fallbacks)
+        QString schemaPath = resolveSchema("host_profiles.schema.json");
         std::ifstream f(schemaPath.toStdString());
 #if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
         if (f.good()) {
@@ -656,8 +672,7 @@ bool ProfileManager::loadProfiles() {
           // schema
           bool itemValid = false;
           try {
-            QString schemaPath =
-                QString(CRANKSHAFT_SOURCE_DIR) + "/docs/schemas/host_profiles.schema.json";
+            QString schemaPath = resolveSchema("host_profiles.schema.json");
             std::ifstream f(schemaPath.toStdString());
 #if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
             if (f.good()) {
@@ -707,8 +722,7 @@ bool ProfileManager::loadProfiles() {
     bool wholeDocValid = false;
     if (doc.isArray()) {
       try {
-        QString schemaPath =
-            QString(CRANKSHAFT_SOURCE_DIR) + "/docs/schemas/vehicle_profiles.schema.json";
+        QString schemaPath = resolveSchema("vehicle_profiles.schema.json");
         std::ifstream f(schemaPath.toStdString());
 #if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
         if (f.good()) {
@@ -752,8 +766,7 @@ bool ProfileManager::loadProfiles() {
 
           bool itemValid = false;
           try {
-            QString schemaPath =
-                QString(CRANKSHAFT_SOURCE_DIR) + "/docs/schemas/vehicle_profiles.schema.json";
+            QString schemaPath = resolveSchema("vehicle_profiles.schema.json");
             std::ifstream f(schemaPath.toStdString());
 #if CRANKSHAFT_JSON_SCHEMA_VALIDATOR
             if (f.good()) {

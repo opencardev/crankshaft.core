@@ -397,14 +397,28 @@ QtObject {
                     label: "Version",
                     description: "Crankshaft version information",
                     type: "info",
-                    value: "1.0.0"
+                    value: Qt.application.version || "1.0.0"
                 },
                 {
                     key: "about.commit",
                     label: "Build Commit",
-                    description: "Git commit SHA",
+                    description: "Git commit SHA (short)",
                     type: "info",
-                    value: "development"
+                    value: (typeof buildCommitShort !== 'undefined') ? buildCommitShort : ((typeof buildCommitLong !== 'undefined') ? buildCommitLong : "development")
+                },
+                {
+                    key: "about.build_timestamp",
+                    label: "Build Timestamp",
+                    description: "Configure-time build timestamp",
+                    type: "info",
+                    value: (typeof buildTimestamp !== 'undefined') ? buildTimestamp : ""
+                },
+                {
+                    key: "about.branch",
+                    label: "Git Branch",
+                    description: "Branch at build time",
+                    type: "info",
+                    value: (typeof buildBranch !== 'undefined') ? buildBranch : ""
                 },
                 {
                     key: "about.license",

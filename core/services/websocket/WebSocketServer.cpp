@@ -24,6 +24,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
+#include "../android_auto/AndroidAutoService.h"
 #include "../eventbus/EventBus.h"
 #include "../logging/Logger.h"
 #include "../service_manager/ServiceManager.h"
@@ -58,11 +59,23 @@ void WebSocketServer::setServiceManager(ServiceManager* serviceManager) {
   Logger::instance().info("[WebSocketServer] ServiceManager registered");
 }
 
+void WebSocketServer::initializeServiceConnections() {
+  if (!m_serviceManager) {
+    Logger::instance().debug("[WebSocketServer] ServiceManager not available");
+    return;
+  }
+
+  Logger::instance().info("[WebSocketServer] Initializing service connections...");
+  setupAndroidAutoConnections();
+}
+
 void WebSocketServer::onNewConnection() {
   QWebSocket* client = m_server->nextPendingConnection();
 
   Logger::instance().info(
-      QString("New WebSocket connection from %1").arg(client->peerAddress().toString()));
+      QString("[WebSocketServer] New WebSocket connection from %1, Total clients: %2")
+          .arg(client->peerAddress().toString())
+          .arg(m_clients.size() + 1));
 
   connect(client, &QWebSocket::textMessageReceived, this, &WebSocketServer::onTextMessageReceived);
   connect(client, &QWebSocket::disconnected, this, &WebSocketServer::onClientDisconnected);
@@ -111,7 +124,38 @@ void WebSocketServer::onClientDisconnected() {
 void WebSocketServer::handleSubscribe(QWebSocket* client, const QString& topic) {
   if (!m_subscriptions[client].contains(topic)) {
     m_subscriptions[client].append(topic);
-    Logger::instance().info(QString("Client subscribed to topic: %1").arg(topic));
+    Logger::instance().info(QString("[WebSocketServer] Client subscribed to topic: %1").arg(topic));
+    Logger::instance().info(QString("[WebSocketServer] Client now has %1 subscriptions")
+                                .arg(m_subscriptions[client].size()));
+    for (const auto& sub : std::as_const(m_subscriptions[client])) {
+      Logger::instance().debug(QString("[WebSocketServer]   - %1").arg(sub));
+    }
+
+    // Send current Android Auto state when subscribing to android-auto topics
+    if (topic.startsWith("android-auto") && m_serviceManager) {
+      AndroidAutoService* aaService = m_serviceManager->getAndroidAutoService();
+      if (aaService) {
+        Logger::instance().info(
+            "[WebSocketServer] Sending current Android Auto state to new subscriber");
+        int currentState = static_cast<int>(aaService->getConnectionState());
+        onAndroidAutoStateChanged(currentState);
+
+        // If connected, also send device info
+        if (aaService->isConnected()) {
+          AndroidAutoService::AndroidDevice device = aaService->getConnectedDevice();
+          QVariantMap deviceMap;
+          deviceMap["serialNumber"] = device.serialNumber;
+          deviceMap["manufacturer"] = device.manufacturer;
+          deviceMap["model"] = device.model;
+          deviceMap["androidVersion"] = device.androidVersion;
+          deviceMap["connected"] = device.connected;
+          onAndroidAutoConnected(deviceMap);
+        }
+      }
+    }
+  } else {
+    Logger::instance().debug(
+        QString("[WebSocketServer] Client already subscribed to: %1").arg(topic));
   }
 }
 
@@ -197,6 +241,11 @@ void WebSocketServer::handleServiceCommand(QWebSocket* client, const QString& co
 }
 
 void WebSocketServer::broadcastEvent(const QString& topic, const QVariantMap& payload) {
+  Logger::instance().info(
+      QString("[WebSocketServer] broadcastEvent called - Topic: %1").arg(topic));
+  Logger::instance().info(
+      QString("[WebSocketServer] Payload keys: %1").arg(payload.keys().join(", ")));
+
   QJsonObject obj;
   obj["type"] = "event";
   obj["topic"] = topic;
@@ -206,16 +255,33 @@ void WebSocketServer::broadcastEvent(const QString& topic, const QVariantMap& pa
   QJsonDocument doc(obj);
   QString message = doc.toJson(QJsonDocument::Compact);
 
+  Logger::instance().info(QString("[WebSocketServer] Message JSON: %1").arg(message));
+  Logger::instance().info(
+      QString("[WebSocketServer] Number of connected clients: %1").arg(m_clients.size()));
+
   for (auto* client : std::as_const(m_clients)) {
     bool shouldSend = false;
+    Logger::instance().debug(QString("[WebSocketServer] Checking subscriptions for client %1")
+                                 .arg(m_clients.indexOf(client)));
+
     for (const QString& subscription : std::as_const(m_subscriptions[client])) {
+      Logger::instance().debug(
+          QString("[WebSocketServer]   Subscription pattern: %1, Topic: %2, Match: %3")
+              .arg(subscription)
+              .arg(topic)
+              .arg(topicMatches(topic, subscription) ? "YES" : "NO"));
       if (topicMatches(topic, subscription)) {
         shouldSend = true;
         break;
       }
     }
+
     if (shouldSend) {
+      Logger::instance().info(
+          QString("[WebSocketServer] Sending event to client (matched subscription)"));
       client->sendTextMessage(message);
+    } else {
+      Logger::instance().debug(QString("[WebSocketServer] Client has no matching subscription"));
     }
   }
 }
@@ -237,5 +303,90 @@ bool WebSocketServer::topicMatches(const QString& topic, const QString& pattern)
     return topic.startsWith(prefix + "/");
   }
 
+  // Handle MQTT-style '#' wildcard - matches everything including nested levels
+  if (pattern.endsWith("/#")) {
+    QString prefix = pattern.left(pattern.length() - 2);
+    return topic.startsWith(prefix + "/");
+  }
+
   return false;
+}
+
+void WebSocketServer::setupAndroidAutoConnections() {
+  if (!m_serviceManager) {
+    Logger::instance().warning(
+        "[WebSocketServer] ServiceManager not set, cannot setup Android Auto connections");
+    return;
+  }
+
+  AndroidAutoService* aaService = m_serviceManager->getAndroidAutoService();
+  if (!aaService) {
+    Logger::instance().warning(
+        "[WebSocketServer] Android Auto service not available - will not broadcast Android Auto "
+        "events");
+    return;
+  }
+
+  Logger::instance().info(
+      "[WebSocketServer] Setting up Android Auto service signal connections...");
+
+  // Connect Android Auto service signals to WebSocket broadcast methods
+  connect(aaService, &AndroidAutoService::connectionStateChanged, this,
+          [this](AndroidAutoService::ConnectionState state) {
+            onAndroidAutoStateChanged(static_cast<int>(state));
+          });
+  connect(aaService, &AndroidAutoService::connected, this,
+          [this](const AndroidAutoService::AndroidDevice& device) {
+            QVariantMap deviceMap;
+            deviceMap["serialNumber"] = device.serialNumber;
+            deviceMap["manufacturer"] = device.manufacturer;
+            deviceMap["model"] = device.model;
+            deviceMap["androidVersion"] = device.androidVersion;
+            deviceMap["connected"] = device.connected;
+            onAndroidAutoConnected(deviceMap);
+          });
+  connect(aaService, &AndroidAutoService::disconnected, this,
+          &WebSocketServer::onAndroidAutoDisconnected);
+  connect(aaService, &AndroidAutoService::errorOccurred, this,
+          &WebSocketServer::onAndroidAutoError);
+
+  Logger::instance().info("[WebSocketServer] Android Auto service connections setup");
+}
+
+void WebSocketServer::onAndroidAutoStateChanged(int state) {
+  Logger::instance().info(QString("[WebSocketServer] Android Auto state changed: %1").arg(state));
+  QVariantMap payload;
+  payload["state"] = state;
+
+  // Convert state enum to string
+  static const QStringList stateNames = {"DISCONNECTED",   "SEARCHING", "CONNECTING",
+                                         "AUTHENTICATING", "SECURING",  "CONNECTED",
+                                         "DISCONNECTING",  "ERROR"};
+
+  if (state >= 0 && state < stateNames.size()) {
+    payload["stateName"] = stateNames[state];
+    Logger::instance().info(
+        QString("[WebSocketServer] Broadcasting state: %1").arg(stateNames[state]));
+  }
+
+  broadcastEvent("android-auto/status/state-changed", payload);
+}
+
+void WebSocketServer::onAndroidAutoConnected(const QVariantMap& device) {
+  QVariantMap payload;
+  payload["device"] = device;
+  payload["connected"] = true;
+  broadcastEvent("android-auto/status/connected", payload);
+}
+
+void WebSocketServer::onAndroidAutoDisconnected() {
+  QVariantMap payload;
+  payload["connected"] = false;
+  broadcastEvent("android-auto/status/disconnected", payload);
+}
+
+void WebSocketServer::onAndroidAutoError(const QString& error) {
+  QVariantMap payload;
+  payload["error"] = error;
+  broadcastEvent("android-auto/status/error", payload);
 }

@@ -172,6 +172,7 @@ class RealAndroidAutoService : public AndroidAutoService {
   void handleConnectionLost();
   void updateStats();
   void transitionToState(ConnectionState newState);
+  void startUSBHubDetection();
 
   // Channel event handlers
   void onVideoChannelUpdate(const QByteArray& data, int width, int height);
@@ -186,6 +187,7 @@ class RealAndroidAutoService : public AndroidAutoService {
   void onVideoFrame(const uint8_t* data, int size, int width, int height);
   void onAudioData(const QByteArray& data);
   void onUSBHotplug(bool connected);
+  void checkForConnectedDevices();  // Fallback device detection
 
   // Transport mode configuration
   enum class TransportMode { Auto, USB, Wireless };
@@ -209,6 +211,7 @@ class RealAndroidAutoService : public AndroidAutoService {
   std::shared_ptr<boost::asio::io_service> m_ioService;
   std::unique_ptr<QThread> m_aasdkThread;
   QTimer* m_ioServiceTimer{nullptr};
+  QTimer* m_deviceDetectionTimer{nullptr};  // Fallback device detection timer
 
   // Transport configuration
   TransportMode m_transportMode{TransportMode::Auto};
@@ -218,6 +221,13 @@ class RealAndroidAutoService : public AndroidAutoService {
 
   // Strands for channel operations
   std::unique_ptr<boost::asio::io_service::strand> m_strand;
+
+  // AOAP negotiation state
+  bool m_aoapInProgress{false};
+  int m_aoapAttempts{0};
+  QTimer* m_aoapRetryResetTimer{nullptr};
+  static constexpr int m_aoapMaxAttempts = 3;
+  static constexpr int m_aoapResetMs = 5 * 60 * 1000;  // 5 minutes
 
   // Pointers to AASDK objects (owned by io_service)
   std::shared_ptr<aasdk::usb::IUSBWrapper> m_usbWrapper;

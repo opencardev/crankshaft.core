@@ -17,9 +17,12 @@
  *  along with Crankshaft. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QByteArray>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QCoreApplication>
+#include <QString>
+#include <aasdk/Common/ModernLogger.hpp>
 
 #include "services/android_auto/AndroidAutoService.h"
 #include "services/config/ConfigService.h"
@@ -28,11 +31,35 @@
 #include "services/profile/ProfileManager.h"
 #include "services/service_manager/ServiceManager.h"
 #include "services/websocket/WebSocketServer.h"
+#if defined(__has_include)
+#if __has_include("build_info.h")
+#include "build_info.h"
+#elif __has_include("../cmake/build_info.h")
+#include "../cmake/build_info.h"
+#else
+#define CRANKSHAFT_BUILD_TIMESTAMP ""
+#define CRANKSHAFT_GIT_COMMIT_SHORT "unknown"
+#define CRANKSHAFT_GIT_COMMIT_LONG "unknown"
+#define CRANKSHAFT_GIT_BRANCH "unknown"
+#endif
+#else
+#include "build_info.h"
+#endif
 
 int main(int argc, char* argv[]) {
   QCoreApplication app(argc, argv);
   QCoreApplication::setApplicationName("Crankshaft Core");
   QCoreApplication::setApplicationVersion("0.1.0");
+
+  // Quick argv scan for legacy/early CLI parsing: allow --verbose-usb or -v
+  bool verboseUsbArgPresent = false;
+  for (int i = 1; i < argc; ++i) {
+    const QByteArray arg = QByteArray::fromRawData(argv[i], static_cast<int>(strlen(argv[i])));
+    if (arg == "--verbose-usb" || arg == "-v") {
+      verboseUsbArgPresent = true;
+      break;
+    }
+  }
 
   // Parse command line arguments
   QCommandLineParser parser;
@@ -48,11 +75,44 @@ int main(int argc, char* argv[]) {
                                   "config", "../config/crankshaft.json");
   parser.addOption(configOption);
 
+  // Long-only option to avoid short-name conflicts with existing options
+  QCommandLineOption verboseUsbOption(
+      QStringList() << "verbose-usb",
+      "Enable verbose AASDK USB logging (or use env AASDK_VERBOSE_USB=1)");
+  parser.addOption(verboseUsbOption);
+
   parser.process(app);
+
+  // Enable AASDK verbose USB logging if requested via env var, CLI option or raw argv
+  bool verboseUsb = false;
+  const QByteArray ev = qgetenv("AASDK_VERBOSE_USB");
+  if (!ev.isEmpty()) {
+    QByteArray lower = ev.toLower();
+    verboseUsb = (lower == "1" || lower == "true" || lower == "yes");
+  }
+  if (!verboseUsb && (parser.isSet(verboseUsbOption) || verboseUsbArgPresent)) {
+    verboseUsb = true;
+  }
+
+  if (verboseUsb) {
+    try {
+      aasdk::common::ModernLogger::getInstance().setVerboseUsb(true);
+    } catch (...) {
+      // best effort - do not fail startup if logger not available
+    }
+  }
 
   // Initialise logger
   Logger::instance().setLevel(Logger::Level::Info);
   Logger::instance().info("Starting Crankshaft Core...");
+
+  // Log build details
+  Logger::instance().info(
+      QString("Build timestamp: %1, commit(short): %2, commit(long): %3, branch: %4")
+          .arg(QString::fromUtf8(CRANKSHAFT_BUILD_TIMESTAMP))
+          .arg(QString::fromUtf8(CRANKSHAFT_GIT_COMMIT_SHORT))
+          .arg(QString::fromUtf8(CRANKSHAFT_GIT_COMMIT_LONG))
+          .arg(QString::fromUtf8(CRANKSHAFT_GIT_BRANCH)));
 
   // Load configuration
   QString configPath = parser.value(configOption);
@@ -110,6 +170,9 @@ int main(int argc, char* argv[]) {
     Logger::instance().warning("No services started successfully");
   }
   Logger::instance().info("=== Service Initialisation Complete ===");
+
+  // Initialize WebSocket connections to services (after services are started)
+  server.initializeServiceConnections();
 
   Logger::instance().info("Crankshaft Core started successfully");
   Logger::instance().info("Core services ready");

@@ -28,6 +28,17 @@ FetchContent_MakeAvailable(Catch2)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Bluetooth Test)
 
+# Some tests pull in core implementation files that depend on system libraries
+# (GStreamer, libusb). Ensure we can find those and link them for the test
+# executables so the test binaries are self-contained.
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
+pkg_check_modules(GSTREAMER_APP REQUIRED gstreamer-app-1.0)
+pkg_check_modules(GSTREAMER_VIDEO REQUIRED gstreamer-video-1.0)
+pkg_check_modules(GSTREAMER_AUDIO REQUIRED gstreamer-audio-1.0)
+pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+pkg_check_modules(DBUS REQUIRED dbus-1)
+
 # Test for EventBus
 add_executable(test_eventbus 
   test_eventbus.cpp
@@ -61,6 +72,15 @@ add_executable(test_websocket
   ../core/services/profile/ProfileManager.cpp
   ../core/hal/multimedia/MediaPipeline.cpp
   ../core/services/android_auto/AndroidAutoService.cpp
+  ../core/hal/multimedia/AudioHAL.cpp
+  ../core/hal/multimedia/VideoHAL.cpp
+  ../core/services/android_auto/MockAndroidAutoService.cpp
+  ../core/services/android_auto/RealAndroidAutoService.cpp
+  ../core/services/android_auto/ProtocolHelpers.cpp
+  ../core/hal/multimedia/GStreamerVideoDecoder.cpp
+  ../core/hal/multimedia/IVideoDecoder.cpp
+  ../core/hal/multimedia/IAudioMixer.cpp
+  ../core/hal/multimedia/AudioMixer.cpp
 )
 
 set_target_properties(test_websocket PROPERTIES
@@ -70,6 +90,16 @@ set_target_properties(test_websocket PROPERTIES
 
 target_include_directories(test_websocket PRIVATE
   ${CMAKE_SOURCE_DIR}/core
+  ${GSTREAMER_INCLUDE_DIRS}
+  ${GSTREAMER_APP_INCLUDE_DIRS}
+  ${GSTREAMER_VIDEO_INCLUDE_DIRS}
+  ${GSTREAMER_AUDIO_INCLUDE_DIRS}
+  ${LIBUSB_INCLUDE_DIRS}
+  # Fallback include path for aap_protobuf generated headers when aasdk is built
+  ${CMAKE_BINARY_DIR}/aasdk/protobuf
+  # aasdk public headers (source and generated build include)
+  ${CMAKE_SOURCE_DIR}/external/aasdk/include
+  ${CMAKE_BINARY_DIR}/aasdk/include
 )
 
 target_link_libraries(test_websocket PRIVATE
@@ -80,6 +110,13 @@ target_link_libraries(test_websocket PRIVATE
   Qt6::Bluetooth
   Qt6::Gui
   Qt6::Test
+  ${GSTREAMER_LIBRARIES}
+  ${GSTREAMER_APP_LIBRARIES}
+  ${GSTREAMER_VIDEO_LIBRARIES}
+  ${GSTREAMER_AUDIO_LIBRARIES}
+  ${DBUS_LIBRARIES}
+  ${LIBUSB_LIBRARIES}
+  aasdk
 )
 
 add_test(NAME WebSocketTest COMMAND test_websocket)
