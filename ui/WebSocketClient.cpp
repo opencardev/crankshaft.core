@@ -44,7 +44,7 @@ bool WebSocketClient::isConnected() const {
 void WebSocketClient::subscribe(const QString& topic) {
   qDebug() << "[WebSocketClient] subscribe() called with topic:" << topic;
   qDebug() << "[WebSocketClient] Connected?" << (isConnected() ? "YES" : "NO");
-  
+
   if (!m_subscriptions.contains(topic)) {
     m_subscriptions.append(topic);
     qDebug() << "[WebSocketClient] Added to local subscriptions";

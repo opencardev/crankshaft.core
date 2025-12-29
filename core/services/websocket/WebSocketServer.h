@@ -47,7 +47,7 @@ class WebSocketServer : public QObject {
   void onNewConnection();
   void onTextMessageReceived(const QString& message);
   void onClientDisconnected();
-  
+
   // Android Auto service events
   void onAndroidAutoStateChanged(int state);
   void onAndroidAutoConnected(const QVariantMap& device);

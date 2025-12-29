@@ -49,11 +49,10 @@
 #include <aasdk/USB/AOAPDevice.hpp>
 #include <aasdk/USB/AccessoryModeQueryChainFactory.hpp>
 #include <aasdk/USB/AccessoryModeQueryFactory.hpp>
-#include <aasdk/USB/USBHub.hpp>
 #include <aasdk/USB/IAccessoryModeQueryChain.hpp>
+#include <aasdk/USB/USBHub.hpp>
 #include <aasdk/USB/USBWrapper.hpp>
 #include <boost/asio.hpp>
-
 #include <chrono>
 #include <iomanip>
 #include <sstream>
@@ -66,10 +65,10 @@ static std::string getTimestamp() {
   auto now = std::chrono::system_clock::now();
   auto time = std::chrono::system_clock::to_time_t(now);
   auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-  
+
   std::ostringstream oss;
-  oss << std::put_time(std::localtime(&time), "%Y-%m-%dT%H:%M:%S")
-      << '.' << std::setfill('0') << std::setw(3) << ms.count();
+  oss << std::put_time(std::localtime(&time), "%Y-%m-%dT%H:%M:%S") << '.' << std::setfill('0')
+      << std::setw(3) << ms.count();
   return oss.str();
 }
 
@@ -77,14 +76,18 @@ static std::string getTimestamp() {
  * @brief Log info message with timestamp prefix
  */
 static void logInfo(const std::string& msg) {
-  Logger::instance().info(QString("[%1] INFO: %2").arg(QString::fromStdString(getTimestamp()), QString::fromStdString(msg)));
+  Logger::instance().info(
+      QString("[%1] INFO: %2")
+          .arg(QString::fromStdString(getTimestamp()), QString::fromStdString(msg)));
 }
 
 /**
  * @brief Log error message with timestamp prefix
  */
 static void logError(const std::string& msg) {
-  Logger::instance().error(QString("[%1] ERROR: %2").arg(QString::fromStdString(getTimestamp()), QString::fromStdString(msg)));
+  Logger::instance().error(
+      QString("[%1] ERROR: %2")
+          .arg(QString::fromStdString(getTimestamp()), QString::fromStdString(msg)));
 }
 
 RealAndroidAutoService::RealAndroidAutoService(MediaPipeline* mediaPipeline, QObject* parent)
@@ -760,7 +763,7 @@ bool RealAndroidAutoService::startSearching() {
     if (m_state != ConnectionState::SEARCHING) {
       return;  // State changed, abort
     }
-    
+
     logInfo("[RealAndroidAutoService] Starting USB hub detection after initial delay");
     startUSBHubDetection();
   });
@@ -798,7 +801,8 @@ void RealAndroidAutoService::startUSBHubDetection() {
         }
       },
       [this](const aasdk::error::Error& error) {
-        logError(QString("USB hub error: %1").arg(QString::fromStdString(error.what())).toStdString());
+        logError(
+            QString("USB hub error: %1").arg(QString::fromStdString(error.what())).toStdString());
         transitionToState(ConnectionState::DISCONNECTED);
       });
   m_usbHub->start(std::move(promise));
@@ -807,12 +811,15 @@ void RealAndroidAutoService::startUSBHubDetection() {
   if (m_deviceDetectionTimer == nullptr) {
     m_deviceDetectionTimer = new QTimer(this);
     m_deviceDetectionTimer->setObjectName("AADeviceDetectionTimer");
-    connect(m_deviceDetectionTimer, &QTimer::timeout, this, &RealAndroidAutoService::checkForConnectedDevices);
-    
+    connect(m_deviceDetectionTimer, &QTimer::timeout, this,
+            &RealAndroidAutoService::checkForConnectedDevices);
+
     // Check more frequently initially (every 500ms for first 10 seconds), then slow down
     m_deviceDetectionTimer->start(500);
-    logInfo("[RealAndroidAutoService] Started periodic device detection timer (checking every 500ms initially)");
-    
+    logInfo(
+        "[RealAndroidAutoService] Started periodic device detection timer (checking every 500ms "
+        "initially)");
+
     // After 10 seconds, reduce frequency to every 2 seconds
     QTimer::singleShot(10000, this, [this]() {
       if (m_deviceDetectionTimer && m_state == ConnectionState::SEARCHING) {
@@ -821,7 +828,7 @@ void RealAndroidAutoService::startUSBHubDetection() {
       }
     });
   }
-  
+
   // Trigger an immediate device check (don't wait for first timer tick)
   QTimer::singleShot(100, this, [this]() {
     if (m_state == ConnectionState::SEARCHING) {
@@ -836,11 +843,11 @@ void RealAndroidAutoService::startUSBHubDetection() {
 void RealAndroidAutoService::stopSearching() {
   if (m_state == ConnectionState::SEARCHING) {
     m_usbHub->cancel();
-    
+
     if (m_deviceDetectionTimer) {
       m_deviceDetectionTimer->stop();
     }
-    
+
     transitionToState(ConnectionState::DISCONNECTED);
     Logger::instance().info("Stopped searching for devices");
   }
@@ -1142,19 +1149,19 @@ void RealAndroidAutoService::checkForConnectedDevices() {
 
   static int checkCount = 0;
   checkCount++;
-  
+
   try {
     aasdk::usb::DeviceListHandle listHandle;
     auto count = m_usbWrapper->getDeviceList(listHandle);
-    
+
     if (count < 0 || !listHandle) {
       if (checkCount <= 5 || checkCount % 10 == 0) {  // Log first 5 times, then every 10th
-        Logger::instance().debug(QString("[RealAndroidAutoService] USB device list error (check #%1)")
-                                     .arg(checkCount));
+        Logger::instance().debug(
+            QString("[RealAndroidAutoService] USB device list error (check #%1)").arg(checkCount));
       }
       return;
     }
-    
+
     bool foundGoogleDevice = false;
     bool foundAoapDevice = false;
     int googleDeviceCount = 0;
@@ -1166,13 +1173,15 @@ void RealAndroidAutoService::checkForConnectedDevices() {
         if (desc.idVendor == 0x18D1) {
           googleDeviceCount++;
           foundGoogleDevice = true;
-          
+
           if (checkCount <= 5 || checkCount % 5 == 0) {  // Log more frequently initially
-            logInfo(QString("[RealAndroidAutoService] Check #%1: Found Google device: vid=0x%2 pid=0x%3")
-                        .arg(checkCount)
-                        .arg(QString::asprintf("%04x", desc.idVendor))
-                        .arg(QString::asprintf("%04x", desc.idProduct))
-                        .toStdString());
+            logInfo(
+                QString(
+                    "[RealAndroidAutoService] Check #%1: Found Google device: vid=0x%2 pid=0x%3")
+                    .arg(checkCount)
+                    .arg(QString::asprintf("%04x", desc.idVendor))
+                    .arg(QString::asprintf("%04x", desc.idProduct))
+                    .toStdString());
           }
 
           // If it's already in AOAP mode, let USBHub handle it
@@ -1189,30 +1198,33 @@ void RealAndroidAutoService::checkForConnectedDevices() {
 
           // Respect maximum attempt limit to avoid tight retry loops
           if (m_aoapAttempts >= m_aoapMaxAttempts) {
-            logInfo(QString("[RealAndroidAutoService] Skipping AOAP attempt: reached max attempts (%1)")
-                        .arg(m_aoapMaxAttempts)
-                        .toStdString());
+            logInfo(
+                QString("[RealAndroidAutoService] Skipping AOAP attempt: reached max attempts (%1)")
+                    .arg(m_aoapMaxAttempts)
+                    .toStdString());
             return;
           }
 
           // Try to open device and initiate AOAP negotiation
           aasdk::usb::DeviceHandle handle;
           int openResult = m_usbWrapper->open(dev, handle);
-          logInfo(QString("[RealAndroidAutoService] Open device result: %1").arg(openResult).toStdString());
-          
+          logInfo(QString("[RealAndroidAutoService] Open device result: %1")
+                      .arg(openResult)
+                      .toStdString());
+
           if (openResult == 0 && handle) {
             logInfo("[RealAndroidAutoService] Opened device for AOAP negotiation");
-            
+
             if (m_queryChainFactory && m_ioService) {
               m_aoapInProgress = true;
               logInfo("[RealAndroidAutoService] Creating AccessoryModeQueryChain...");
               auto chain = m_queryChainFactory->create();
               // Use io_service directly, not strand, for the promise
               auto aoapPromise = aasdk::usb::IAccessoryModeQueryChain::Promise::defer(*m_ioService);
-              
+
               auto onSuccess = [this](aasdk::usb::DeviceHandle devHandle) {
                 m_aoapInProgress = false;
-                m_aoapAttempts = 0; // reset attempts on success
+                m_aoapAttempts = 0;  // reset attempts on success
                 if (m_aoapRetryResetTimer) {
                   m_aoapRetryResetTimer->stop();
                 }
@@ -1226,7 +1238,7 @@ void RealAndroidAutoService::checkForConnectedDevices() {
                   });
                 }
               };
-              
+
               auto onError = [this](const aasdk::error::Error& error) {
                 m_aoapInProgress = false;
                 m_aoapAttempts++;
@@ -1235,7 +1247,8 @@ void RealAndroidAutoService::checkForConnectedDevices() {
                              .arg(QString::fromStdString(error.what()))
                              .toStdString());
                 if (m_aoapAttempts >= m_aoapMaxAttempts) {
-                  logInfo(QString("[RealAndroidAutoService] Reached %1 AOAP attempts, pausing retries for %2 ms")
+                  logInfo(QString("[RealAndroidAutoService] Reached %1 AOAP attempts, pausing "
+                                  "retries for %2 ms")
                               .arg(m_aoapMaxAttempts)
                               .arg(m_aoapResetMs)
                               .toStdString());
@@ -1244,7 +1257,9 @@ void RealAndroidAutoService::checkForConnectedDevices() {
                     m_aoapRetryResetTimer = new QTimer(this);
                     m_aoapRetryResetTimer->setSingleShot(true);
                     connect(m_aoapRetryResetTimer, &QTimer::timeout, this, [this]() {
-                      logInfo("[RealAndroidAutoService] AOAP attempt window reset; allowing retries again");
+                      logInfo(
+                          "[RealAndroidAutoService] AOAP attempt window reset; allowing retries "
+                          "again");
                       m_aoapAttempts = 0;
                     });
                   }
@@ -1259,20 +1274,22 @@ void RealAndroidAutoService::checkForConnectedDevices() {
                   });
                 }
               };
-              
+
               aoapPromise->then(onSuccess, onError);
-              
+
               logInfo("[RealAndroidAutoService] Starting AOAP query chain...");
               try {
                 chain->start(std::move(handle), std::move(aoapPromise));
                 logInfo("[RealAndroidAutoService] AOAP chain started successfully");
-                
+
                 // Set a timeout to check if device re-enumerated in AOAP mode
                 // The chain may take longer on some devices; give it more time
                 if (m_deviceDetectionTimer) {
                   QTimer::singleShot(8000, this, [this]() {
                     if (m_aoapInProgress) {
-                      logInfo("[RealAndroidAutoService] AOAP timeout - checking if device re-enumerated...");
+                      logInfo(
+                          "[RealAndroidAutoService] AOAP timeout - checking if device "
+                          "re-enumerated...");
                       // This will trigger another device check which will look for AOAP mode
                       if (m_state == ConnectionState::SEARCHING) {
                         m_aoapInProgress = false;  // Reset flag to allow retry
@@ -1282,35 +1299,42 @@ void RealAndroidAutoService::checkForConnectedDevices() {
                   });
                 }
               } catch (const std::exception& e) {
-                logError(QString("[RealAndroidAutoService] Exception starting AOAP chain: %1").arg(e.what()).toStdString());
+                logError(QString("[RealAndroidAutoService] Exception starting AOAP chain: %1")
+                             .arg(e.what())
+                             .toStdString());
                 m_aoapInProgress = false;
                 if (m_deviceDetectionTimer && m_state == ConnectionState::SEARCHING) {
                   m_deviceDetectionTimer->start();
                 }
               }
-              
+
               // Stop the detection timer since we're attempting AOAP
               if (m_deviceDetectionTimer) {
                 m_deviceDetectionTimer->stop();
               }
               // Increment attempt counter and guard against too many attempts
               m_aoapAttempts++;
-              Logger::instance().debug(QString("[RealAndroidAutoService] AOAP attempt %1 started").arg(m_aoapAttempts));
+              Logger::instance().debug(
+                  QString("[RealAndroidAutoService] AOAP attempt %1 started").arg(m_aoapAttempts));
             } else {
-              Logger::instance().warning("[RealAndroidAutoService] Query chain factory or strand not available");
+              Logger::instance().warning(
+                  "[RealAndroidAutoService] Query chain factory or strand not available");
               m_aoapInProgress = false;
             }
           } else {
-            Logger::instance().warning(QString("[RealAndroidAutoService] Failed to open device for AOAP (result=%1)").arg(openResult));
+            Logger::instance().warning(
+                QString("[RealAndroidAutoService] Failed to open device for AOAP (result=%1)")
+                    .arg(openResult));
           }
         }
       }
     }
-    
+
     // Log summary at end of check (periodically)
     if (checkCount <= 3 || checkCount % 10 == 0) {
       if (foundGoogleDevice) {
-        logInfo(QString("[RealAndroidAutoService] Check #%1 summary: Found %2 Google device(s), AOAP in progress: %3, attempts: %4/%5")
+        logInfo(QString("[RealAndroidAutoService] Check #%1 summary: Found %2 Google device(s), "
+                        "AOAP in progress: %3, attempts: %4/%5")
                     .arg(checkCount)
                     .arg(googleDeviceCount)
                     .arg(m_aoapInProgress ? "yes" : "no")
@@ -1324,7 +1348,8 @@ void RealAndroidAutoService::checkForConnectedDevices() {
       }
     }
   } catch (const std::exception& e) {
-    Logger::instance().debug(QString("[RealAndroidAutoService] Device check error: %1").arg(e.what()));
+    Logger::instance().debug(
+        QString("[RealAndroidAutoService] Device check error: %1").arg(e.what()));
   }
 }
 

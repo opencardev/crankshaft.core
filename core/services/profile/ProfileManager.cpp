@@ -19,13 +19,13 @@
 
 #include "ProfileManager.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QStandardPaths>
-#include <QCoreApplication>
 #include <QUuid>
 #include <fstream>
 
