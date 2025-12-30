@@ -125,7 +125,7 @@ Rectangle {
                     Layout.preferredWidth: 12
                     Layout.preferredHeight: 12
                     radius: 6
-                    color: androidAutoScreen.statusColor
+                    color: AndroidAutoStatus.statusColor
                     
                     Behavior on color {
                         ColorAnimation { duration: 300 }
@@ -137,7 +137,7 @@ Rectangle {
                     color: '#FFFFFF'
                     font.pixelSize: 14
                     font.family: 'Roboto'
-                    text: androidAutoScreen.statusText
+                    text: AndroidAutoStatus.statusText
                 }
 
                 Item { Layout.fillWidth: true }

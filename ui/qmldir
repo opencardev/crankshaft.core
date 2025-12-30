@@ -11,6 +11,7 @@ WiFiSettingsPage 1.0 qml/screens/WiFiSettingsPage.qml
 BluetoothSettingsPage 1.0 qml/screens/BluetoothSettingsPage.qml
 singleton SettingsModel 1.0 qml/models/SettingsModel.qml
 singleton Strings 1.0 qml/models/Strings.qml
+singleton AndroidAutoStatus 1.0 qml/models/AndroidAutoStatus.qml
 AppButton 1.0 qml/components/AppButton.qml
 Card 1.0 qml/components/Card.qml
 Icon 1.0 qml/components/Icon.qml
