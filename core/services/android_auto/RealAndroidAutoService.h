@@ -112,7 +112,9 @@ class RealAndroidAutoService : public AndroidAutoService {
   ~RealAndroidAutoService() override;
 
   void configureTransport(const QMap<QString, QVariant>& settings) override;
-  void setEventBus(EventBus* eventBus) { m_eventBus = eventBus; }
+  void setEventBus(EventBus* eventBus) {
+    m_eventBus = eventBus;
+  }
 
   bool initialise() override;
   void deinitialise() override;

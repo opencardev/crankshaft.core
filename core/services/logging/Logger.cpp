@@ -39,7 +39,7 @@ void Logger::setLevel(Level level) {
 void Logger::setLogFile(const QString& filePath) {
   m_logFile = filePath;
   m_currentLogSize = 0;
-  
+
   // Check initial log file size
   if (!m_logFile.isEmpty()) {
     QFileInfo fileInfo(m_logFile);
@@ -78,19 +78,20 @@ void Logger::fatal(const QString& message) {
 }
 
 void Logger::logStructured(Level level, const QString& component, const QString& message,
-                            const QJsonObject& context) {
+                           const QJsonObject& context) {
   if (level < m_level) return;
 
   QJsonObject logEntry = createLogEntry(level, component, message, context);
   QJsonDocument doc(logEntry);
-  
+
   QString logMessage;
   if (m_jsonFormat) {
     logMessage = QString::fromUtf8(doc.toJson(QJsonDocument::Compact));
   } else {
     // Fallback to readable format
-    logMessage = QString("[%1] %2 (%3): %4")
-                     .arg(logEntry["timestamp"].toString(), levelToString(level), component, message);
+    logMessage =
+        QString("[%1] %2 (%3): %4")
+            .arg(logEntry["timestamp"].toString(), levelToString(level), component, message);
   }
 
   // Console output
@@ -137,10 +138,11 @@ void Logger::log(Level level, const QString& message) {
 
 void Logger::rotateLogIfNeeded() {
   if (m_currentLogSize >= m_maxLogSize && !m_logFile.isEmpty()) {
-    QString rotatedFile = m_logFile + "." + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss");
+    QString rotatedFile =
+        m_logFile + "." + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss");
     QFile::rename(m_logFile, rotatedFile);
     m_currentLogSize = 0;
-    
+
     // Clean up old rotated logs (keep last 5)
     QFileInfo fileInfo(m_logFile);
     QDir dir = fileInfo.dir();
@@ -148,7 +150,7 @@ void Logger::rotateLogIfNeeded() {
     filters << (fileInfo.baseName() + "*");
     dir.setFilter(QDir::Files);
     dir.setSorting(QDir::Time);
-    
+
     QFileInfoList logs = dir.entryInfoList(filters);
     while (logs.count() > 5) {
       QFile::remove(logs.last().filePath());
@@ -157,22 +159,21 @@ void Logger::rotateLogIfNeeded() {
   }
 }
 
-QJsonObject Logger::createLogEntry(Level level, const QString& component,
-                                    const QString& message,
-                                    const QJsonObject& context) const {
+QJsonObject Logger::createLogEntry(Level level, const QString& component, const QString& message,
+                                   const QJsonObject& context) const {
   QJsonObject entry;
-  
+
   entry["timestamp"] = QDateTime::currentDateTime().toString(Qt::ISODate);
   entry["level"] = levelToString(level);
   entry["component"] = component;
   entry["message"] = message;
   entry["thread"] = QString::number(reinterpret_cast<qint64>(QThread::currentThread()));
-  
+
   // Merge context if provided
   for (auto it = context.constBegin(); it != context.constEnd(); ++it) {
     entry[it.key()] = it.value();
   }
-  
+
   return entry;
 }
 

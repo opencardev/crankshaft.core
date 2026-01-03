@@ -37,19 +37,15 @@ MediaService::MediaService(AudioRouter* audioRouter, QObject* parent)
   // Connect QMediaPlayer signals
   connect(m_mediaPlayer, &QMediaPlayer::playbackStateChanged, this,
           &MediaService::onPlaybackStateChanged);
-  connect(m_mediaPlayer, &QMediaPlayer::positionChanged, this,
-          &MediaService::onPositionChanged);
-  connect(m_mediaPlayer, &QMediaPlayer::durationChanged, this,
-          &MediaService::onDurationChanged);
+  connect(m_mediaPlayer, &QMediaPlayer::positionChanged, this, &MediaService::onPositionChanged);
+  connect(m_mediaPlayer, &QMediaPlayer::durationChanged, this, &MediaService::onDurationChanged);
   connect(m_mediaPlayer, &QMediaPlayer::mediaStatusChanged, this,
           &MediaService::onMediaStatusChanged);
-  connect(m_mediaPlayer, &QMediaPlayer::errorOccurred, this,
-          &MediaService::onErrorOccurred);
+  connect(m_mediaPlayer, &QMediaPlayer::errorOccurred, this, &MediaService::onErrorOccurred);
 
   // Volume changed signal via QAudioOutput
   if (m_audioOutput) {
-    connect(m_audioOutput, &QAudioOutput::volumeChanged, this,
-            &MediaService::onVolumeChanged);
+    connect(m_audioOutput, &QAudioOutput::volumeChanged, this, &MediaService::onVolumeChanged);
   }
 }
 
@@ -88,9 +84,9 @@ bool MediaService::play(const QString& filePath) {
 
   // Store track list (all files in same directory)
   QDir dir(QFileInfo(filePath).absolutePath());
-  const QStringList filters = {QStringLiteral("*.mp3"), QStringLiteral("*.wav"),
-                                QStringLiteral("*.flac"), QStringLiteral("*.m4a"),
-                                QStringLiteral("*.ogg"), QStringLiteral("*.aac")};
+  const QStringList filters = {QStringLiteral("*.mp3"),  QStringLiteral("*.wav"),
+                               QStringLiteral("*.flac"), QStringLiteral("*.m4a"),
+                               QStringLiteral("*.ogg"),  QStringLiteral("*.aac")};
   m_trackList = dir.entryList(filters, QDir::Files | QDir::NoSymLinks);
 
   // Find current file in list
@@ -134,8 +130,7 @@ void MediaService::skip(int direction) {
     nextIndex = 0;
   }
 
-  if (nextIndex != m_currentTrackIndex && nextIndex >= 0 &&
-      nextIndex < m_trackList.size()) {
+  if (nextIndex != m_currentTrackIndex && nextIndex >= 0 && nextIndex < m_trackList.size()) {
     m_currentTrackIndex = nextIndex;
     const QString nextFile = QFileInfo(m_currentFilePath).absolutePath() + QStringLiteral("/") +
                              m_trackList.at(nextIndex);
@@ -169,8 +164,8 @@ int MediaService::volume() const {
 QVariantMap MediaService::currentMedia() const {
   QVariantMap info;
   info[QStringLiteral("filename")] = QFileInfo(m_currentFilePath).fileName();
-  info[QStringLiteral("title")] = m_mediaTitle.isEmpty() ? info[QStringLiteral("filename")]
-                                                          : m_mediaTitle;
+  info[QStringLiteral("title")] =
+      m_mediaTitle.isEmpty() ? info[QStringLiteral("filename")] : m_mediaTitle;
   info[QStringLiteral("artist")] = m_mediaArtist;
   info[QStringLiteral("album")] = m_mediaAlbum;
   info[QStringLiteral("duration")] = m_mediaDuration;

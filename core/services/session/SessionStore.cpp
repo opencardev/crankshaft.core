@@ -64,19 +64,18 @@ bool SessionStore::createSchema() {
   QSqlQuery query(*m_db);
 
   // Create android_devices table
-  if (!query.exec(QStringLiteral(
-          "CREATE TABLE IF NOT EXISTS android_devices ("
-          "  id TEXT PRIMARY KEY,"
-          "  model TEXT NOT NULL,"
-          "  android_version TEXT,"
-          "  connection_type TEXT CHECK(connection_type IN ('wired', 'wireless')),"
-          "  paired INTEGER NOT NULL DEFAULT 0,"
-          "  last_seen INTEGER NOT NULL,"
-          "  capabilities TEXT"
-          ")"))) {
-    Logger::instance().error(
-        QString("[SessionStore] Failed to create android_devices table: %1")
-            .arg(query.lastError().text()));
+  if (!query.exec(
+          QStringLiteral("CREATE TABLE IF NOT EXISTS android_devices ("
+                         "  id TEXT PRIMARY KEY,"
+                         "  model TEXT NOT NULL,"
+                         "  android_version TEXT,"
+                         "  connection_type TEXT CHECK(connection_type IN ('wired', 'wireless')),"
+                         "  paired INTEGER NOT NULL DEFAULT 0,"
+                         "  last_seen INTEGER NOT NULL,"
+                         "  capabilities TEXT"
+                         ")"))) {
+    Logger::instance().error(QString("[SessionStore] Failed to create android_devices table: %1")
+                                 .arg(query.lastError().text()));
     return false;
   }
 
@@ -91,9 +90,8 @@ bool SessionStore::createSchema() {
           "  last_heartbeat INTEGER NOT NULL,"
           "  FOREIGN KEY (device_id) REFERENCES android_devices(id)"
           ")"))) {
-    Logger::instance().error(
-        QString("[SessionStore] Failed to create sessions table: %1")
-            .arg(query.lastError().text()));
+    Logger::instance().error(QString("[SessionStore] Failed to create sessions table: %1")
+                                 .arg(query.lastError().text()));
     return false;
   }
 
@@ -102,10 +100,10 @@ bool SessionStore::createSchema() {
 
 bool SessionStore::createDevice(const QString& deviceId, const QVariantMap& deviceInfo) {
   QSqlQuery query(*m_db);
-  query.prepare(
-      QStringLiteral("INSERT INTO android_devices "
-                     "(id, model, android_version, connection_type, paired, last_seen, capabilities) "
-                     "VALUES (?, ?, ?, ?, ?, ?, ?)"));
+  query.prepare(QStringLiteral(
+      "INSERT INTO android_devices "
+      "(id, model, android_version, connection_type, paired, last_seen, capabilities) "
+      "VALUES (?, ?, ?, ?, ?, ?, ?)"));
 
   query.addBindValue(deviceId);
   query.addBindValue(deviceInfo.value("model", "").toString());
@@ -114,7 +112,8 @@ bool SessionStore::createDevice(const QString& deviceId, const QVariantMap& devi
   query.addBindValue(deviceInfo.value("paired", false).toBool() ? 1 : 0);
   query.addBindValue(QDateTime::currentSecsSinceEpoch());
 
-  const QJsonDocument capabilitiesDoc = QJsonDocument::fromVariant(deviceInfo.value("capabilities"));
+  const QJsonDocument capabilitiesDoc =
+      QJsonDocument::fromVariant(deviceInfo.value("capabilities"));
   query.addBindValue(QString::fromUtf8(capabilitiesDoc.toJson(QJsonDocument::Compact)));
 
   if (!query.exec()) {
@@ -157,9 +156,9 @@ QList<QVariantMap> SessionStore::getAllDevices() const {
   QList<QVariantMap> devices;
   QSqlQuery query(*m_db);
 
-  if (!query.exec(QStringLiteral(
-          "SELECT id, model, android_version, connection_type, paired, last_seen, "
-          "capabilities FROM android_devices"))) {
+  if (!query.exec(
+          QStringLiteral("SELECT id, model, android_version, connection_type, paired, last_seen, "
+                         "capabilities FROM android_devices"))) {
     Logger::instance().error(
         QString("[SessionStore] Failed to fetch all devices: %1").arg(query.lastError().text()));
     return devices;
@@ -185,8 +184,7 @@ QList<QVariantMap> SessionStore::getAllDevices() const {
 
 bool SessionStore::updateDeviceLastSeen(const QString& deviceId) {
   QSqlQuery query(*m_db);
-  query.prepare(
-      QStringLiteral("UPDATE android_devices SET last_seen = ? WHERE id = ?"));
+  query.prepare(QStringLiteral("UPDATE android_devices SET last_seen = ? WHERE id = ?"));
   query.addBindValue(QDateTime::currentSecsSinceEpoch());
   query.addBindValue(deviceId);
 
@@ -205,8 +203,8 @@ bool SessionStore::deleteDevice(const QString& deviceId) {
   query.addBindValue(deviceId);
 
   if (!query.exec()) {
-    Logger::instance().error(QString("[SessionStore] Failed to delete device: %1")
-                                 .arg(query.lastError().text()));
+    Logger::instance().error(
+        QString("[SessionStore] Failed to delete device: %1").arg(query.lastError().text()));
     return false;
   }
 
@@ -231,8 +229,8 @@ bool SessionStore::createSession(const QString& sessionId, const QString& device
   query.addBindValue(now);
 
   if (!query.exec()) {
-    Logger::instance().error(QString("[SessionStore] Failed to create session: %1")
-                                 .arg(query.lastError().text()));
+    Logger::instance().error(
+        QString("[SessionStore] Failed to create session: %1").arg(query.lastError().text()));
     return false;
   }
 
@@ -294,8 +292,8 @@ bool SessionStore::updateSessionState(const QString& sessionId, const QString& n
   query.addBindValue(sessionId);
 
   if (!query.exec()) {
-    Logger::instance().error(QString("[SessionStore] Failed to update session state: %1")
-                                 .arg(query.lastError().text()));
+    Logger::instance().error(
+        QString("[SessionStore] Failed to update session state: %1").arg(query.lastError().text()));
     return false;
   }
 
@@ -306,8 +304,7 @@ bool SessionStore::updateSessionState(const QString& sessionId, const QString& n
 
 bool SessionStore::updateSessionHeartbeat(const QString& sessionId) {
   QSqlQuery query(*m_db);
-  query.prepare(
-      QStringLiteral("UPDATE sessions SET last_heartbeat = ? WHERE id = ?"));
+  query.prepare(QStringLiteral("UPDATE sessions SET last_heartbeat = ? WHERE id = ?"));
   query.addBindValue(QDateTime::currentSecsSinceEpoch());
   query.addBindValue(sessionId);
 
@@ -322,14 +319,13 @@ bool SessionStore::updateSessionHeartbeat(const QString& sessionId) {
 
 bool SessionStore::endSession(const QString& sessionId) {
   QSqlQuery query(*m_db);
-  query.prepare(
-      QStringLiteral("UPDATE sessions SET state = 'ended', ended_at = ? WHERE id = ?"));
+  query.prepare(QStringLiteral("UPDATE sessions SET state = 'ended', ended_at = ? WHERE id = ?"));
   query.addBindValue(QDateTime::currentSecsSinceEpoch());
   query.addBindValue(sessionId);
 
   if (!query.exec()) {
-    Logger::instance().error(QString("[SessionStore] Failed to end session: %1")
-                                 .arg(query.lastError().text()));
+    Logger::instance().error(
+        QString("[SessionStore] Failed to end session: %1").arg(query.lastError().text()));
     return false;
   }
 

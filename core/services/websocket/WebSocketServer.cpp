@@ -416,10 +416,9 @@ void WebSocketServer::onAndroidAutoError(const QString& error) {
 }
 
 bool WebSocketServer::validateMessage(const QJsonObject& obj, QString& error) const {
-  static const QSet<QString> allowedTypes = {QStringLiteral("subscribe"),
-                                              QStringLiteral("unsubscribe"),
-                                              QStringLiteral("publish"),
-                                              QStringLiteral("service_command")};
+  static const QSet<QString> allowedTypes = {
+      QStringLiteral("subscribe"), QStringLiteral("unsubscribe"), QStringLiteral("publish"),
+      QStringLiteral("service_command")};
 
   const QString type = obj.value("type").toString();
   if (type.isEmpty() || !allowedTypes.contains(type)) {
@@ -457,11 +456,10 @@ bool WebSocketServer::validateMessage(const QJsonObject& obj, QString& error) co
 }
 
 bool WebSocketServer::validateServiceCommand(const QString& command, QString& error) const {
-  static const QSet<QString> allowedCommands = {QStringLiteral("reload_services"),
-                                                 QStringLiteral("start_service"),
-                                                 QStringLiteral("stop_service"),
-                                                 QStringLiteral("restart_service"),
-                                                 QStringLiteral("get_running_services")};
+  static const QSet<QString> allowedCommands = {
+      QStringLiteral("reload_services"), QStringLiteral("start_service"),
+      QStringLiteral("stop_service"), QStringLiteral("restart_service"),
+      QStringLiteral("get_running_services")};
 
   if (!allowedCommands.contains(command)) {
     error = QStringLiteral("unauthorised_command");
@@ -497,7 +495,8 @@ void WebSocketServer::handleUnsubscribe(QWebSocket* client, const QString& topic
   }
 
   m_subscriptions[client].removeOne(topic);
-  Logger::instance().info(QString("[WebSocketServer] Client unsubscribed from topic: %1").arg(topic));
+  Logger::instance().info(
+      QString("[WebSocketServer] Client unsubscribed from topic: %1").arg(topic));
 }
 
 void WebSocketServer::enableSecureMode(const QString& certificatePath, const QString& keyPath) {
@@ -559,7 +558,8 @@ void WebSocketServer::enableSecureMode(const QString& certificatePath, const QSt
   // Listen on the secure port (typically 9003 for wss)
   quint16 securePort = 9003;
   if (m_server->listen(QHostAddress::Any, securePort)) {
-    Logger::instance().info(QString("WebSocket secure server (wss://) listening on port %1").arg(securePort));
+    Logger::instance().info(
+        QString("WebSocket secure server (wss://) listening on port %1").arg(securePort));
     m_secureModeEnabled = true;
     m_certificatePath = certificatePath;
     m_keyPath = keyPath;

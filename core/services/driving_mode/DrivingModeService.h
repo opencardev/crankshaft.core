@@ -46,27 +46,36 @@ class DrivingModeService : public QObject {
   Q_PROPERTY(bool isDrivingMode READ isDrivingMode NOTIFY drivingModeChanged)
   Q_PROPERTY(float vehicleSpeedMph READ vehicleSpeedMph NOTIFY vehicleSpeedChanged)
   Q_PROPERTY(bool isRestricted READ isRestricted NOTIFY restrictionChanged)
-  Q_PROPERTY(QString restrictionReason READ restrictionReason NOTIFY
-                 restrictionChanged)
+  Q_PROPERTY(QString restrictionReason READ restrictionReason NOTIFY restrictionChanged)
 
   // User preferences
-  Q_PROPERTY(
-      float speedThresholdMph READ speedThresholdMph WRITE
-          setSpeedThresholdMph NOTIFY settingsChanged)
-  Q_PROPERTY(bool strictMode READ strictMode WRITE setStrictMode NOTIFY
+  Q_PROPERTY(float speedThresholdMph READ speedThresholdMph WRITE setSpeedThresholdMph NOTIFY
                  settingsChanged)
+  Q_PROPERTY(bool strictMode READ strictMode WRITE setStrictMode NOTIFY settingsChanged)
 
  public:
   explicit DrivingModeService(QObject *parent = nullptr);
   ~DrivingModeService() = default;
 
   // Getters
-  bool isDrivingMode() const { return m_isDrivingMode; }
-  float vehicleSpeedMph() const { return m_vehicleSpeedMph; }
-  bool isRestricted() const { return m_isRestricted; }
-  QString restrictionReason() const { return m_restrictionReason; }
-  float speedThresholdMph() const { return m_speedThresholdMph; }
-  bool strictMode() const { return m_strictMode; }
+  bool isDrivingMode() const {
+    return m_isDrivingMode;
+  }
+  float vehicleSpeedMph() const {
+    return m_vehicleSpeedMph;
+  }
+  bool isRestricted() const {
+    return m_isRestricted;
+  }
+  QString restrictionReason() const {
+    return m_restrictionReason;
+  }
+  float speedThresholdMph() const {
+    return m_speedThresholdMph;
+  }
+  bool strictMode() const {
+    return m_strictMode;
+  }
 
   // Setters
   void setSpeedThresholdMph(float mph);
@@ -108,32 +117,24 @@ class DrivingModeService : public QObject {
 
   // Settings
   float m_speedThresholdMph = 5.0f;  // Driving starts above 5 mph
-  bool m_strictMode = false;  // When true, enforce stricter restrictions
+  bool m_strictMode = false;         // When true, enforce stricter restrictions
 
   // Restricted actions
   static constexpr const char *RESTRICTED_ACTIONS[] = {
-      "ui.fullKeyboard",     // Full text input keyboard
-      "ui.settings.modify",  // Modifying settings while driving
+      "ui.fullKeyboard",       // Full text input keyboard
+      "ui.settings.modify",    // Modifying settings while driving
       "ui.extension.install",  // Installing extensions
-      "ui.system.configure",  // System configuration
+      "ui.system.configure",   // System configuration
   };
 
   // Safe actions (allowed while driving)
   static constexpr const char *SAFE_ACTIONS[] = {
-      "media.play",
-      "media.pause",
-      "media.skip",
-      "media.volume",
-      "navigation.start",
-      "navigation.cancel",
-      "phone.answer",
-      "phone.reject",
-      "phone.voiceControl",
+      "media.play",        "media.pause",  "media.skip",   "media.volume",       "navigation.start",
+      "navigation.cancel", "phone.answer", "phone.reject", "phone.voiceControl",
   };
 
   void updateRestrictionState();
-  bool isActionInList(const QString &action, const char *const *list,
-                      size_t count) const;
+  bool isActionInList(const QString &action, const char *const *list, size_t count) const;
 };
 
 #endif  // DRIVING_MODE_SERVICE_H

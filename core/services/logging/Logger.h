@@ -68,12 +68,12 @@ class Logger : public QObject {
   void rotateLogIfNeeded();
   [[nodiscard]] QString levelToString(Level level) const;
   [[nodiscard]] QJsonObject createLogEntry(Level level, const QString& component,
-                                            const QString& message,
-                                            const QJsonObject& context) const;
+                                           const QString& message,
+                                           const QJsonObject& context) const;
 
   Level m_level{Level::Info};
   QString m_logFile;
-  bool m_jsonFormat{true};  // Default to JSON format
+  bool m_jsonFormat{true};                // Default to JSON format
   qint64 m_maxLogSize{10 * 1024 * 1024};  // 10 MB default
   qint64 m_currentLogSize{0};
 };

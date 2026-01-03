@@ -36,10 +36,10 @@ class Logger;
  * Maps AASDK audio channels to vehicle audio zones
  */
 enum class AAudioStreamRole {
-  MEDIA,          ///< Media/music playback
-  SYSTEM_AUDIO,   ///< Navigation and system sounds
-  GUIDANCE,       ///< Voice guidance only
-  PHONE_CALL,     ///< Phone call audio (future)
+  MEDIA,         ///< Media/music playback
+  SYSTEM_AUDIO,  ///< Navigation and system sounds
+  GUIDANCE,      ///< Voice guidance only
+  PHONE_CALL,    ///< Phone call audio (future)
   UNKNOWN = -1
 };
 

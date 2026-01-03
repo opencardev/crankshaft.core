@@ -64,7 +64,8 @@ bool AudioRouter::initialize() {
 
   // Enumerate available devices
   const auto& devices = QMediaDevices::audioOutputs();
-  Logger::instance().info(QString::asprintf("[AudioRouter] Found %lu audio output devices", devices.size()));
+  Logger::instance().info(
+      QString::asprintf("[AudioRouter] Found %lu audio output devices", devices.size()));
 
   for (const auto& device : devices) {
     Logger::instance().debug(QStringLiteral("[AudioRouter] Device: %1 (%2 channels)")
@@ -80,8 +81,7 @@ bool AudioRouter::initializePipeWire() {
   // Check if PipeWire daemon is running via pw-cli
   QProcess pwProcess;
   pwProcess.setProgram(QStringLiteral("pw-cli"));
-  pwProcess.setArguments(QStringList() << QStringLiteral("info")
-                                       << QStringLiteral("0"));
+  pwProcess.setArguments(QStringList() << QStringLiteral("info") << QStringLiteral("0"));
   pwProcess.start();
 
   if (!pwProcess.waitForStarted(1000)) {
@@ -171,11 +171,13 @@ bool AudioRouter::setAudioDevice(AAudioStreamRole role, const QString& deviceId)
   } else {
     // Find device by ID
     const auto& devices = QMediaDevices::audioOutputs();
-    auto it = std::find_if(devices.begin(), devices.end(),
-                           [&deviceId](const QAudioDevice& dev) { return dev.id() == deviceId.toLatin1(); });
+    auto it = std::find_if(devices.begin(), devices.end(), [&deviceId](const QAudioDevice& dev) {
+      return dev.id() == deviceId.toLatin1();
+    });
 
     if (it == devices.end()) {
-      Logger::instance().error(QStringLiteral("[AudioRouter] Audio device not found: %1").arg(deviceId));
+      Logger::instance().error(
+          QStringLiteral("[AudioRouter] Audio device not found: %1").arg(deviceId));
       return false;
     }
 
@@ -218,7 +220,8 @@ QStringList AudioRouter::getAvailableAudioDevices() const {
 
 bool AudioRouter::setStreamVolume(AAudioStreamRole role, int volume) {
   if (volume < 0 || volume > 100) {
-    Logger::instance().warning(QStringLiteral("[AudioRouter] Invalid volume level: %1").arg(volume));
+    Logger::instance().warning(
+        QStringLiteral("[AudioRouter] Invalid volume level: %1").arg(volume));
     return false;
   }
 
@@ -279,8 +282,9 @@ bool AudioRouter::setStreamMuted(AAudioStreamRole role, bool muted) {
 
 bool AudioRouter::enableAudioDucking(bool enable) {
   m_duckingEnabled = enable;
-  Logger::instance().info(QStringLiteral("[AudioRouter] Audio ducking %1")
-                              .arg(enable ? QStringLiteral("enabled") : QStringLiteral("disabled")));
+  Logger::instance().info(
+      QStringLiteral("[AudioRouter] Audio ducking %1")
+          .arg(enable ? QStringLiteral("enabled") : QStringLiteral("disabled")));
   return true;
 }
 

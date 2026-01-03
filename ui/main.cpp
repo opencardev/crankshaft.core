@@ -108,8 +108,8 @@ int main(int argc, char* argv[]) {
                                            QString::fromUtf8(CRANKSHAFT_GIT_COMMIT_LONG));
   engine.rootContext()->setContextProperty("buildBranch", QString::fromUtf8(CRANKSHAFT_GIT_BRANCH));
 
-  qInfo() << "[STARTUP]" << startupTimer.elapsed() << "ms elapsed: UI Build:"
-          << QString::fromUtf8(CRANKSHAFT_BUILD_TIMESTAMP)
+  qInfo() << "[STARTUP]" << startupTimer.elapsed()
+          << "ms elapsed: UI Build:" << QString::fromUtf8(CRANKSHAFT_BUILD_TIMESTAMP)
           << "commit(short):" << QString::fromUtf8(CRANKSHAFT_GIT_COMMIT_SHORT)
           << "branch:" << QString::fromUtf8(CRANKSHAFT_GIT_BRANCH);
 

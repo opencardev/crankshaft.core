@@ -35,8 +35,8 @@ PreferencesService::PreferencesService(const QString& dbPath, QObject* parent)
                    ? QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) +
                          "/preferences.db"
                    : dbPath) {
-  Logger::instance().info(QString("[PreferencesService] Initialized with database: %1")
-                              .arg(m_dbPath));
+  Logger::instance().info(
+      QString("[PreferencesService] Initialized with database: %1").arg(m_dbPath));
 }
 
 PreferencesService::~PreferencesService() = default;
@@ -68,14 +68,13 @@ bool PreferencesService::initialize() {
 
 bool PreferencesService::createSchema() {
   QSqlQuery query(*m_db);
-  const QString createTableSQL =
-      QStringLiteral(
-          "CREATE TABLE IF NOT EXISTS preferences ("
-          "  user_id TEXT DEFAULT 'default',"
-          "  key TEXT NOT NULL,"
-          "  value TEXT NOT NULL,"
-          "  PRIMARY KEY (user_id, key)"
-          ")");
+  const QString createTableSQL = QStringLiteral(
+      "CREATE TABLE IF NOT EXISTS preferences ("
+      "  user_id TEXT DEFAULT 'default',"
+      "  key TEXT NOT NULL,"
+      "  value TEXT NOT NULL,"
+      "  PRIMARY KEY (user_id, key)"
+      ")");
 
   if (!query.exec(createTableSQL)) {
     Logger::instance().error(
@@ -89,8 +88,8 @@ bool PreferencesService::createSchema() {
 bool PreferencesService::loadPreferences() {
   QSqlQuery query(*m_db);
   if (!query.exec(QStringLiteral("SELECT key, value FROM preferences WHERE user_id = 'default'"))) {
-    Logger::instance().error(
-        QString("[PreferencesService] Failed to load preferences: %1").arg(query.lastError().text()));
+    Logger::instance().error(QString("[PreferencesService] Failed to load preferences: %1")
+                                 .arg(query.lastError().text()));
     return false;
   }
 
@@ -98,7 +97,7 @@ bool PreferencesService::loadPreferences() {
   while (query.next()) {
     const QString key = query.value(0).toString();
     const QString valueString = query.value(1).toString();
-    
+
     // Deserialize JSON string back to QVariant
     QVariant cachedValue;
     if (valueString == QStringLiteral("true")) {
@@ -126,7 +125,7 @@ bool PreferencesService::loadPreferences() {
         }
       }
     }
-    
+
     m_cache[key] = cachedValue;
     Logger::instance().debug(QString("[PreferencesService] Loaded preference: %1").arg(key));
   }
@@ -144,7 +143,7 @@ QVariant PreferencesService::get(const QString& key, const QVariant& defaultValu
 bool PreferencesService::set(const QString& key, const QVariant& value) {
   // Convert QVariant to JSON string for storage
   QString jsonString;
-  
+
   // Handle different QVariant types for proper JSON serialization
   if (value.type() == QVariant::Bool) {
     jsonString = value.toBool() ? QStringLiteral("true") : QStringLiteral("false");
@@ -160,8 +159,8 @@ bool PreferencesService::set(const QString& key, const QVariant& value) {
   }
 
   QSqlQuery query(*m_db);
-  query.prepare(
-      QStringLiteral("INSERT OR REPLACE INTO preferences (user_id, key, value) VALUES ('default', ?, ?)"));
+  query.prepare(QStringLiteral(
+      "INSERT OR REPLACE INTO preferences (user_id, key, value) VALUES ('default', ?, ?)"));
   query.addBindValue(key);
   query.addBindValue(jsonString);
 
@@ -200,9 +199,8 @@ bool PreferencesService::remove(const QString& key) {
 bool PreferencesService::clear() {
   QSqlQuery query(*m_db);
   if (!query.exec(QStringLiteral("DELETE FROM preferences WHERE user_id = 'default'"))) {
-    Logger::instance().error(
-        QString("[PreferencesService] Failed to clear preferences: %1")
-            .arg(query.lastError().text()));
+    Logger::instance().error(QString("[PreferencesService] Failed to clear preferences: %1")
+                                 .arg(query.lastError().text()));
     return false;
   }
 

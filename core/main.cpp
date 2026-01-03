@@ -115,8 +115,7 @@ int main(int argc, char* argv[]) {
   // Initialise logger
   Logger::instance().setLevel(Logger::Level::Info);
   Logger::instance().info(
-      QString("[STARTUP] %1ms elapsed: Starting Crankshaft Core...")
-          .arg(startupTimer.elapsed()));
+      QString("[STARTUP] %1ms elapsed: Starting Crankshaft Core...").arg(startupTimer.elapsed()));
 
   // Log build details
   Logger::instance().info(
@@ -131,8 +130,8 @@ int main(int argc, char* argv[]) {
   if (!ConfigService::instance().load(configPath)) {
     Logger::instance().warning("Using default configuration");
   }
-  Logger::instance().info(QString("[STARTUP] %1ms elapsed: Configuration loaded")
-                              .arg(startupTimer.elapsed()));
+  Logger::instance().info(
+      QString("[STARTUP] %1ms elapsed: Configuration loaded").arg(startupTimer.elapsed()));
 
   // Get port from config or command line
   quint16 port = parser.value(portOption).toUInt();
@@ -142,16 +141,14 @@ int main(int argc, char* argv[]) {
 
   // Initialise services
   Logger::instance().info(
-      QString("[STARTUP] %1ms elapsed: Initialising core services...")
-          .arg(startupTimer.elapsed()));
+      QString("[STARTUP] %1ms elapsed: Initialising core services...").arg(startupTimer.elapsed()));
   EventBus::instance();  // Initialise event bus
-  Logger::instance().info(QString("[STARTUP] %1ms elapsed: Event bus initialised")
-                              .arg(startupTimer.elapsed()));
+  Logger::instance().info(
+      QString("[STARTUP] %1ms elapsed: Event bus initialised").arg(startupTimer.elapsed()));
 
   // Initialise ProfileManager
-  Logger::instance().info(
-      QString("[STARTUP] %1ms elapsed: Initialising ProfileManager...")
-          .arg(startupTimer.elapsed()));
+  Logger::instance().info(QString("[STARTUP] %1ms elapsed: Initialising ProfileManager...")
+                              .arg(startupTimer.elapsed()));
   QString profileConfigDir = ConfigService::instance()
                                  .get("core.profile.configDir", "/etc/crankshaft/profiles")
                                  .toString();
@@ -162,32 +159,29 @@ int main(int argc, char* argv[]) {
   }
 
   HostProfile activeProfile = profileManager.getActiveHostProfile();
-  Logger::instance().info(
-      QString("[STARTUP] %1ms elapsed: Active host profile: %2 (%3)")
-          .arg(startupTimer.elapsed())
-          .arg(activeProfile.name, activeProfile.id));
+  Logger::instance().info(QString("[STARTUP] %1ms elapsed: Active host profile: %2 (%3)")
+                              .arg(startupTimer.elapsed())
+                              .arg(activeProfile.name, activeProfile.id));
 
   // Create WebSocket server
-  Logger::instance().info(QString("[STARTUP] %1ms elapsed: Creating WebSocket server...")
-                              .arg(startupTimer.elapsed()));
+  Logger::instance().info(
+      QString("[STARTUP] %1ms elapsed: Creating WebSocket server...").arg(startupTimer.elapsed()));
   WebSocketServer server(port);
   if (!server.isListening()) {
     Logger::instance().error("Failed to start WebSocket server on port " + QString::number(port));
     return 1;
   }
-  Logger::instance().info(
-      QString("[STARTUP] %1ms elapsed: WebSocket server listening on port %2")
-          .arg(startupTimer.elapsed())
-          .arg(port));
+  Logger::instance().info(QString("[STARTUP] %1ms elapsed: WebSocket server listening on port %2")
+                              .arg(startupTimer.elapsed())
+                              .arg(port));
 
   // Connect EventBus to WebSocket server (broadcasts all events)
   QObject::connect(&EventBus::instance(), &EventBus::messagePublished, &server,
                    &WebSocketServer::broadcastEvent);
 
   // Create ServiceManager and start services
-  Logger::instance().info(
-      QString("[STARTUP] %1ms elapsed: Initialising ServiceManager...")
-          .arg(startupTimer.elapsed()));
+  Logger::instance().info(QString("[STARTUP] %1ms elapsed: Initialising ServiceManager...")
+                              .arg(startupTimer.elapsed()));
   ServiceManager serviceManager(&profileManager, &app);
 
   // Register ServiceManager with WebSocketServer for remote control
@@ -204,9 +198,8 @@ int main(int argc, char* argv[]) {
   // Initialize WebSocket connections to services (after services are started)
   server.initializeServiceConnections();
 
-  Logger::instance().info(
-      QString("[STARTUP] %1ms elapsed: Crankshaft Core started successfully")
-          .arg(startupTimer.elapsed()));
+  Logger::instance().info(QString("[STARTUP] %1ms elapsed: Crankshaft Core started successfully")
+                              .arg(startupTimer.elapsed()));
   Logger::instance().info(
       QString("[STARTUP] READY - Total startup time: %1ms").arg(startupTimer.elapsed()));
 

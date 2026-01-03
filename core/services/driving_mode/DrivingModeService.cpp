@@ -23,8 +23,7 @@
 #include <algorithm>
 
 DrivingModeService::DrivingModeService(QObject *parent)
-    : QObject(parent), m_isDrivingMode(false), m_vehicleSpeedMph(0.0f),
-      m_isRestricted(false) {}
+    : QObject(parent), m_isDrivingMode(false), m_vehicleSpeedMph(0.0f), m_isRestricted(false) {}
 
 void DrivingModeService::onVehicleSpeedUpdated(float speedMph) {
   // Update speed
@@ -42,8 +41,7 @@ void DrivingModeService::onVehicleSpeedUpdated(float speedMph) {
     updateRestrictionState();
 
     if (m_isDrivingMode) {
-      qInfo() << "DrivingModeService: Driving mode activated at" << speedMph
-              << "mph";
+      qInfo() << "DrivingModeService: Driving mode activated at" << speedMph << "mph";
     } else {
       qInfo() << "DrivingModeService: Driving mode deactivated";
     }
@@ -161,8 +159,7 @@ void DrivingModeService::updateRestrictionState() {
   }
 }
 
-bool DrivingModeService::isActionInList(const QString &action,
-                                        const char *const *list,
+bool DrivingModeService::isActionInList(const QString &action, const char *const *list,
                                         size_t count) const {
   for (size_t i = 0; i < count; ++i) {
     if (action == QString::fromUtf8(list[i])) {

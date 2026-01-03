@@ -51,7 +51,7 @@ class SessionStore : public QObject {
 
   // Session operations
   [[nodiscard]] bool createSession(const QString& sessionId, const QString& deviceId,
-                                    const QString& initialState);
+                                   const QString& initialState);
   [[nodiscard]] QVariantMap getSession(const QString& sessionId) const;
   [[nodiscard]] QVariantMap getSessionByDevice(const QString& deviceId) const;
   [[nodiscard]] bool updateSessionState(const QString& sessionId, const QString& newState);

@@ -45,8 +45,8 @@ class DiagnosticsEndpoint : public QObject {
   Q_OBJECT
 
  public:
-  explicit DiagnosticsEndpoint(EventBus* eventBus, ServiceManager* serviceManager,
-                                Logger* logger, QObject* parent = nullptr);
+  explicit DiagnosticsEndpoint(EventBus* eventBus, ServiceManager* serviceManager, Logger* logger,
+                               QObject* parent = nullptr);
   ~DiagnosticsEndpoint() override = default;
 
   /**

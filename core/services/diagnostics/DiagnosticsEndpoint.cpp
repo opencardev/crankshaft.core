@@ -29,16 +29,15 @@
 #include <QSysInfo>
 
 #include "../eventbus/EventBus.h"
+#include "../extensions/ExtensionManager.h"
 #include "../logging/Logger.h"
 #include "../service_manager/ServiceManager.h"
-#include "../extensions/ExtensionManager.h"
 
 #ifndef CRANKSHAFT_VERSION
 #define CRANKSHAFT_VERSION "unknown"
 #endif
 
-DiagnosticsEndpoint::DiagnosticsEndpoint(EventBus* eventBus,
-                                         ServiceManager* serviceManager,
+DiagnosticsEndpoint::DiagnosticsEndpoint(EventBus* eventBus, ServiceManager* serviceManager,
                                          Logger* logger, QObject* parent)
     : QObject(parent),
       m_eventBus(eventBus),
@@ -54,7 +53,8 @@ DiagnosticsEndpoint::DiagnosticsEndpoint(EventBus* eventBus,
 bool DiagnosticsEndpoint::init() {
   if (!m_eventBus || !m_serviceManager || !m_logger) {
     if (m_logger) {
-      m_logger->error(QStringLiteral("DiagnosticsEndpoint initialisation failed: missing dependencies"));
+      m_logger->error(
+          QStringLiteral("DiagnosticsEndpoint initialisation failed: missing dependencies"));
     }
     return false;
   }
@@ -88,8 +88,7 @@ QJsonObject DiagnosticsEndpoint::handleExtensionsReloadRequest() {
   QJsonObject response;
   response[QStringLiteral("status")] = QStringLiteral("success");
   response[QStringLiteral("message")] = QStringLiteral("Extension registry reload requested");
-  response[QStringLiteral("timestamp")] =
-      QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+  response[QStringLiteral("timestamp")] = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
 
   // Emit event to trigger extension reload
   if (m_eventBus) {
@@ -133,7 +132,8 @@ QJsonObject DiagnosticsEndpoint::gatherHealthStatus() {
 
   // Service status (placeholder)
   QJsonObject services;
-  services[QStringLiteral("event_bus")] = m_eventBus ? QStringLiteral("ok") : QStringLiteral("error");
+  services[QStringLiteral("event_bus")] =
+      m_eventBus ? QStringLiteral("ok") : QStringLiteral("error");
   services[QStringLiteral("service_manager")] =
       m_serviceManager ? QStringLiteral("ok") : QStringLiteral("error");
   services[QStringLiteral("logger")] = m_logger ? QStringLiteral("ok") : QStringLiteral("error");
@@ -153,7 +153,7 @@ QJsonObject DiagnosticsEndpoint::gatherMetrics() {
 
   // Event bus metrics
   QJsonObject eventBusMetrics;
-  eventBusMetrics[QStringLiteral("subscribers")] = 0;  // Placeholder
+  eventBusMetrics[QStringLiteral("subscribers")] = 0;         // Placeholder
   eventBusMetrics[QStringLiteral("published_messages")] = 0;  // Placeholder
   metrics[QStringLiteral("eventbus")] = eventBusMetrics;
 
@@ -163,8 +163,7 @@ QJsonObject DiagnosticsEndpoint::gatherMetrics() {
   }
 
   // Timestamp
-  metrics[QStringLiteral("timestamp")] =
-      QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+  metrics[QStringLiteral("timestamp")] = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
 
   return metrics;
 }
@@ -182,8 +181,8 @@ QJsonObject DiagnosticsEndpoint::gatherExtensionsList() {
   exampleExt[QStringLiteral("status")] = QStringLiteral("loaded");
   exampleExt[QStringLiteral("path")] =
       QStringLiteral("/usr/lib/crankshaft/extensions/media-player/lib.so");
-  exampleExt[QStringLiteral("permissions")] = QJsonArray{QStringLiteral("audio_device_access"),
-                                                           QStringLiteral("event_bus_publish")};
+  exampleExt[QStringLiteral("permissions")] =
+      QJsonArray{QStringLiteral("audio_device_access"), QStringLiteral("event_bus_publish")};
 
   // Placeholder: add actual extensions from ServiceManager
   // for (const auto& ext : m_serviceManager->loadedExtensions()) {
@@ -192,8 +191,7 @@ QJsonObject DiagnosticsEndpoint::gatherExtensionsList() {
 
   response[QStringLiteral("extensions")] = extensions;
   response[QStringLiteral("total_count")] = extensions.size();
-  response[QStringLiteral("timestamp")] =
-      QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+  response[QStringLiteral("timestamp")] = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
 
   return response;
 }
@@ -298,7 +296,7 @@ QJsonObject DiagnosticsEndpoint::handleExtensionsStartRequest(const QString& ext
 
   QJsonObject info = m_extensionManager->getExtensionInfo(extensionId);
   return QJsonObject{{QStringLiteral("status"), QStringLiteral("success")},
-                      {QStringLiteral("extension"), info}};
+                     {QStringLiteral("extension"), info}};
 }
 
 QJsonObject DiagnosticsEndpoint::handleExtensionsStopRequest(const QString& extensionId) {
@@ -328,5 +326,5 @@ QJsonObject DiagnosticsEndpoint::handleExtensionsRestartRequest(const QString& e
 
   QJsonObject info = m_extensionManager->getExtensionInfo(extensionId);
   return QJsonObject{{QStringLiteral("status"), QStringLiteral("success")},
-                      {QStringLiteral("extension"), info}};
+                     {QStringLiteral("extension"), info}};
 }
