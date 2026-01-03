@@ -55,7 +55,13 @@ class WebSocketServer : public QObject {
   void onAndroidAutoError(const QString& error);
 
  private:
+  // Message validation helpers
+  [[nodiscard]] bool validateMessage(const QJsonObject& obj, QString& error) const;
+  [[nodiscard]] bool validateServiceCommand(const QString& command, QString& error) const;
+  void sendError(QWebSocket* client, const QString& message) const;
+
   void handleSubscribe(QWebSocket* client, const QString& topic);
+  void handleUnsubscribe(QWebSocket* client, const QString& topic);
   void handlePublish(const QString& topic, const QVariantMap& payload);
   void handleServiceCommand(QWebSocket* client, const QString& command, const QVariantMap& params);
   [[nodiscard]] bool topicMatches(const QString& topic, const QString& pattern) const;

@@ -28,6 +28,11 @@ class QTimer;
 #include "../../hal/multimedia/IVideoDecoder.h"
 #include "AndroidAutoService.h"
 
+// Forward declarations
+class SessionStore;
+class EventBus;
+class AudioRouter;
+
 // Forward declarations for AASDK
 namespace aasdk {
 namespace usb {
@@ -94,10 +99,20 @@ class RealAndroidAutoService : public AndroidAutoService {
   Q_OBJECT
 
  public:
+  // Session state matches data-model.md Session entity states
+  enum class SessionState {
+    NEGOTIATING,  // Handshake in progress
+    ACTIVE,       // Connection established and projecting
+    SUSPENDED,    // Temporarily paused (network drop, user switch)
+    ENDED,        // Cleanly disconnected
+    ERROR         // Fatal error occurred
+  };
+
   explicit RealAndroidAutoService(MediaPipeline* mediaPipeline, QObject* parent = nullptr);
   ~RealAndroidAutoService() override;
 
   void configureTransport(const QMap<QString, QVariant>& settings) override;
+  void setEventBus(EventBus* eventBus) { m_eventBus = eventBus; }
 
   bool initialise() override;
   void deinitialise() override;
@@ -160,6 +175,12 @@ class RealAndroidAutoService : public AndroidAutoService {
     return m_channelConfig;
   }
 
+ signals:
+  /**
+   * @brief Emitted when AA session state changes
+   */
+  void sessionStateChanged(const QString& sessionId, const QString& state);
+
  private:
   void setupAASDK();
   void cleanupAASDK();
@@ -174,6 +195,13 @@ class RealAndroidAutoService : public AndroidAutoService {
   void transitionToState(ConnectionState newState);
   void startUSBHubDetection();
 
+  // Session state management
+  void transitionToSessionState(SessionState newState);
+  QString sessionStateToString(SessionState state) const;
+  void createSessionForDevice(const QString& deviceId);
+  void endCurrentSession();
+  void updateSessionHeartbeat();
+
   // Channel event handlers
   void onVideoChannelUpdate(const QByteArray& data, int width, int height);
   void onMediaAudioChannelUpdate(const QByteArray& data);
@@ -182,6 +210,11 @@ class RealAndroidAutoService : public AndroidAutoService {
   void onSensorRequest();
   void onBluetoothPairingRequest(const QString& deviceName);
   void onChannelError(const QString& channelName, const QString& error);
+
+  // Audio routing for AA channels
+  void routeMediaAudioToVehicle(const QByteArray& audioData);
+  void routeGuidanceAudioToVehicle(const QByteArray& audioData);
+  void routeSystemAudioToVehicle(const QByteArray& audioData);
 
   // AASDK callbacks
   void onVideoFrame(const uint8_t* data, int size, int width, int height);
@@ -201,6 +234,15 @@ class RealAndroidAutoService : public AndroidAutoService {
   int m_fps{30};
   bool m_audioEnabled{true};
   ChannelConfig m_channelConfig;
+
+  // Session state tracking
+  SessionState m_sessionState{SessionState::ENDED};
+  QString m_currentSessionId;
+  QString m_currentDeviceId;
+  SessionStore* m_sessionStore{nullptr};
+  QTimer* m_heartbeatTimer{nullptr};
+  EventBus* m_eventBus{nullptr};
+  AudioRouter* m_audioRouter{nullptr};
 
   // Statistics
   int m_droppedFrames{0};

@@ -29,16 +29,6 @@ Page {
     property var stack: null
     property var settingsComponent: null
     property var androidAutoComponent: null
-    property string currentTime: Qt.formatTime(new Date(), "hh:mm")
-    
-    Timer {
-        interval: 1000 // Update every second
-        running: true
-        repeat: true
-        onTriggered: {
-            root.currentTime = Qt.formatTime(new Date(), "hh:mm")
-        }
-    }
     
     background: Rectangle {
         color: Theme.background
@@ -101,10 +91,10 @@ Page {
                     Layout.fillWidth: true
                 }
                 
-                Text {
-                    text: root.currentTime
-                    font.pixelSize: 20
-                    color: Theme.textSecondary
+                SystemClock {
+                    fontSize: 20
+                    textColor: Theme.textSecondary
+                    timeFormat: "hh:mm"
                 }
             }
         }

@@ -26,7 +26,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Catch2)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Bluetooth Test)
+# JSON library for tests that include profile/services JSON parsing
+FetchContent_Declare(
+  nlohmann_json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG v3.11.2
+)
+FetchContent_MakeAvailable(nlohmann_json)
+
+find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Bluetooth Test Sql)
 
 # Some tests pull in core implementation files that depend on system libraries
 # (GStreamer, libusb). Ensure we can find those and link them for the test
@@ -110,6 +118,8 @@ target_link_libraries(test_websocket PRIVATE
   Qt6::Bluetooth
   Qt6::Gui
   Qt6::Test
+  Qt6::Sql
+  nlohmann_json::nlohmann_json
   ${GSTREAMER_LIBRARIES}
   ${GSTREAMER_APP_LIBRARIES}
   ${GSTREAMER_VIDEO_LIBRARIES}
@@ -121,3 +131,118 @@ target_link_libraries(test_websocket PRIVATE
 
 add_test(NAME WebSocketTest COMMAND test_websocket)
 
+# Unit test for WebSocket validation
+add_executable(test_websocket_validation
+  unit/test_websocket_validation.cpp
+)
+
+set_target_properties(test_websocket_validation PROPERTIES
+  AUTOMOC ON
+  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests
+)
+
+target_include_directories(test_websocket_validation PRIVATE
+  ${CMAKE_SOURCE_DIR}/core
+)
+
+target_link_libraries(test_websocket_validation PRIVATE
+  Qt6::Core
+  Qt6::Test
+)
+
+add_test(NAME WebSocketValidationTest COMMAND test_websocket_validation)
+
+# Contract tests for WebSocket and extension manifest schemas
+add_executable(test_contract_schemas
+  unit/test_contract_schemas.cpp
+)
+
+set_target_properties(test_contract_schemas PROPERTIES
+  AUTOMOC ON
+  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests
+)
+
+target_include_directories(test_contract_schemas PRIVATE
+  ${CMAKE_SOURCE_DIR}/core
+)
+
+target_link_libraries(test_contract_schemas PRIVATE
+  Qt6::Core
+  Qt6::Test
+)
+
+add_test(NAME ContractSchemasTest COMMAND test_contract_schemas)
+
+# Integration test for Android Auto session lifecycle
+add_executable(test_aa_lifecycle
+  integration/test_aa_lifecycle.cpp
+  ../core/services/session/SessionStore.cpp
+  ../core/services/logging/Logger.cpp
+)
+
+set_target_properties(test_aa_lifecycle PROPERTIES
+  AUTOMOC ON
+  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests
+)
+
+target_include_directories(test_aa_lifecycle PRIVATE
+  ${CMAKE_SOURCE_DIR}/core
+)
+
+target_link_libraries(test_aa_lifecycle PRIVATE
+  Qt6::Core
+  Qt6::Test
+  Qt6::Sql
+)
+
+add_test(NAME AALifecycleTest COMMAND test_aa_lifecycle)
+
+# Integration test for settings persistence
+add_executable(test_settings_persistence
+  integration/test_settings_persistence.cpp
+  ../core/services/preferences/PreferencesService.cpp
+  ../core/services/logging/Logger.cpp
+)
+
+set_target_properties(test_settings_persistence PROPERTIES
+  AUTOMOC ON
+  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests
+)
+
+target_include_directories(test_settings_persistence PRIVATE
+  ${CMAKE_SOURCE_DIR}/core
+)
+
+target_link_libraries(test_settings_persistence PRIVATE
+  Qt6::Core
+  Qt6::Test
+  Qt6::Sql
+)
+
+add_test(NAME SettingsPersistenceTest COMMAND test_settings_persistence)
+
+# Integration test for extension lifecycle
+add_executable(test_extension_lifecycle
+  integration/test_extension_lifecycle.cpp
+  ../core/services/extensions/ExtensionManager.cpp
+  ../core/services/logging/Logger.cpp
+)
+
+set_target_properties(test_extension_lifecycle PROPERTIES
+  AUTOMOC ON
+  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests
+)
+
+target_include_directories(test_extension_lifecycle PRIVATE
+  ${CMAKE_SOURCE_DIR}/core
+)
+
+target_link_libraries(test_extension_lifecycle PRIVATE
+  Qt6::Core
+  Qt6::Test
+)
+
+add_test(NAME ExtensionLifecycleTest COMMAND test_extension_lifecycle)
+
+# Enable CTest for the test project
+enable_testing()

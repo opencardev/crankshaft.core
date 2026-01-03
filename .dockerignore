@@ -1,0 +1,21 @@
+# Project: Crankshaft
+# Docker build ignore file
+
+.git
+.gitignore
+build/
+build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+_deps/
+node_modules/
+dist/
+coverage/
+*.log
+*.tmp
+*.swp
+.env*
+.DS_Store
+Thumbs.db

@@ -8,6 +8,12 @@ build/
 compile_commands.json
 .vscode/
 .idea/
+.DS_Store
+Thumbs.db
+.env*
+*.log
+*.tmp
+*.swp
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake

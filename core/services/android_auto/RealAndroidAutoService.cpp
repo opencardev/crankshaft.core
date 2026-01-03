@@ -22,10 +22,14 @@
 #include <QImage>
 #include <QJsonObject>
 #include <QTimer>
+#include <QUuid>
 
 #include "../../hal/multimedia/AudioMixer.h"
 #include "../../hal/multimedia/GStreamerVideoDecoder.h"
+#include "../audio/AudioRouter.h"
+#include "../eventbus/EventBus.h"
 #include "../logging/Logger.h"
+#include "../session/SessionStore.h"
 #include "ProtocolHelpers.h"
 
 // AASDK includes
@@ -95,9 +99,27 @@ RealAndroidAutoService::RealAndroidAutoService(MediaPipeline* mediaPipeline, QOb
   // Create AASDK thread
   m_aasdkThread = std::make_unique<QThread>();
   m_aasdkThread->setObjectName("AASDKThread");
+
+  // Initialize SessionStore
+  m_sessionStore = new SessionStore(QString(), this);
+  if (!m_sessionStore->initialize()) {
+    Logger::instance().error("[RealAndroidAutoService] Failed to initialize SessionStore");
+  }
+
+  // Setup heartbeat timer for active sessions (30s interval)
+  m_heartbeatTimer = new QTimer(this);
+  m_heartbeatTimer->setInterval(30000);
+  connect(m_heartbeatTimer, &QTimer::timeout, this, &RealAndroidAutoService::updateSessionHeartbeat);
+
+  // Initialize AudioRouter for AA audio channel management
+  m_audioRouter = new AudioRouter(mediaPipeline, this);
+  if (!m_audioRouter->initialize()) {
+    Logger::instance().warning("[RealAndroidAutoService] Failed to initialize AudioRouter - audio may not work");
+  }
 }
 
 RealAndroidAutoService::~RealAndroidAutoService() {
+  endCurrentSession();
   deinitialise();
 
   if (m_aasdkThread && m_aasdkThread->isRunning()) {
@@ -1117,6 +1139,26 @@ void RealAndroidAutoService::handleDeviceDetected() {
   m_device.connected = false;
   m_device.projectionMode = ProjectionMode::PROJECTION;
 
+  // Persist device to SessionStore
+  if (m_sessionStore) {
+    const QString deviceId = m_device.serialNumber;
+    QVariantMap deviceInfo;
+    deviceInfo["model"] = m_device.model;
+    deviceInfo["androidVersion"] = m_device.androidVersion;
+    deviceInfo["connectionType"] = (m_transportMode == TransportMode::Wireless || m_wirelessEnabled) 
+                                        ? "wireless" : "wired";
+    deviceInfo["paired"] = true;
+    deviceInfo["capabilities"] = QVariantList{"media", "maps"};
+
+    if (!m_sessionStore->createDevice(deviceId, deviceInfo)) {
+      // Device might already exist, update last_seen
+      if (!m_sessionStore->updateDeviceLastSeen(deviceId)) {
+        Logger::instance().warning(
+            QString("[RealAndroidAutoService] Failed to update device last_seen: %1").arg(deviceId));
+      }
+    }
+  }
+
   emit deviceFound(m_device);
 }
 
@@ -1131,6 +1173,11 @@ void RealAndroidAutoService::handleConnectionEstablished() {
   setupChannels();
 
   m_device.connected = true;
+
+  // Create session for this device
+  const QString deviceId = m_device.serialNumber;
+  createSessionForDevice(deviceId);
+
   transitionToState(ConnectionState::CONNECTED);
   emit connected(m_device);
   Logger::instance().info("Android Auto connection established");
@@ -1382,6 +1429,162 @@ void RealAndroidAutoService::transitionToState(ConnectionState newState) {
 
   m_state = newState;
   emit connectionStateChanged(newState);
+
+  // Map connection state to session state
+  switch (newState) {
+    case ConnectionState::CONNECTING:
+    case ConnectionState::AUTHENTICATING:
+    case ConnectionState::SECURING:
+      transitionToSessionState(SessionState::NEGOTIATING);
+      break;
+    case ConnectionState::CONNECTED:
+      transitionToSessionState(SessionState::ACTIVE);
+      break;
+    case ConnectionState::DISCONNECTED:
+      if (m_sessionState == SessionState::ACTIVE || m_sessionState == SessionState::NEGOTIATING) {
+        transitionToSessionState(SessionState::ENDED);
+      }
+      break;
+    case ConnectionState::ERROR:
+      transitionToSessionState(SessionState::ERROR);
+      break;
+    default:
+      break;
+  }
+}
+
+void RealAndroidAutoService::transitionToSessionState(SessionState newState) {
+  if (m_sessionState == newState) {
+    return;
+  }
+
+  const SessionState oldState = m_sessionState;
+  m_sessionState = newState;
+
+  const QString stateStr = sessionStateToString(newState);
+  Logger::instance().info(
+      QString("[RealAndroidAutoService] Session state: %1 -> %2")
+          .arg(sessionStateToString(oldState), stateStr));
+
+  // Update session in database
+  if (!m_currentSessionId.isEmpty() && m_sessionStore) {
+    if (!m_sessionStore->updateSessionState(m_currentSessionId, stateStr.toLower())) {
+      Logger::instance().warning(
+          QString("[RealAndroidAutoService] Failed to update session state: %1").arg(m_currentSessionId));
+    }
+  }
+
+  // Emit EventBus event for WebSocket subscribers
+  if (m_eventBus) {
+    QVariantMap payload;
+    payload[QStringLiteral("sessionId")] = m_currentSessionId;
+    payload[QStringLiteral("state")] = stateStr;
+    payload[QStringLiteral("deviceId")] = m_currentDeviceId;
+    payload[QStringLiteral("timestamp")] = QDateTime::currentSecsSinceEpoch();
+
+    m_eventBus->publish(QStringLiteral("android-auto/status/state-changed"), payload);
+
+    // Emit specific events for important state transitions
+    if (newState == SessionState::ACTIVE) {
+      m_eventBus->publish(QStringLiteral("android-auto/status/connected"), payload);
+      Logger::instance().info("[RealAndroidAutoService] Emitted android-auto/status/connected event");
+    } else if (newState == SessionState::ENDED || newState == SessionState::ERROR) {
+      m_eventBus->publish(QStringLiteral("android-auto/status/disconnected"), payload);
+      Logger::instance().info("[RealAndroidAutoService] Emitted android-auto/status/disconnected event");
+    }
+  }
+
+  // Emit local signal
+  emit sessionStateChanged(m_currentSessionId, stateStr);
+
+  // Manage heartbeat timer
+  if (newState == SessionState::ACTIVE && !m_heartbeatTimer->isActive()) {
+    m_heartbeatTimer->start();
+    updateSessionHeartbeat();
+  } else if (newState != SessionState::ACTIVE && m_heartbeatTimer->isActive()) {
+    m_heartbeatTimer->stop();
+  }
+
+  // End session on terminal states
+  if (newState == SessionState::ENDED || newState == SessionState::ERROR) {
+    endCurrentSession();
+  }
+}
+
+QString RealAndroidAutoService::sessionStateToString(SessionState state) const {
+  switch (state) {
+    case SessionState::NEGOTIATING:
+      return QStringLiteral("negotiating");
+    case SessionState::ACTIVE:
+      return QStringLiteral("active");
+    case SessionState::SUSPENDED:
+      return QStringLiteral("suspended");
+    case SessionState::ENDED:
+      return QStringLiteral("ended");
+    case SessionState::ERROR:
+      return QStringLiteral("error");
+    default:
+      return QStringLiteral("unknown");
+  }
+}
+
+void RealAndroidAutoService::createSessionForDevice(const QString& deviceId) {
+  if (!m_sessionStore) {
+    Logger::instance().error("[RealAndroidAutoService] SessionStore not available");
+    return;
+  }
+
+  // End any existing session
+  endCurrentSession();
+
+  // Generate new session ID
+  m_currentSessionId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+  m_currentDeviceId = deviceId;
+
+  // Create session in database
+  const bool created = m_sessionStore->createSession(
+      m_currentSessionId, deviceId, sessionStateToString(SessionState::NEGOTIATING).toLower());
+
+  if (created) {
+    Logger::instance().info(
+        QString("[RealAndroidAutoService] Created session: %1 for device: %2")
+            .arg(m_currentSessionId, deviceId));
+  } else {
+    Logger::instance().error(
+        QString("[RealAndroidAutoService] Failed to create session for device: %1").arg(deviceId));
+  }
+}
+
+void RealAndroidAutoService::endCurrentSession() {
+  if (m_currentSessionId.isEmpty() || !m_sessionStore) {
+    return;
+  }
+
+  m_heartbeatTimer->stop();
+  if (!m_sessionStore->endSession(m_currentSessionId)) {
+    Logger::instance().warning(
+        QString("[RealAndroidAutoService] Failed to end session: %1").arg(m_currentSessionId));
+  }
+
+  Logger::instance().info(
+      QString("[RealAndroidAutoService] Ended session: %1").arg(m_currentSessionId));
+
+  m_currentSessionId.clear();
+  m_currentDeviceId.clear();
+}
+
+void RealAndroidAutoService::updateSessionHeartbeat() {
+  if (m_currentSessionId.isEmpty() || !m_sessionStore) {
+    return;
+  }
+
+  if (m_sessionState == SessionState::ACTIVE) {
+    if (!m_sessionStore->updateSessionHeartbeat(m_currentSessionId)) {
+      Logger::instance().debug(
+          QString("[RealAndroidAutoService] Failed to update heartbeat for session: %1")
+              .arg(m_currentSessionId));
+    }
+  }
 }
 
 void RealAndroidAutoService::onVideoChannelUpdate(const QByteArray& data, int width, int height) {
@@ -1416,6 +1619,9 @@ void RealAndroidAutoService::onMediaAudioChannelUpdate(const QByteArray& data) {
   }
 
   // PCM audio data from Android device (music playback)
+  // Route to vehicle audio system via AudioRouter
+  routeMediaAudioToVehicle(data);
+
   if (m_audioMixer) {
     m_audioMixer->mixAudioData(IAudioMixer::ChannelId::MEDIA, data);
     Logger::instance().debug(QString("Media audio mixed: %1 bytes").arg(data.size()));
@@ -1432,6 +1638,9 @@ void RealAndroidAutoService::onSystemAudioChannelUpdate(const QByteArray& data) 
   }
 
   // PCM audio data from Android device (system sounds, notifications)
+  // Route to vehicle audio system via AudioRouter
+  routeSystemAudioToVehicle(data);
+
   if (m_audioMixer) {
     m_audioMixer->mixAudioData(IAudioMixer::ChannelId::SYSTEM, data);
     Logger::instance().debug(QString("System audio mixed: %1 bytes").arg(data.size()));
@@ -1448,6 +1657,9 @@ void RealAndroidAutoService::onSpeechAudioChannelUpdate(const QByteArray& data) 
   }
 
   // PCM audio data from Android device (navigation guidance, voice assistant)
+  // Route to vehicle audio system via AudioRouter with ducking support
+  routeGuidanceAudioToVehicle(data);
+
   if (m_audioMixer) {
     m_audioMixer->mixAudioData(IAudioMixer::ChannelId::SPEECH, data);
     Logger::instance().debug(QString("Speech audio mixed: %1 bytes").arg(data.size()));
@@ -1481,4 +1693,40 @@ void RealAndroidAutoService::onBluetoothPairingRequest(const QString& deviceName
 void RealAndroidAutoService::onChannelError(const QString& channelName, const QString& error) {
   Logger::instance().error(QString("Channel error [%1]: %2").arg(channelName, error));
   emit errorOccurred(QString("%1 channel error: %2").arg(channelName, error));
+}
+
+void RealAndroidAutoService::routeMediaAudioToVehicle(const QByteArray& audioData) {
+  if (!m_audioRouter) {
+    Logger::instance().debug("[RealAndroidAutoService] AudioRouter not initialised, skipping media audio routing");
+    return;
+  }
+
+  if (!m_audioRouter->routeAudioFrame(AAudioStreamRole::MEDIA, audioData)) {
+    Logger::instance().warning("[RealAndroidAutoService] Failed to route media audio");
+  }
+}
+
+void RealAndroidAutoService::routeGuidanceAudioToVehicle(const QByteArray& audioData) {
+  if (!m_audioRouter) {
+    Logger::instance().debug("[RealAndroidAutoService] AudioRouter not initialised, skipping guidance audio routing");
+    return;
+  }
+
+  // Enable audio ducking when guidance is active (reduces other streams to 40%)
+  m_audioRouter->enableAudioDucking(true);
+
+  if (!m_audioRouter->routeAudioFrame(AAudioStreamRole::GUIDANCE, audioData)) {
+    Logger::instance().warning("[RealAndroidAutoService] Failed to route guidance audio");
+  }
+}
+
+void RealAndroidAutoService::routeSystemAudioToVehicle(const QByteArray& audioData) {
+  if (!m_audioRouter) {
+    Logger::instance().debug("[RealAndroidAutoService] AudioRouter not initialised, skipping system audio routing");
+    return;
+  }
+
+  if (!m_audioRouter->routeAudioFrame(AAudioStreamRole::SYSTEM_AUDIO, audioData)) {
+    Logger::instance().warning("[RealAndroidAutoService] Failed to route system audio");
+  }
 }

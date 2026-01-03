@@ -2,3 +2,5 @@ module Crankshaft.Components
 AppButton 1.0 AppButton.qml
 Card 1.0 Card.qml
 Icon 1.0 Icon.qml
+Tile 1.0 Tile.qml
+SystemClock 1.0 SystemClock.qml
