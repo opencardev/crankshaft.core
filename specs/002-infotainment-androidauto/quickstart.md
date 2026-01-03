@@ -3,7 +3,40 @@
 This quickstart shows how to build and run the core, UI and a sample extension locally for development. Use WSL on Windows or a Linux development environment for consistent behaviour.
 
 ## Prerequisites
-- WSL2 with Ubuntu (or native Linux). Install build tools: `cmake`, `ninja`, `g++`, `pkg-config`, Qt6 development packages, PipeWire (preferred) or PulseAudio dev packages, and `libsqlite3-dev` for preferences/session persistence.
+
+### System Requirements
+- **OS**: Ubuntu 22.04 LTS or later (WSL2 or native Linux)
+- **RAM**: 2 GB minimum (4 GB recommended for build)
+- **Disk**: 6 GB free space
+- **CPU**: 2 cores minimum (4+ recommended for faster builds)
+
+### Install Dependencies
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+    build-essential \
+    cmake \
+    ninja-build \
+    pkg-config \
+    qt6-base-dev \
+    qt6-declarative-dev \
+    qt6-websockets-dev \
+    libsqlite3-dev \
+    libpipewire-0.3-dev \
+    libpulse-dev
+```
+
+**Packages Installed**:
+- **Build tools**: gcc, g++, make, cmake, ninja-build, pkg-config
+- **Qt6**: qt6-base-dev (Core, Gui, Widgets), qt6-declarative-dev (QML, Quick), qt6-websockets-dev
+- **Audio**: libpipewire-0.3-dev (recommended), libpulse-dev (fallback)
+- **Database**: libsqlite3-dev (preferences and session persistence)
+
+**Build Time Estimates** (8 cores):
+- Core service: ~1.5 minutes
+- UI application: ~2 minutes
+- Full build with tests: ~4.5 minutes
 
 ## Build (development)
 
@@ -340,4 +373,63 @@ When navigation guidance plays:
 - All UI components follow Design for Driving guidelines with appropriate touch target sizes and contrast ratios
 - The application supports light and dark themes, toggled via Settings
 - Translations are available for en-GB (default) and de-DE
+
+---
+
+## Troubleshooting
+
+### Build Failures
+
+**Issue**: `ninja: command not found`  
+**Solution**: Install ninja-build: `sudo apt-get install ninja-build`
+
+**Issue**: CMake cannot find Qt6 packages  
+**Solution**: Ensure Qt6 development packages are installed:
+```bash
+sudo apt-get install qt6-base-dev qt6-declarative-dev qt6-websockets-dev
+```
+
+**Issue**: Missing PipeWire headers  
+**Solution**: Install PipeWire development package:
+```bash
+sudo apt-get install libpipewire-0.3-dev
+```
+Alternatively, use PulseAudio: `sudo apt-get install libpulse-dev`
+
+### Runtime Failures
+
+**Issue**: VNC connection refused  
+**Solution**: Check if port 5900 is already in use:
+```bash
+lsof -i :5900
+```
+Kill conflicting process or use different port: `-platform vnc:size=1024x600,port=5901`
+
+**Issue**: Android Auto device not detected  
+**Solution**:
+1. Check USB connection: `lsusb` (should show phone)
+2. Enable USB debugging on Android device
+3. Check dmesg for USB errors: `dmesg | tail -n 50`
+
+**Issue**: High memory usage (>1 GB)  
+**Solution**: Check for memory leaks:
+```bash
+valgrind --leak-check=full ./build/core/crankshaft-core
+```
+
+### Performance Issues
+
+**Issue**: Cold start takes >10 seconds  
+**Solution**: 
+1. Check system load: `top` (CPU should be <80%)
+2. Verify Qt Quick Compiler is enabled (Release builds)
+3. Disable debug logging: Remove `QT_DEBUG_PLUGINS=1`
+
+**Issue**: Media playback stuttering  
+**Solution**:
+1. Check audio backend: Prefer PipeWire over PulseAudio
+2. Verify CPU isn't throttling: `cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq`
+3. Check latency metrics in performance dashboard
+
+For additional support, see [TROUBLESHOOTING.md](../../docs/TROUBLESHOOTING.md) or file an issue on GitHub.
 

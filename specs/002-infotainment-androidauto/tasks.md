@@ -168,7 +168,7 @@
 - [x] T066 [P] Implement driving-mode safety restrictions (block full keyboard, limit settings access) in ui/qml/main.qml
 - [x] T067 [P] Add 24-hour soak test script in tests/integration/soak_test.sh (run core + 3 extensions for 24h)
 - [x] T068 [P] Add memory/CPU profiling hooks and dashboard for performance monitoring in core/services/diagnostics/
-- [ ] T069 Run quickstart.md validation on clean WSL environment
+- [x] T069 Run quickstart.md validation on clean WSL environment
 - [ ] T070 Update README.md with feature summary, installation, and quickstart link
 
 ---
