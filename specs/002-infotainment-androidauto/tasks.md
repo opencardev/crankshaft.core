@@ -169,7 +169,7 @@
 - [x] T067 [P] Add 24-hour soak test script in tests/integration/soak_test.sh (run core + 3 extensions for 24h)
 - [x] T068 [P] Add memory/CPU profiling hooks and dashboard for performance monitoring in core/services/diagnostics/
 - [x] T069 Run quickstart.md validation on clean WSL environment
-- [ ] T070 Update README.md with feature summary, installation, and quickstart link
+- [x] T070 Update README.md with feature summary, installation, and quickstart link
 
 ---
 
