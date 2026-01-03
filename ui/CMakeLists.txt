@@ -44,7 +44,10 @@ set_target_properties(crankshaft-ui PROPERTIES
 # Compile translations
 set(TS_FILES
   i18n/ui_en_GB.ts
+  i18n/ui_en_US.ts
   i18n/ui_de_DE.ts
+  i18n/ui_fr_FR.ts
+  i18n/ui_es_ES.ts
 )
 
 qt_add_translations(crankshaft-ui
