@@ -1,4 +1,3 @@
-````markdown
 # Implementation Plan: [FEATURE]
 
 **Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
@@ -91,6 +90,9 @@ frontend/
 # [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
 api/
 └── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
 **Structure Decision**: [Document the selected structure and reference the real
@@ -104,5 +106,3 @@ directories captured above]
 |-----------|------------|-------------------------------------|
 | [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
 | [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
-
-````

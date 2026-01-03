@@ -77,15 +77,25 @@ ApplicationWindow {
         target: wsClient
         
         function onEventReceived(topic, payload) {
-            console.log("Event received:", topic, JSON.stringify(payload))
+            console.log('[Main] Event received:', topic, JSON.stringify(payload))
             
-            if (topic === "ui/theme/changed") {
-                Theme.isDark = payload.mode === "dark"
+            if (topic === 'ui/theme/changed') {
+                Theme.isDark = payload.mode === 'dark'
+            } else if (topic === 'android-auto/status/connected') {
+                console.log('[Main] Android Auto connected, navigating to AA screen')
+                // Automatically navigate to AA screen when device connects
+                if (stackView.currentItem && stackView.currentItem.stack) {
+                    stackView.currentItem.stack.push(androidautoScreen, { stack: stackView })
+                }
+            } else if (topic === 'android-auto/status/disconnected') {
+                console.log('[Main] Android Auto disconnected')
+                // Optionally: navigate back to home when disconnected
+                // This can be handled by the AndroidAutoScreen itself
             }
         }
         
         function onErrorOccurred(error) {
-            console.error("WebSocket error:", error)
+            console.error('[Main] WebSocket error:', error)
         }
     }
 }

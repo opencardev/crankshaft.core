@@ -19,6 +19,8 @@
 
 #include <QCommandLineOption>
 #include <QCommandLineParser>
+#include <QDateTime>
+#include <QElapsedTimer>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -29,9 +31,18 @@
 #include "build_info.h"
 
 int main(int argc, char* argv[]) {
+  // Start timing for cold-start performance measurement
+  QElapsedTimer startupTimer;
+  startupTimer.start();
+  const qint64 startTimestampMs = QDateTime::currentMSecsSinceEpoch();
+
   QGuiApplication app(argc, argv);
   QGuiApplication::setApplicationName("Crankshaft UI");
   QGuiApplication::setApplicationVersion("0.1.0");
+
+  // Log startup initiation with timestamp
+  qInfo() << "[STARTUP]" << startTimestampMs << "ms: UI main() entry";
+  qInfo() << "[STARTUP]" << startupTimer.elapsed() << "ms elapsed: QGuiApplication created";
 
   // Parse command line arguments
   QCommandLineParser parser;
@@ -49,32 +60,41 @@ int main(int argc, char* argv[]) {
 
   parser.process(app);
 
+  qInfo() << "[STARTUP]" << startupTimer.elapsed() << "ms elapsed: Command line parsed";
+
   // Set up translator (heap-allocated for proper lifetime)
   QTranslator* translator = new QTranslator(&app);
   QString currentLanguage = parser.value(languageOption);
   QString translationFile = QString(":/i18n/ui_%1").arg(QString(currentLanguage).replace('-', '_'));
   if (translator->load(translationFile)) {
     app.installTranslator(translator);
-    qDebug() << "Loaded translation:" << translationFile;
+    qDebug() << "[STARTUP]" << startupTimer.elapsed()
+             << "ms elapsed: Loaded translation:" << translationFile;
   } else {
-    qWarning() << "Failed to load translation:" << translationFile;
+    qWarning() << "[STARTUP]" << startupTimer.elapsed()
+               << "ms elapsed: Failed to load translation:" << translationFile;
   }
 
   // Create WebSocket client
   QString serverUrl = parser.value(serverOption);
+  qInfo() << "[STARTUP]" << startupTimer.elapsed()
+          << "ms elapsed: Creating WebSocket client for:" << serverUrl;
   WebSocketClient* wsClient = new WebSocketClient(QUrl(serverUrl));
 
   // Subscribe to common topics
   wsClient->subscribe("ui/*");
   wsClient->subscribe("system/*");
+  qInfo() << "[STARTUP]" << startupTimer.elapsed() << "ms elapsed: WebSocket client created";
 
   // Create QML engine
+  qInfo() << "[STARTUP]" << startupTimer.elapsed() << "ms elapsed: Creating QML engine";
   QQmlApplicationEngine engine;
 
   // Create Theme instance
   Theme* theme = new Theme(&app);
 
   // Set context properties (Theme as global object, not singleton)
+  qInfo() << "[STARTUP]" << startupTimer.elapsed() << "ms elapsed: Setting context properties";
   engine.rootContext()->setContextProperty("Theme", theme);
   engine.rootContext()->setContextProperty("wsClient", wsClient);
   engine.rootContext()->setContextProperty("currentLanguage", currentLanguage);
@@ -88,7 +108,8 @@ int main(int argc, char* argv[]) {
                                            QString::fromUtf8(CRANKSHAFT_GIT_COMMIT_LONG));
   engine.rootContext()->setContextProperty("buildBranch", QString::fromUtf8(CRANKSHAFT_GIT_BRANCH));
 
-  qInfo() << "UI Build:" << QString::fromUtf8(CRANKSHAFT_BUILD_TIMESTAMP)
+  qInfo() << "[STARTUP]" << startupTimer.elapsed()
+          << "ms elapsed: UI Build:" << QString::fromUtf8(CRANKSHAFT_BUILD_TIMESTAMP)
           << "commit(short):" << QString::fromUtf8(CRANKSHAFT_GIT_COMMIT_SHORT)
           << "branch:" << QString::fromUtf8(CRANKSHAFT_GIT_BRANCH);
 
@@ -124,7 +145,11 @@ int main(int argc, char* argv[]) {
                    });
 
   // Load the module
+  qInfo() << "[STARTUP]" << startupTimer.elapsed() << "ms elapsed: Loading QML module";
   engine.loadFromModule("Crankshaft", "Main");
+  qInfo() << "[STARTUP]" << startupTimer.elapsed() << "ms elapsed: QML module loaded";
+
+  qInfo() << "[STARTUP] READY - Total UI startup time:" << startupTimer.elapsed() << "ms";
 
   return app.exec();
 }

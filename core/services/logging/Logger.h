@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <QJsonObject>
 #include <QObject>
 #include <QString>
 
@@ -26,17 +27,36 @@ class Logger : public QObject {
   Q_OBJECT
 
  public:
-  enum class Level { Debug, Info, Warning, Error };
+  enum class Level { Debug = 0, Info = 1, Warning = 2, Error = 3, Fatal = 4 };
 
   [[nodiscard]] static Logger& instance();
 
+  // Configuration
   void setLevel(Level level);
   void setLogFile(const QString& filePath);
+  void setJsonFormat(bool enabled);
+  void setMaxLogSize(qint64 bytes);  // For log rotation
 
+  // Simple logging (backward compatible)
   void debug(const QString& message);
   void info(const QString& message);
   void warning(const QString& message);
   void error(const QString& message);
+  void fatal(const QString& message);
+
+  // Structured logging with context
+  void logStructured(Level level, const QString& component, const QString& message,
+                     const QJsonObject& context = QJsonObject());
+
+  // Contextual logging helpers
+  void debugContext(const QString& component, const QString& message,
+                    const QJsonObject& context = QJsonObject());
+  void infoContext(const QString& component, const QString& message,
+                   const QJsonObject& context = QJsonObject());
+  void warningContext(const QString& component, const QString& message,
+                      const QJsonObject& context = QJsonObject());
+  void errorContext(const QString& component, const QString& message,
+                    const QJsonObject& context = QJsonObject());
 
  private:
   Logger() = default;
@@ -45,8 +65,15 @@ class Logger : public QObject {
   Logger& operator=(const Logger&) = delete;
 
   void log(Level level, const QString& message);
+  void rotateLogIfNeeded();
   [[nodiscard]] QString levelToString(Level level) const;
+  [[nodiscard]] QJsonObject createLogEntry(Level level, const QString& component,
+                                           const QString& message,
+                                           const QJsonObject& context) const;
 
   Level m_level{Level::Info};
   QString m_logFile;
+  bool m_jsonFormat{true};                // Default to JSON format
+  qint64 m_maxLogSize{10 * 1024 * 1024};  // 10 MB default
+  qint64 m_currentLogSize{0};
 };

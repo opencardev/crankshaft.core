@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WebSocket Message Envelope",
+  "description": "WebSocket messages as currently implemented in core WebSocketServer / UI WebSocketClient.",
+  "oneOf": [
+    {
+      "title": "Subscribe",
+      "type": "object",
+      "required": ["type", "topic"],
+      "properties": {
+        "type": { "const": "subscribe" },
+        "topic": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Unsubscribe",
+      "type": "object",
+      "required": ["type", "topic"],
+      "properties": {
+        "type": { "const": "unsubscribe" },
+        "topic": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Publish",
+      "type": "object",
+      "required": ["type", "topic", "payload"],
+      "properties": {
+        "type": { "const": "publish" },
+        "topic": { "type": "string" },
+        "payload": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Event",
+      "type": "object",
+      "required": ["type", "topic", "payload"],
+      "properties": {
+        "type": { "const": "event" },
+        "topic": { "type": "string" },
+        "payload": { "type": ["object", "array", "null", "string", "number", "boolean"] },
+        "timestamp": { "type": "integer", "description": "epoch seconds" }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Service Command",
+      "type": "object",
+      "required": ["type", "command"],
+      "properties": {
+        "type": { "const": "service_command" },
+        "command": {
+          "type": "string",
+          "enum": [
+            "reload_services",
+            "start_service",
+            "stop_service",
+            "restart_service",
+            "get_running_services"
+          ]
+        },
+        "params": { "type": "object", "default": {} }
+      },
+      "additionalProperties": false
+    },
+    {
+      "title": "Service Response",
+      "type": "object",
+      "required": ["type", "command", "success"],
+      "properties": {
+        "type": { "const": "service_response" },
+        "command": { "type": "string" },
+        "success": { "type": "boolean" },
+        "services": { "type": "array", "items": { "type": "string" } },
+        "error": { "type": "string" },
+        "timestamp": { "type": "integer", "description": "epoch seconds" }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

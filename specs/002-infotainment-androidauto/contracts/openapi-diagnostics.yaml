@@ -1,0 +1,59 @@
+openapi: 3.0.3
+info:
+  title: Crankshaft Core Diagnostics API
+  version: '0.1.0'
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /metrics:
+    get:
+      summary: Expose basic metrics
+      responses:
+        '200':
+          description: Metrics (text)
+          content:
+            text/plain:
+              schema:
+                type: string
+  /extensions:
+    get:
+      summary: List installed extensions
+      responses:
+        '200':
+          description: List of extensions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    status:
+                      type: string
+    post:
+      summary: Install or update an extension (manifest in body)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './extension-manifest.schema.json'
+      responses:
+        '202':
+          description: Accepted (installation started)

@@ -23,6 +23,8 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSslCertificate>
+#include <QSslKey>
 
 #include "../android_auto/AndroidAutoService.h"
 #include "../eventbus/EventBus.h"
@@ -32,11 +34,12 @@
 WebSocketServer::WebSocketServer(quint16 port, QObject* parent)
     : QObject(parent),
       m_server(new QWebSocketServer("CrankshaftCore", QWebSocketServer::NonSecureMode, this)),
-      m_serviceManager(nullptr) {
+      m_serviceManager(nullptr),
+      m_secureModeEnabled(false) {
   Logger::instance().info(QString("Initializing WebSocket server on port %1...").arg(port));
 
   if (m_server->listen(QHostAddress::Any, port)) {
-    Logger::instance().info(QString("WebSocket server listening on port %1").arg(port));
+    Logger::instance().info(QString("WebSocket server listening on port %1 (ws://)").arg(port));
     connect(m_server, &QWebSocketServer::newConnection, this, &WebSocketServer::onNewConnection);
   } else {
     Logger::instance().error(QString("Failed to start WebSocket server on port %1: %2")
@@ -88,23 +91,44 @@ void WebSocketServer::onTextMessageReceived(const QString& message) {
   QWebSocket* client = qobject_cast<QWebSocket*>(sender());
   if (!client) return;
 
-  QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
-  if (!doc.isObject()) {
-    Logger::instance().warning("Received invalid JSON message");
+  QJsonParseError parseError;
+  QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8(), &parseError);
+  if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+    Logger::instance().warning(
+        QString("[WebSocketServer] Invalid JSON message: %1").arg(parseError.errorString()));
+    sendError(client, QStringLiteral("invalid_json"));
     return;
   }
 
   QJsonObject obj = doc.object();
+  QString error;
+  if (!validateMessage(obj, error)) {
+    Logger::instance().warning(QString("[WebSocketServer] Invalid message: %1").arg(error));
+    sendError(client, error);
+    return;
+  }
+
   QString type = obj.value("type").toString();
-  QString topic = obj.value("topic").toString();
 
   if (type == "subscribe") {
+    QString topic = obj.value("topic").toString();
     handleSubscribe(client, topic);
+  } else if (type == "unsubscribe") {
+    QString topic = obj.value("topic").toString();
+    handleUnsubscribe(client, topic);
   } else if (type == "publish") {
+    QString topic = obj.value("topic").toString();
     QVariantMap payload = obj.value("payload").toObject().toVariantMap();
     handlePublish(topic, payload);
   } else if (type == "service_command") {
     QString command = obj.value("command").toString();
+    QString commandError;
+    if (!validateServiceCommand(command, commandError)) {
+      Logger::instance().warning(
+          QString("[WebSocketServer] Rejected service command: %1").arg(commandError));
+      sendError(client, commandError);
+      return;
+    }
     QVariantMap params = obj.value("params").toObject().toVariantMap();
     handleServiceCommand(client, command, params);
   }
@@ -389,4 +413,164 @@ void WebSocketServer::onAndroidAutoError(const QString& error) {
   QVariantMap payload;
   payload["error"] = error;
   broadcastEvent("android-auto/status/error", payload);
+}
+
+bool WebSocketServer::validateMessage(const QJsonObject& obj, QString& error) const {
+  static const QSet<QString> allowedTypes = {
+      QStringLiteral("subscribe"), QStringLiteral("unsubscribe"), QStringLiteral("publish"),
+      QStringLiteral("service_command")};
+
+  const QString type = obj.value("type").toString();
+  if (type.isEmpty() || !allowedTypes.contains(type)) {
+    error = QStringLiteral("invalid_type");
+    return false;
+  }
+
+  // Validate required fields for each type
+  if (type == "subscribe" || type == "unsubscribe" || type == "publish") {
+    if (!obj.contains("topic") || obj.value("topic").toString().isEmpty()) {
+      error = QStringLiteral("missing_topic");
+      return false;
+    }
+  }
+
+  if (type == "publish") {
+    if (!obj.contains("payload") || !obj.value("payload").isObject()) {
+      error = QStringLiteral("invalid_payload");
+      return false;
+    }
+  }
+
+  if (type == "service_command") {
+    if (!obj.contains("command") || obj.value("command").toString().isEmpty()) {
+      error = QStringLiteral("missing_command");
+      return false;
+    }
+    if (!obj.contains("params") || !obj.value("params").isObject()) {
+      error = QStringLiteral("missing_params");
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool WebSocketServer::validateServiceCommand(const QString& command, QString& error) const {
+  static const QSet<QString> allowedCommands = {
+      QStringLiteral("reload_services"), QStringLiteral("start_service"),
+      QStringLiteral("stop_service"), QStringLiteral("restart_service"),
+      QStringLiteral("get_running_services")};
+
+  if (!allowedCommands.contains(command)) {
+    error = QStringLiteral("unauthorised_command");
+    return false;
+  }
+  return true;
+}
+
+void WebSocketServer::sendError(QWebSocket* client, const QString& message) const {
+  if (!client) {
+    return;
+  }
+
+  QJsonObject errorObj;
+  errorObj["type"] = "error";
+  errorObj["message"] = message;
+  QJsonDocument doc(errorObj);
+  client->sendTextMessage(doc.toJson(QJsonDocument::Compact));
+  Logger::instance().debug(QString("[WebSocketServer] Sent error to client: %1").arg(message));
+}
+
+void WebSocketServer::handleUnsubscribe(QWebSocket* client, const QString& topic) {
+  if (!m_subscriptions.contains(client)) {
+    Logger::instance().warning("[WebSocketServer] Unsubscribe from unknown client");
+    sendError(client, QStringLiteral("client_not_found"));
+    return;
+  }
+
+  if (!m_subscriptions[client].contains(topic)) {
+    Logger::instance().debug(QString("[WebSocketServer] Client not subscribed to: %1").arg(topic));
+    sendError(client, QStringLiteral("not_subscribed"));
+    return;
+  }
+
+  m_subscriptions[client].removeOne(topic);
+  Logger::instance().info(
+      QString("[WebSocketServer] Client unsubscribed from topic: %1").arg(topic));
+}
+
+void WebSocketServer::enableSecureMode(const QString& certificatePath, const QString& keyPath) {
+  // Load SSL certificate and key
+  QFile certFile(certificatePath);
+  QFile keyFile(keyPath);
+
+  if (!certFile.exists()) {
+    Logger::instance().error(QString("SSL certificate not found: %1").arg(certificatePath));
+    return;
+  }
+
+  if (!keyFile.exists()) {
+    Logger::instance().error(QString("SSL key not found: %1").arg(keyPath));
+    return;
+  }
+
+  if (!certFile.open(QIODevice::ReadOnly)) {
+    Logger::instance().error(QString("Failed to open SSL certificate: %1").arg(certificatePath));
+    return;
+  }
+
+  if (!keyFile.open(QIODevice::ReadOnly)) {
+    Logger::instance().error(QString("Failed to open SSL key: %1").arg(keyPath));
+    certFile.close();
+    return;
+  }
+
+  QSslCertificate certificate(&certFile, QSsl::Pem);
+  QSslKey sslKey(&keyFile, QSsl::Rsa, QSsl::Pem);
+
+  certFile.close();
+  keyFile.close();
+
+  if (certificate.isNull()) {
+    Logger::instance().error("SSL certificate is invalid");
+    return;
+  }
+
+  if (sslKey.isNull()) {
+    Logger::instance().error("SSL key is invalid");
+    return;
+  }
+
+  // Close the current non-secure server
+  m_server->close();
+  delete m_server;
+
+  // Create secure server
+  m_server = new QWebSocketServer("CrankshaftCore", QWebSocketServer::SecureMode, this);
+
+  // Configure SSL
+  QSslConfiguration sslConfiguration;
+  sslConfiguration.setLocalCertificate(certificate);
+  sslConfiguration.setPrivateKey(sslKey);
+  sslConfiguration.setProtocol(QSsl::TlsV1_3OrLater);
+  m_server->setSslConfiguration(sslConfiguration);
+
+  // Listen on the secure port (typically 9003 for wss)
+  quint16 securePort = 9003;
+  if (m_server->listen(QHostAddress::Any, securePort)) {
+    Logger::instance().info(
+        QString("WebSocket secure server (wss://) listening on port %1").arg(securePort));
+    m_secureModeEnabled = true;
+    m_certificatePath = certificatePath;
+    m_keyPath = keyPath;
+    connect(m_server, &QWebSocketServer::newConnection, this, &WebSocketServer::onNewConnection);
+  } else {
+    Logger::instance().error(QString("Failed to start secure WebSocket server on port %1: %2")
+                                 .arg(securePort)
+                                 .arg(m_server->errorString()));
+  }
+}
+
+bool WebSocketServer::isSecureModeEnabled() const {
+  return m_secureModeEnabled;
 }

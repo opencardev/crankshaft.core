@@ -21,10 +21,13 @@ Sync Impact Report
 
 ### I. Code Quality & Maintainability
 All code produced for Crankshaft MUST be readable, well-structured, and maintainable. Code MUST follow the project coding standards (file headers, naming, spacing, and style) and pass automated static analysis before merging. Public APIs and modules MUST include: clear purpose, minimal surface area, stable interfaces, and documentation sufficient for another engineer to use without additional explanation. Long-lived code MUST avoid hacks or undocumented workarounds; any technical debt MUST be recorded in an issue with a remediation plan.
+Code duplication is prohibited.  
+You must search for existing functions before creating a new one.  
 
 Rationale: High-quality code reduces defects, eases onboarding, and lowers long-term maintenance cost.
 
 Acceptance criteria:
+- Linting and formatting must be run before commiting.
 - Linting and formatting pass in CI; code must compile cleanly where applicable.
 - New public APIs include concise README entry and examples.
 - Pull requests MUST include a short rationale for design choices when non-obvious.
@@ -100,4 +103,4 @@ Compliance and enforcement:
 - All PRs are required to reference which constitution principles they affect and how compliance is ensured.
 - CI and repository checks should automatically flag violations where feasible (linting, tests, license headers).
 
-**Version**: 1.0.0 | **Ratified**: TODO(RATIFICATION_DATE): please supply original adoption date | **Last Amended**: 2025-12-30
+**Version**: 1.0.0 | **Ratified**: 2025-12-30 | **Last Amended**: 2025-12-30

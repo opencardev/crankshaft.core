@@ -35,7 +35,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nlohmann_json nlohmann_json_schema_validator)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Gui DBus Bluetooth)
+find_package(Qt6 REQUIRED COMPONENTS Core Network WebSockets Gui DBus Bluetooth Sql Multimedia)
 
 # Find GStreamer for multimedia
 find_package(PkgConfig REQUIRED)
@@ -77,6 +77,12 @@ set(SOURCES
   services/android_auto/MockAndroidAutoService.cpp
   services/android_auto/RealAndroidAutoService.cpp
   services/android_auto/ProtocolHelpers.cpp
+  services/preferences/PreferencesService.cpp
+  services/session/SessionStore.cpp
+  services/audio/AudioRouter.cpp
+  services/media/MediaService.cpp
+  services/extensions/ExtensionManager.cpp
+  services/diagnostics/DiagnosticsEndpoint.cpp
   
   # Transport Layer
   hal/transport/Transport.cpp
@@ -152,6 +158,8 @@ target_link_libraries(crankshaft-core PRIVATE
   Qt6::Gui
   Qt6::DBus
   Qt6::Bluetooth
+  Qt6::Sql
+  Qt6::Multimedia
   ${GSTREAMER_LIBRARIES}
   ${GSTREAMER_APP_LIBRARIES}
   ${GSTREAMER_VIDEO_LIBRARIES}
